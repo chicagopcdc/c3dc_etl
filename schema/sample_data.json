@@ -1,56 +1,142 @@
 {
-  "study_id": "test study 1",
-  "acl": "test acl",
-  "study_acronym": "test study acronym",
-  "study_description": "test study description",
-  "study_short_title": "test study short title",
+  "diagnoses": [
+    {
+      "diagnosis_id": "diagnosis 1",
+      "age_at_diagnosis": 1000,
+      "anatomic_site": "Abdomen, NOS",
+      "diagnosis_icd_o": [
+        "8000/0 : Neoplasm, benign"
+      ],
+      "disease_phase": "Initial Diagnosis",
+      "participant.participant_id": "participant 1"
+    },
+    {
+      "diagnosis_id": "diagnosis 2",
+      "age_at_diagnosis": 2000,
+      "anatomic_site": "Abdominal esophagus",
+      "diagnosis_icd_o": [
+        "8000/1 : Neoplasm, uncertain whether benign or malignant"
+      ],
+      "disease_phase": "Disease Progression",
+      "participant.participant_id": "participant 2"
+    }
+  ],
   "participants": [
     {
-      "participant_id": "test participant 1",
-      "ethnicity": "Hispanic or Latino",
+      "participant_id": "participant 1",
+      "ethnicity": [
+        "Hispanic or Latino"
+      ],
       "race": [
         "American Indian or Alaska Native"
       ],
       "gender": "Female",
-      "diagnoses": [
-        {
-          "diagnosis_id": "test participant 1 diagnosis 1",
-          "age_at_diagnosis": 1000,
-          "anatomic_site": "Abdomen, NOS",
-          "disease_phase": "Initial Diagnosis"
-        }
+      "diagnosis.diagnosis_id": [
+        "diagnosis 1"
       ],
-      "samples": [
-        {
-          "sample_id": "test participant 1 sample 1",
-          "anatomic_site": "Abdominal esophagus",
-          "participant_age_at_collection": 1001,
-          "sample_tumor_status": "Abnormal",
-          "tumor_classification": "Primary"
-        }
-      ]
+      "sample.sample_id": [
+        "participant sample 1"
+      ],
+      "study.study_id": "study 1"
+    },
+    {
+      "participant_id": "participant 2",
+      "ethnicity": [
+        "Not Hispanic or Latino"
+      ],
+      "race": [
+        "Asian"
+      ],
+      "gender": "Male",
+      "diagnosis.diagnosis_id": [
+        "diagnosis 2"
+      ],
+      "sample.sample_id": [
+        "participant sample 2"
+      ],
+      "study.study_id": "study 1"
     }
   ],
   "reference_files": [
     {
-      "reference_file_id": "test reference file 1",
-      "dcf_indexd_guid": "test dcf indexed guid",
-      "file_name": "test file name",
+      "reference_file_id": "reference file 1",
+      "dcf_indexd_guid": "dcf indexed guid 1",
+      "file_name": "file name 1",
       "file_size": 1024,
       "file_type": "bam",
-      "mapping_documentation_url": "https://example.com/mapping_documentation_url",
-      "md5sum": "test md5sum",
-      "source_code_url": "https://example.com/source_code_url",
-      "source_file_url": "https://example.com/source_file_url"
+      "mapping_documentation_url": "https://example.com/mapping_documentation_url1",
+      "md5sum": "md5sum 1",
+      "source_code_url": "https://example.com/source_code_url1",
+      "source_file_url": "https://example.com/source_file_url1",
+      "study.study_id": "study 1"
+    },
+    {
+      "reference_file_id": "reference file 2",
+      "dcf_indexd_guid": "dcf indexed guid 2",
+      "file_name": "file name 2",
+      "file_size": 2048,
+      "file_type": "bam_index",
+      "mapping_documentation_url": "https://example.com/mapping_documentation_url2",
+      "md5sum": "md5sum 2",
+      "source_code_url": "https://example.com/source_code_url2",
+      "source_file_url": "https://example.com/source_file_url2",
+      "study.study_id": "study 1"
     }
   ],
   "samples": [
     {
-      "sample_id": "test sample 1",
+      "sample_id": "participant sample 1",
+      "anatomic_site": "Abdominal esophagus",
+      "diagnosis_icd_o": [
+        "8000/3 : Neoplasm, malignant"
+      ],
+      "participant_age_at_collection": 1001,
+      "sample_tumor_status": "Abnormal",
+      "tumor_classification": "Primary",
+      "participant.participant_id": "participant 1"
+    },
+    {
+      "sample_id": "participant sample 2",
       "anatomic_site": "Accessory sinus, NOS",
-      "participant_age_at_collection": 1002,
+      "diagnosis_icd_o": [
+        "8000/6 : Neoplasm, metastatic"
+      ],
+      "participant_age_at_collection": 2002,
       "sample_tumor_status": "Non-neoplastic",
-      "tumor_classification": "Regional"
+      "tumor_classification": "Regional",
+      "participant.participant_id": "participant 2"
+    },
+    {
+      "sample_id": "study sample 1",
+      "anatomic_site": "Accessory sinus, NOS",
+      "diagnosis_icd_o": [
+        "8000/9 : Neoplasm, malignant, uncertain whether primary or metastatic"
+      ],
+      "participant_age_at_collection": 3003,
+      "sample_tumor_status": "Normal",
+      "tumor_classification": "Metastatic",
+      "study.study_id": "study 1"
+    }
+  ],
+  "studies": [
+    {
+      "study_id": "test study 1",
+      "acl": "test acl",
+      "consent": "GRU",
+      "consent_number": 12345,
+      "study_acronym": "test study acronym",
+      "study_description": "test study description",
+      "study_short_title": "test study short title",
+      "participant.participant_id": [
+        "participant 1",
+        "participant 2"
+      ],
+      "sample.sample_id": [
+        "study sample 1"
+      ],
+      "reference_file.reference_file_id": [
+        "reference file 1"
+      ]
     }
   ]
 }
