@@ -292,9 +292,10 @@ class SchemaCreator:
                     (src_dst_endpt['Src'], src_dst_endpt['Dst'], dst_mul.lower()),
                     (src_dst_endpt['Dst'], src_dst_endpt['Src'], src_mul.lower())
                 ]:
-                    local_rel_prop_name: str = f'{rel_name}_{remote_node_name}'
+                    local_rel_prop_name: str = f'{remote_node_name}.{remote_node_name}_id'
                     description: str = (
-                        f'{src_mul}_to_{dst_mul}, {src_dst_endpt["Src"]} => {src_dst_endpt["Dst"]}'
+                        f'{rel_name}: {src_mul}_to_{dst_mul}, ' +
+                        f'[src] {src_dst_endpt["Src"]} => [dst] {src_dst_endpt["Dst"]}'
                     )
                     local_rel_prop_obj: dict[str, any] = self._build_node_relationship(remote_node_mul, description)
                     self._schema_nodes[local_node_name]['properties'][local_rel_prop_name] = local_rel_prop_obj

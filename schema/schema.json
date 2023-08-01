@@ -1762,9 +1762,9 @@
             "MX"
           ]
         },
-        "of_diagnosis_participant": {
+        "participant.participant_id": {
           "type": "string",
-          "description": "many_to_one, diagnosis => participant"
+          "description": "of_diagnosis: many_to_one, [src] diagnosis => [dst] participant"
         }
       }
     },
@@ -1838,20 +1838,20 @@
           "type": "string",
           "description": "A synonymous or alternate ID for a participant that is stored in another study or repository."
         },
-        "of_diagnosis_diagnosis": {
+        "diagnosis.diagnosis_id": {
           "type": "array",
-          "description": "many_to_one, diagnosis => participant",
+          "description": "of_diagnosis: many_to_one, [src] diagnosis => [dst] participant",
           "items": {
             "type": "string"
           }
         },
-        "of_participant_study": {
+        "study.study_id": {
           "type": "string",
-          "description": "many_to_one, participant => study"
+          "description": "of_participant: many_to_one, [src] participant => [dst] study"
         },
-        "of_sample_sample": {
+        "sample.sample_id": {
           "type": "array",
-          "description": "many_to_one, sample => participant",
+          "description": "of_sample: many_to_one, [src] sample => [dst] participant",
           "items": {
             "type": "string"
           }
@@ -1967,9 +1967,9 @@
           "type": "string",
           "description": "One or more characters using a irreversible unique number generated from a string of text to identify a set of related electronic records."
         },
-        "of_reference_file_study": {
+        "study.study_id": {
           "type": "string",
-          "description": "many_to_one, reference_file => study"
+          "description": "of_reference_file: many_to_one, [src] reference_file => [dst] study"
         }
       }
     },
@@ -3744,13 +3744,13 @@
           "type": "string",
           "description": "The diagnosis, in humans, as captured in the 2022 extension of the tenth version of the International Classification of Disease (ICD-10-CM, the disease code subset of ICD-10). Examples - C80.1, C44.510, D14.3-, D49.89."
         },
-        "of_sample_participant": {
+        "participant.participant_id": {
           "type": "string",
-          "description": "many_to_one, sample => participant"
+          "description": "of_sample: many_to_one, [src] sample => [dst] participant"
         },
-        "of_sample_study": {
+        "study.study_id": {
           "type": "string",
-          "description": "many_to_one, sample => study"
+          "description": "of_sample: many_to_one, [src] sample => [dst] study"
         }
       }
     },
@@ -3811,23 +3811,23 @@
           "type": "string",
           "description": "The url of the study (often a dbGaP study page)."
         },
-        "of_participant_participant": {
+        "participant.participant_id": {
           "type": "array",
-          "description": "many_to_one, participant => study",
+          "description": "of_participant: many_to_one, [src] participant => [dst] study",
           "items": {
             "type": "string"
           }
         },
-        "of_sample_sample": {
+        "sample.sample_id": {
           "type": "array",
-          "description": "many_to_one, sample => study",
+          "description": "of_sample: many_to_one, [src] sample => [dst] study",
           "items": {
             "type": "string"
           }
         },
-        "of_reference_file_reference_file": {
+        "reference_file.reference_file_id": {
           "type": "array",
-          "description": "many_to_one, reference_file => study",
+          "description": "of_reference_file: many_to_one, [src] reference_file => [dst] study",
           "items": {
             "type": "string"
           }

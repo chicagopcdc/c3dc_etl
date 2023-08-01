@@ -8,7 +8,7 @@
         "8000/0 : Neoplasm, benign"
       ],
       "disease_phase": "Initial Diagnosis",
-      "of_diagnosis_participant": "participant 1"
+      "participant.participant_id": "participant 1"
     },
     {
       "diagnosis_id": "diagnosis 2",
@@ -18,7 +18,7 @@
         "8000/1 : Neoplasm, uncertain whether benign or malignant"
       ],
       "disease_phase": "Disease Progression",
-      "of_diagnosis_participant": "participant 2"
+      "participant.participant_id": "participant 2"
     }
   ],
   "participants": [
@@ -31,13 +31,13 @@
         "American Indian or Alaska Native"
       ],
       "gender": "Female",
-      "of_diagnosis_diagnosis": [
+      "diagnosis.diagnosis_id": [
         "diagnosis 1"
       ],
-      "of_sample_sample": [
+      "sample.sample_id": [
         "participant sample 1"
       ],
-      "of_participant_study": "study 1"
+      "study.study_id": "study 1"
     },
     {
       "participant_id": "participant 2",
@@ -48,13 +48,13 @@
         "Asian"
       ],
       "gender": "Male",
-      "of_diagnosis_diagnosis": [
+      "diagnosis.diagnosis_id": [
         "diagnosis 2"
       ],
-      "of_sample_sample": [
+      "sample.sample_id": [
         "participant sample 2"
       ],
-      "of_participant_study": "study 1"
+      "study.study_id": "study 1"
     }
   ],
   "reference_files": [
@@ -68,7 +68,7 @@
       "md5sum": "md5sum 1",
       "source_code_url": "https://example.com/source_code_url1",
       "source_file_url": "https://example.com/source_file_url1",
-      "of_reference_file_study": "study 1"
+      "study.study_id": "study 1"
     },
     {
       "reference_file_id": "reference file 2",
@@ -80,7 +80,7 @@
       "md5sum": "md5sum 2",
       "source_code_url": "https://example.com/source_code_url2",
       "source_file_url": "https://example.com/source_file_url2",
-      "of_reference_file_study": "study 1"
+      "study.study_id": "study 1"
     }
   ],
   "samples": [
@@ -93,7 +93,7 @@
       "participant_age_at_collection": 1001,
       "sample_tumor_status": "Abnormal",
       "tumor_classification": "Primary",
-      "of_sample_participant": "participant 1"
+      "participant.participant_id": "participant 1"
     },
     {
       "sample_id": "participant sample 2",
@@ -104,7 +104,7 @@
       "participant_age_at_collection": 2002,
       "sample_tumor_status": "Non-neoplastic",
       "tumor_classification": "Regional",
-      "of_sample_participant": "participant 2"
+      "participant.participant_id": "participant 2"
     },
     {
       "sample_id": "study sample 1",
@@ -115,7 +115,7 @@
       "participant_age_at_collection": 3003,
       "sample_tumor_status": "Normal",
       "tumor_classification": "Metastatic",
-      "of_sample_study": "study 1"
+      "study.study_id": "study 1"
     }
   ],
   "studies": [
@@ -127,14 +127,14 @@
       "study_acronym": "test study acronym",
       "study_description": "test study description",
       "study_short_title": "test study short title",
-      "of_participant_participant": [
+      "participant.participant_id": [
         "participant 1",
         "participant 2"
       ],
-      "of_sample_sample": [
+      "sample.sample_id": [
         "study sample 1"
       ],
-      "of_reference_file_reference_file": [
+      "reference_file.reference_file_id": [
         "reference file 1"
       ]
     }
