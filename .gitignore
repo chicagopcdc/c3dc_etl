@@ -12,7 +12,9 @@
 *.csv
 *.html
 *.ini
-#*.json
+*.json
+!schema/schema.json
+!schema/sample_data.json
 *.log
 *.log.*
 *.pickle
