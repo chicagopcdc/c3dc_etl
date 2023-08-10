@@ -53,6 +53,15 @@ logging.config.dictConfig({
 })
 
 
+def is_numeric(value: any) -> bool:
+    """ indicate whether specified value is int or float """
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+
 class SchemaRelMul(str, Enum):
     """
     Enum class for schema relationship multiplicity: one_to_one | many_to_one | many_to_many | one_to_many 
@@ -346,10 +355,9 @@ class SchemaCreator:
                 schema['mininum'] = 0
 
             if name.startswith('age_at') or '_age_at_' in name:
-                schema['mininum'] = 0
                 schema['maximum'] = 54750 # 365 * 150
 
-        allowed_values: list[str] = self._get_property_allowed_values(obj)
+        allowed_values: list[str] = self._get_property_allowed_values(name, obj)
         if allowed_values:
             if schema['type'] == 'array':
                 schema['uniqueItems'] = True
@@ -363,52 +371,47 @@ class SchemaCreator:
         if 'Type' not in obj and 'Enum' in obj:
             return 'string'
 
+        log_msg: str = None
+
         type_value: any = obj.get('Type', None)
         if isinstance(type_value, str):
             return type_value.lower()
-        if isinstance(type_value, (list, set, tuple)):
-            type_entry: any
-            for type_entry in type_value:
-                if isinstance(type_entry, str):
-                    return type_entry.lower()
 
-        log_msg: str = f'YAML property {name} does not have Type or Enum defined, unable to determine JSON schema type'
+        if isinstance(type_value, dict):
+            if type_value.get('value_type', '') != 'list':
+                log_msg = (
+                    f'YAML property {name} sub-property Type does not have "value_type" ' +
+                    'set to "list", unable to determine JSON schema type'
+                )
+            elif 'Enum' not in type_value:
+                log_msg = (
+                    f'YAML property {name} sub-property Type has "value_type" set to "list" ' +
+                    'but does not have "Enum" defined, unable to determine JSON schema type'
+                )
+            if log_msg:
+                _logger.critical(log_msg)
+                raise RuntimeError(log_msg)
+            return 'array'
+
+        log_msg = f'YAML property {name} does not have Type or Enum defined, unable to determine JSON schema type'
         _logger.critical(log_msg)
         raise RuntimeError(log_msg)
 
-    def _get_property_allowed_values(self, obj: dict[str, any]) -> list[str]:
+    def _get_property_allowed_values(self, name: str, obj: dict[str, any]) -> list[str]:
         """ Get list of allowed values for specified property """
-        sub_prop_name: str
-        for sub_prop_name in ('Enum', 'Items'):
-            if sub_prop_name in obj:
-                allowed_values: list = list(obj[sub_prop_name])
-                # check if allowed list contains sub-list (ethnicity, race) containing the actual allowed values
-                # the yaml sources are defined this way to allow for down-level validation where the property can
-                # hold any value of the specified type OR any of the values in the allowed value list; values
-                # other than those in the allowed list should trigger validation warnings
-                # e.g. 'gender' can be set to one of the allowed values ('Female', 'Male', etc) or any arbitrary
-                # string and a validation warning will be thrown when an unlisted value is specified in the data
-                allowed_value: str
-                for allowed_value in allowed_values:
-                    if isinstance(allowed_value, (list, set, tuple)):
-                        return allowed_value
-                return obj[sub_prop_name]
-        # Enum and Items not set, check if Type property is array containing sub-array of allowed values
-        type_value: any = obj.get('Type', None)
-        if isinstance(type_value, (list, set, tuple)):
-            type_entry: any
-            prop_type: str
-            for type_entry in type_value:
-                if isinstance(type_entry, str):
-                    prop_type = type_entry.lower()
-                if isinstance(type_entry, (list, set, tuple)):
-                    # TODO: remove conditional check in future once source yaml updated
-                    # age_at_* properties have been defined with 'Type' as array containing
-                    # 'integer' and single-element sub-array ['null'] as allowed value list
-                    # ignore the ['null'] sub-list for now pending future source correction
-                    # e.g. don't restrict these properties to only containing 'null' for now
-                    if prop_type != 'integer' and set(type_entry) != {'null'}:
-                        return type_entry
+        if 'Enum' in obj:
+            return list(obj['Enum'])
+
+        if 'Type' in obj and isinstance(obj['Type'], dict):
+            if obj['Type'].get('value_type', '') == 'list' and 'Enum' in obj['Type']:
+                return obj['Type']['Enum']
+            log_msg: str = (
+                f'YAML property {name} is dict but does not have "value_type" set ' +
+                'to "list" and "Enum" property containing allowed values'
+            )
+            _logger.critical(log_msg)
+            raise RuntimeError(log_msg)
+
         return []
 
     @staticmethod
