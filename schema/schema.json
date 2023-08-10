@@ -913,6 +913,7 @@
               "9394/1 : Myxopapillary ependymoma",
               "9395/3 : Papillary tumor of pineal region",
               "9396/3 : Ependymoma, RELA fusion positive",
+              "9400/0 : Astrocytoma, benign",
               "9400/3 : Astrocytoma, NOS",
               "9401/3 : Astrocytoma, anaplastic, NOS",
               "9410/3 : Protoplasmic astrocytoma",
@@ -940,6 +941,7 @@
               "9471/3 : Desmoplastic nodular medulloblastoma",
               "9472/3 : Medullomyoblastoma",
               "9473/3 : CNS embryonal tumor, NOS",
+              "9473/3 : Central primitive neuroectodermal tumor",
               "9474/3 : Large cell medulloblastoma",
               "9475/3 : Medulloblastoma, WNT-activated, NOS",
               "9476/3 : Medulloblastoma, SHH-activated and TP53-mutant",
@@ -958,11 +960,13 @@
               "9502/3 : Teratoid medulloepithelioma, NOS",
               "9503/3 : Neuroepithelioma, NOS",
               "9504/3 : Spongioneuroblastoma",
+              "9505/0 : Ganglioglioma, benign",
               "9505/1 : Ganglioglioma, NOS",
               "9505/3 : Ganglioglioma, anaplastic",
               "9506/1 : Central neurocytoma",
               "9507/0 : Pacinian tumor",
               "9508/3 : Atypical teratoid/rhabdoid tumor",
+              "9508/3 : CNS embryonal tumor with rhabdoid features",
               "9509/1 : Papillary glioneuronal tumor",
               "9510/0 : Retinocytoma",
               "9510/3 : Retinoblastoma, NOS",
@@ -987,6 +991,7 @@
               "9539/1 : Atypical meningioma",
               "9539/3 : Meningeal sarcomatosis",
               "9540/0 : Neurofibroma, NOS",
+              "9540/1 : Neurofibromatosis, NOS",
               "9540/3 : Malignant peripheral nerve sheath tumor, NOS",
               "9541/0 : Melanotic neurofibroma",
               "9542/3 : Malignant peripheral nerve sheath tumor, epithelioid",
@@ -1050,6 +1055,7 @@
               "9709/3 : Cutaneous T-cell lymphoma, NOS",
               "9712/3 : Intravascular large B-cell lymphoma",
               "9714/3 : Anaplastic large cell lymphoma, T-cell and Null-cell type",
+              "9714/3 : Anaplastic large cell lymphoma, ALK positive",
               "9715/3 : Anaplastic large cell lymphoma, ALK negative",
               "9716/3 : Hepatosplenic T-cell lymphoma",
               "9717/3 : Intestinal T-cell lymphoma",
@@ -1117,7 +1123,9 @@
               "9833/3 : Prolymphocytic leukemia, B-cell type",
               "9834/3 : Prolymphocytic leukemia, T-cell type",
               "9835/3 : Precursor cell lymphoblastic leukemia, NOS",
+              "9836/3 : Precursor B-cell lymphoblastic leukemia",
               "9837/3 : Precursor T-cell lymphoblastic leukemia",
+              "9837/3 : T lymphoblastic leukemia/lymphoma",
               "9840/3 : Acute erythroid leukemia",
               "9860/3 : Myeloid leukemia, NOS",
               "9861/3 : Acute myeloid leukemia, NOS",
@@ -1172,7 +1180,8 @@
               "9985/3 : Myelodysplastic syndrome with multilineage dysplasia",
               "9986/3 : Myelodysplastic syndrome with isolated del (5q)",
               "9987/3 : Therapy-related myelodysplastic syndrome, NOS",
-              "9989/3 : Myelodysplastic syndrome, NOS"
+              "9989/3 : Myelodysplastic syndrome, NOS",
+              "999 : Unknown, to be completed later"
             ]
           }
         },
@@ -1552,7 +1561,6 @@
         "age_at_diagnosis": {
           "type": "integer",
           "description": "Age at the time of diagnosis expressed in number of days since birth.",
-          "mininum": 0,
           "maximum": 54750
         },
         "toronto_childhood_cancer_staging": {
@@ -1637,7 +1645,6 @@
         "age_at_recurrence": {
           "type": "integer",
           "description": "Number of days between the date used for index (DOB) and the date the patient's disease recurred.",
-          "mininum": 0,
           "maximum": 54750
         },
         "last_known_disease_status": {
@@ -1659,7 +1666,6 @@
         "age_at_last_known_disease_status": {
           "type": "integer",
           "description": "Age at the time of last known disease status expressed in number of days since birth.",
-          "mininum": 0,
           "maximum": 54750
         },
         "tumor_grade": {
@@ -1891,16 +1897,24 @@
           "enum": [
             "bam",
             "bam_index",
+            "bai",
             "bcf",
             "bed",
             "bif",
+            "bw",
+            "cns",
             "cram",
             "cram_index",
+            "crai",
+            "csi",
             "csv",
             "dicom",
             "docx",
             "fasta",
             "fastq",
+            "gvcf",
+            "html",
+            "idat",
             "jpg",
             "json",
             "mrxs",
@@ -1908,14 +1922,17 @@
             "ndpi",
             "nifti",
             "pdf",
+            "ped",
             "png",
             "rda",
             "rdata",
             "rds",
             "sas7bdat",
             "scn",
+            "seg",
             "svg",
             "svs",
+            "tar",
             "tbi",
             "tsv",
             "tif",
@@ -2346,7 +2363,6 @@
         "participant_age_at_collection": {
           "type": "integer",
           "description": "The age of the participant (in days) at the time of sample collection.",
-          "mininum": 0,
           "maximum": 54750
         },
         "diagnosis_icd_o": {
@@ -3238,6 +3254,7 @@
               "9394/1 : Myxopapillary ependymoma",
               "9395/3 : Papillary tumor of pineal region",
               "9396/3 : Ependymoma, RELA fusion positive",
+              "9400/0 : Astrocytoma, benign",
               "9400/3 : Astrocytoma, NOS",
               "9401/3 : Astrocytoma, anaplastic, NOS",
               "9410/3 : Protoplasmic astrocytoma",
@@ -3265,6 +3282,7 @@
               "9471/3 : Desmoplastic nodular medulloblastoma",
               "9472/3 : Medullomyoblastoma",
               "9473/3 : CNS embryonal tumor, NOS",
+              "9473/3 : Central primitive neuroectodermal tumor",
               "9474/3 : Large cell medulloblastoma",
               "9475/3 : Medulloblastoma, WNT-activated, NOS",
               "9476/3 : Medulloblastoma, SHH-activated and TP53-mutant",
@@ -3283,11 +3301,13 @@
               "9502/3 : Teratoid medulloepithelioma, NOS",
               "9503/3 : Neuroepithelioma, NOS",
               "9504/3 : Spongioneuroblastoma",
+              "9505/0 : Ganglioglioma, benign",
               "9505/1 : Ganglioglioma, NOS",
               "9505/3 : Ganglioglioma, anaplastic",
               "9506/1 : Central neurocytoma",
               "9507/0 : Pacinian tumor",
               "9508/3 : Atypical teratoid/rhabdoid tumor",
+              "9508/3 : CNS embryonal tumor with rhabdoid features",
               "9509/1 : Papillary glioneuronal tumor",
               "9510/0 : Retinocytoma",
               "9510/3 : Retinoblastoma, NOS",
@@ -3312,6 +3332,7 @@
               "9539/1 : Atypical meningioma",
               "9539/3 : Meningeal sarcomatosis",
               "9540/0 : Neurofibroma, NOS",
+              "9540/1 : Neurofibromatosis, NOS",
               "9540/3 : Malignant peripheral nerve sheath tumor, NOS",
               "9541/0 : Melanotic neurofibroma",
               "9542/3 : Malignant peripheral nerve sheath tumor, epithelioid",
@@ -3375,6 +3396,7 @@
               "9709/3 : Cutaneous T-cell lymphoma, NOS",
               "9712/3 : Intravascular large B-cell lymphoma",
               "9714/3 : Anaplastic large cell lymphoma, T-cell and Null-cell type",
+              "9714/3 : Anaplastic large cell lymphoma, ALK positive",
               "9715/3 : Anaplastic large cell lymphoma, ALK negative",
               "9716/3 : Hepatosplenic T-cell lymphoma",
               "9717/3 : Intestinal T-cell lymphoma",
@@ -3442,7 +3464,9 @@
               "9833/3 : Prolymphocytic leukemia, B-cell type",
               "9834/3 : Prolymphocytic leukemia, T-cell type",
               "9835/3 : Precursor cell lymphoblastic leukemia, NOS",
+              "9836/3 : Precursor B-cell lymphoblastic leukemia",
               "9837/3 : Precursor T-cell lymphoblastic leukemia",
+              "9837/3 : T lymphoblastic leukemia/lymphoma",
               "9840/3 : Acute erythroid leukemia",
               "9860/3 : Myeloid leukemia, NOS",
               "9861/3 : Acute myeloid leukemia, NOS",
@@ -3497,7 +3521,8 @@
               "9985/3 : Myelodysplastic syndrome with multilineage dysplasia",
               "9986/3 : Myelodysplastic syndrome with isolated del (5q)",
               "9987/3 : Therapy-related myelodysplastic syndrome, NOS",
-              "9989/3 : Myelodysplastic syndrome, NOS"
+              "9989/3 : Myelodysplastic syndrome, NOS",
+              "999 : Unknown, to be completed later"
             ]
           }
         },
@@ -3558,7 +3583,6 @@
         "age_at_last_known_disease_status": {
           "type": "integer",
           "description": "Age at the time of last known disease status expressed in number of days since birth.",
-          "mininum": 0,
           "maximum": 54750
         },
         "toronto_childhood_cancer_staging": {
