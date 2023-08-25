@@ -110,7 +110,7 @@ class SchemaCreator:
     @property
     def schema(self) -> dict[str, any]:
         """
-        Get PCDC data dictionary, retrieving and caching from url specified in config as needed
+        Get internal schema object, building if needed
         """
         return self._schema if self._schema else self.build_schema()
 
