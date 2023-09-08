@@ -197,7 +197,6 @@ class C3dcEtl:
 
     def load_transformations(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON transformations from configured URLs and merge with local config """
-
         # enumerate each per-study transformation config object in local config
         st_index: int
         study_config: list[dict[str, any]]
@@ -318,7 +317,7 @@ class C3dcEtl:
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Save JSON ETL data for specified transformation to designated output file """
         with open(transformation.get('output_file_path'), 'w', encoding='utf-8') as output_file:
-            _logger.info('Saving ETL data to %s', transformation.get('output_file_path'))
+            _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
             json.dump(self._json_etl_data_sets[study_id][transformation.get('name')], output_file, indent=2)
 
     def _load_source_data(self, study_id: str, transformation: dict[str, any]) -> any:
@@ -691,8 +690,8 @@ class C3dcEtl:
         return self._raw_etl_data_tables[study_configuration.get('study')]
 
     def _create_json_etl_file(self, study_id: str, transformation: dict[str, any]) -> None:
-        """ Create ETL file for specified raw source data set """
-        _logger.info('Creating ETL file for transformation %s ()', transformation.get('name'))
+        """ Create JSON ETL data file for specified raw source data set """
+        _logger.info('Creating JSON ETL data file for transformation %s (%s)', transformation.get('name'), study_id)
         self._random = random.Random()
         self._random.seed(transformation.get('uuid_seed', None))
         self._load_source_data(study_id, transformation)
