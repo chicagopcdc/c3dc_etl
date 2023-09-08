@@ -14,7 +14,7 @@
 *.html
 *.ini
 *.json
-!etl/c3dc_transformations.json
+!etl/transformations/*.json
 !schema/schema.json
 !schema/sample_data.json
 *.log
