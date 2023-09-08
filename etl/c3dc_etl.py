@@ -8,6 +8,7 @@ import os
 import pathlib
 import random
 import re
+import sys
 import uuid
 from urllib.parse import urlparse, ParseResult
 from urllib.request import url2pathname
@@ -97,16 +98,15 @@ class C3dcEtl:
         self._raw_etl_data_tables: dict[any] = {}
         self._random: random.Random = random.Random()
 
-        # remote transformations config would contain env-agnostic info like mappings,
-        # local transformations config would containing env-specific info like file paths,
-        # and the two would be merged to form final transformations config object
-        self._transformations_url: str = config.get('TRANSFORMATIONS_URL')
-        self._transformations_config: list[dict[str, any]] = json.loads(config.get('TRANSFORMATIONS_CONFIG', '[]'))
-        self._transformations: list[dict[str, any]]
+        # Remote study config should contain env-agnostic info like mappings, local study config
+        # should contain info specific to the local env like file paths; remote and local will be
+        # merged together to form the final study configuration object
+        self._study_configurations: list[dict[str, any]] = json.loads(config.get('STUDY_CONFIGURATIONS', '[]'))
+        self._study_configurations = [sc for sc in self._study_configurations if sc.get('active', True)]
 
         self.load_json_schema()
         self.load_transformations()
-        self._assert_valid_transformations()
+        self._assert_valid_study_configurations()
 
     @property
     def json_etl_data(self) -> dict[str, any]:
@@ -114,9 +114,9 @@ class C3dcEtl:
         Get internal JSON ETL data object, building if needed
         """
         if not self._json_etl_data_sets:
-            transformation: dict[str, any]
-            for transformation in self._transformations:
-                self._transform_source_data(transformation)
+            study_configuration: dict[str, any]
+            for study_configuration in self._study_configurations:
+                self._transform_study(study_configuration)
         return self._json_etl_data_sets
 
     @property
@@ -125,9 +125,9 @@ class C3dcEtl:
         Get internal schema object, building if needed
         """
         if not self._raw_etl_data_tables:
-            transformation: dict[str, any]
-            for transformation in self._transformations:
-                self._load_source_data(transformation)
+            study_configuration: dict[str, any]
+            for study_configuration in self._study_configurations:
+                self._load_study_data(study_configuration)
         return self._raw_etl_data_tables
 
     @staticmethod
@@ -194,38 +194,49 @@ class C3dcEtl:
         tbl = petl.cut(tbl, [h for h in petl.header(tbl) if (h or '').strip()])
         return tbl
 
+
     def load_transformations(self, save_local_copy: bool = False) -> dict[str, any]:
-        """ Download JSON transformations from configured URL """
+        """ Download JSON transformations from configured URLs and merge with local config """
 
-        # load remote transformation config containing mappings
-        self._transformations = C3dcEtl.get_url_content(self._transformations_url)
-        if save_local_copy:
-            with open(f'./{os.path.basename(urlparse(self._transformations_url).path)}', 'wb') as file:
-                json.dump(self._transformations, file)
-        self._transformations = [t for t in self._transformations.get('transformations') if t.get('active', True)]
+        # enumerate each per-study transformation config object in local config
+        st_index: int
+        study_config: list[dict[str, any]]
+        for st_index, study_config in enumerate(self._study_configurations):
+            # load remote study config containing transformations and mappings
+            remote_transforms: dict[str, any] = C3dcEtl.get_url_content(study_config.get('transformations_url'))
+            if save_local_copy:
+                with open(f'./{os.path.basename(urlparse(study_config.get("transformations_url")))}', 'wb') as file:
+                    json.dump(remote_transforms, file)
 
-        # merge with local transformation config containing paths
-        transformation_mapping: dict[str, any]
-        for index, transformation_mapping in enumerate(self._transformations):
-            transformation_config: dict[str, any] = next(
-                (t for t in self._transformations_config if t.get('name') == transformation_mapping.get('name')),
-                {}
-            )
-            _logger.info('updating transformation at index %d', index)
-            transformation_mapping.update(transformation_config)
+            # match by 'name' to merge remote with local transformation config sections containing e.g. paths
+            remote_transforms = [t for t in remote_transforms.get('transformations') if t.get('active', True)]
+            rt_index: int
+            remote_transform: dict[str, any]
+            for rt_index, remote_transform in enumerate(remote_transforms):
+                transform_config: dict[str, any] = next(
+                    (
+                        t for t in study_config.get('transformations', [])
+                            if t.get('name') and t.get('name') == remote_transform.get('name')
+                    ),
+                    {}
+                )
+                _logger.info('updating transformation at index %d for study configuration %d', rt_index, st_index)
+                transform_config.update(remote_transform)
 
-        unmatched_transformations_config: dict[str, any]
-        unmatched_transformations_configs: list[dict[str, any]] = [
-            tc for tc in self._transformations_config
-                if tc.get('name') not in [tm.get('name') for tm in self._transformations]
-        ]
-        for unmatched_transformations_config in unmatched_transformations_configs:
-            _logger.warning(
-                'Local transformations config entry "%s" not found in remote transformations config',
-                unmatched_transformations_config.get('name')
-            )
+            # log warnings for any unmatched transformations
+            unmatched_transforms: list[dict[str, any]] = [
+                st for st in study_config.get('transformations', [])
+                    if st.get('name') not in [rt.get('name') for rt in remote_transforms]
+            ]
+            unmatched_transform: dict[str, any]
+            for unmatched_transform in unmatched_transforms:
+                _logger.warning(
+                    'Local transformations config entry "%s" (%s) not found in remote transformations config',
+                    unmatched_transform.get('name'),
+                    study_config.get('study')
+                )
 
-        return self._transformations
+        return self._study_configurations
 
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON schema from configured URL """
@@ -244,29 +255,36 @@ class C3dcEtl:
         return self._json_schema
 
     def validate_json_etl_data(self) -> None:
-        """ Validate JSON ETL data resulting form transformations specified in config """
+        """ Validate JSON ETL data resulting from study configurations specified in config """
         are_etl_data_sets_valid: bool = True
-        transformation_name: str
-        for transformation_name in [t.get('name') for t in self._transformations]:
-            are_etl_data_sets_valid = self._is_json_etl_data_valid(transformation_name) and are_etl_data_sets_valid
+        study_configuration: dict[str, any]
+        for study_configuration in self._study_configurations:
+            transformation_name: str
+            for transformation_name in [t.get('name') for t in study_configuration.get('transformations', [])]:
+                are_etl_data_sets_valid = (
+                    self._is_json_etl_data_valid(study_configuration.get('study'), transformation_name)
+                    and
+                    are_etl_data_sets_valid
+                )
         return are_etl_data_sets_valid
 
     def create_json_etl_files(self) -> None:
-        """ Create ETL files and save to configured output paths """
-        # create ETL file for transformations specified in config
-        transformation: dict[str, any]
-        for transformation in self._transformations:
-            self._create_json_etl_file(transformation)
+        """ Create ETL files and save to output paths for study configurations specified in conf """
+        study_configuration: dict[str, any]
+        for study_configuration in self._study_configurations:
+            transformation: dict[str, any]
+            for transformation in study_configuration.get('transformations', []):
+                self._create_json_etl_file(study_configuration.get('study'), transformation)
 
     def _generate_uuid(self) -> uuid.UUID:
-        """ Generate and return UUID(v4) """
+        """ Generate and return UUID(v4) using internal RNG that may be seeded for idempotent values """
         return uuid.UUID(int=self._random.getrandbits(128), version=4)
 
-    def _is_json_etl_data_valid(self, transformation_name: str) -> bool:
+    def _is_json_etl_data_valid(self, study_id: str, transformation_name: str) -> bool:
         """ Validate JSON ETL data for specified transformation against JSON schema """
-        _logger.info('Validating JSON ETL data for transformation %s', transformation_name)
+        _logger.info('Validating JSON ETL data for transformation %s (study %s)', transformation_name, study_id)
         log_msg: str
-        if not self._json_etl_data_sets.get(transformation_name):
+        if not self._json_etl_data_sets.get(study_id, {}).get(transformation_name):
             _logger.warning('No JSON ETL data loaded to validate')
             return False
 
@@ -278,28 +296,47 @@ class C3dcEtl:
                 raise RuntimeError(log_msg)
 
         try:
-            jsonschema.validate(instance=self._json_etl_data_sets[transformation_name], schema=self._json_schema)
-            _logger.info('Validation succeeded for JSON ETL data for transformation %s', transformation_name)
+            jsonschema.validate(
+                instance=self._json_etl_data_sets[study_id][transformation_name],
+                schema=self._json_schema
+            )
+            _logger.info(
+                'Validation succeeded for JSON ETL data for transformation %s (study %s)',
+                transformation_name,
+                study_id
+            )
             return True
         except ValidationError as verr:
-            _logger.warning('ETL data failed schema validation:')
+            _logger.warning(
+                'ETL data for transformation %s (study %s) failed schema validation:',
+                transformation_name,
+                study_id
+            )
             _logger.warning(verr.message)
         return False
 
-    def _save_json_etl_data(self, transformation: dict[str, any]) -> None:
+    def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Save JSON ETL data for specified transformation to designated output file """
         with open(transformation.get('output_file_path'), 'w', encoding='utf-8') as output_file:
             _logger.info('Saving ETL data to %s', transformation.get('output_file_path'))
-            json.dump(self._json_etl_data_sets[transformation.get('name')], output_file, indent=2)
+            json.dump(self._json_etl_data_sets[study_id][transformation.get('name')], output_file, indent=2)
 
-    def _load_source_data(self, transformation: dict[str, any]) -> any:
+    def _load_source_data(self, study_id: str, transformation: dict[str, any]) -> any:
         """ Load raw ETL data from source file specified in config """
         raw_etl_data_tbl: any = C3dcEtl.get_petl_table_from_source_file(transformation.get('source_file_path'))
 
         # add row numbers for logging/auditing
         raw_etl_data_tbl = petl.addrownumbers(raw_etl_data_tbl, start=2, field='source_file_row_num')
-        self._raw_etl_data_tables[transformation.get('name')] = raw_etl_data_tbl
-        return self._raw_etl_data_tables[transformation.get('name')]
+        self._raw_etl_data_tables[study_id] = self._raw_etl_data_tables.get(study_id, {})
+        self._raw_etl_data_tables[study_id][transformation.get('name')] = raw_etl_data_tbl
+        return self._raw_etl_data_tables[study_id][transformation.get('name')]
+
+    def _load_study_data(self, study_configuration: dict[str, any]) -> any:
+        """ Load raw ETL data from source files specified in study config """
+        transformation: dict[str, any]
+        for transformation in study_configuration.get('transformations', []):
+            self._load_source_data(study_configuration.get('study'), transformation)
+        return self._raw_etl_data_tables[study_configuration.get('study')]
 
     def _get_json_schema_node_properties(self, node_type: C3dcEtlModelNode) -> dict[str, any]:
         """ Get properties for specified node in JSON schema  """
@@ -314,6 +351,7 @@ class C3dcEtl:
     def _get_replacement_new_value_errors(
         self,
         source_header: list[str],
+        study_id: str,
         transformation_name: str,
         replacement_new_value: any
     ) -> list[str]:
@@ -342,13 +380,14 @@ class C3dcEtl:
                     macro_text[len('field:'):] in source_header
                 )
             ):
-                errors.append(f'{transformation_name}: invalid replacement macro: {replacement_new_value}')
+                errors.append(f'{transformation_name} ({study_id}): invalid replacement macro: {replacement_new_value}')
 
         return errors
 
     def _get_transformation_mapping_errors(
         self,
         source_header: list[str],
+        study_id: str,
         transformation_name: str,
         mapping: dict[str, any]
     ) -> list[str]:
@@ -357,12 +396,12 @@ class C3dcEtl:
 
         source_field: str = mapping.get('source_field')
         if not source_field:
-            errors.append(f'{transformation_name}: mapping source field not specified: {mapping}')
+            errors.append(f'{transformation_name} ({study_id}): mapping source field not specified: {mapping}')
         if source_field != '[string_literal]' and source_field not in source_header:
-            errors.append(f'{transformation_name}: source field not present in source data: {mapping}')
+            errors.append(f'{transformation_name} ({study_id}): source field not present in source data: {mapping}')
         output_field: str = mapping.get('output_field')
         if not output_field:
-            errors.append(f'{transformation_name}: mapping output field not specified: {mapping}')
+            errors.append(f'{transformation_name} ({study_id}): mapping output field not specified: {mapping}')
         output_field_parts = output_field.split('.')
         output_node: str = output_field_parts.pop(0)
         output_property: str = '.'.join(output_field_parts)
@@ -392,53 +431,74 @@ class C3dcEtl:
             new_value = [new_value] if not isinstance(new_value, (list, set, tuple)) else new_value
             new_sub_value: str
             for new_sub_value in new_value:
-                errors.extend(self._get_replacement_new_value_errors(source_header, transformation_name, new_sub_value))
+                errors.extend(
+                    self._get_replacement_new_value_errors(source_header, study_id, transformation_name, new_sub_value)
+                )
 
         return errors
 
-    def _get_transformation_errors(self, index: int, transformation: dict[str, any]) -> list[str]:
+    def _get_transformation_errors(self, study_id: str, index: int, transformation: dict[str, any]) -> list[str]:
         """ Get errors for specified transformation """
         errors: list[str] = []
         required_properties: tuple[str, ...] = ('name', 'source_file_path', 'output_file_path', 'mappings')
         if any(not transformation.get(p) for p in required_properties):
-            errors.append(f'Transformation {index + 1}: one or more of "{required_properties}" missing or invalid')
+            errors.append(
+                f'Study {study_id}, transformation {index + 1}: one or more of "{required_properties}" missing/invalid'
+            )
 
         if transformation.get('source_file_path') and not os.path.isfile(transformation.get('source_file_path')):
             errors.append(
-                f'{transformation.get("name")}: invalid source file "{transformation.get("source_file_path")}"'
+                f'{transformation.get("name")} ({study_id}): invalid source file ' +
+                f'"{transformation.get("source_file_path")}"'
             )
 
         if (
             transformation.get('name')
             and
-            (not self._raw_etl_data_tables or transformation.get('name') not in self._raw_etl_data_tables)
+            not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name'))
         ):
             if transformation.get('source_file_path') and os.path.isfile(transformation.get('source_file_path')):
-                self._load_source_data(transformation)
-            if not self._raw_etl_data_tables or transformation.get('name') not in self._raw_etl_data_tables:
+                self._load_source_data(study_id, transformation)
+            if not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name')):
                 errors.append(f'{transformation.get("name")}: unable to load source data')
 
         if not errors:
-            source_header: list[str] = petl.header(self._raw_etl_data_tables[transformation.get('name')])
+            source_header: list[str] = petl.header(self._raw_etl_data_tables[study_id][transformation.get('name')])
             mapping: dict[str, any]
             for mapping in transformation['mappings']:
                 mapping_errors: list[str] = self._get_transformation_mapping_errors(
-                    source_header, transformation.get('name'), mapping
+                    source_header, study_id, transformation.get('name'), mapping
                 )
                 errors.extend(mapping_errors)
         return errors
 
-    def _assert_valid_transformations(self) -> None:
-        """ Assert that transformations specified in config are invalid else raise exception(s) """
-        _logger.info('Validating transformations')
-        if not self._transformations:
-            raise RuntimeError('No transformations to validate')
+    def _get_study_configuration_errors(self, index: int, study_configuration: dict[str, any]) -> list[str]:
+        """ Get errors for specified study configuration """
+        errors: list[str] = []
+        required_properties: tuple[str, ...] = ('study', 'transformations_url', 'transformations')
+        if any(not study_configuration.get(p) for p in required_properties):
+            errors.append(f'Study configuration {index + 1}: one or more of "{required_properties}" missing/invalid')
+        t_index: int
+        transformation: dict[str, any]
+        for t_index, transformation in enumerate(study_configuration.get('transformations')):
+            errors.extend(self._get_transformation_errors(study_configuration.get('study'), t_index, transformation))
+        return errors
+
+    def _assert_valid_study_configurations(self) -> None:
+        """ Assert that study configurations specified in config are invalid else raise exception(s) """
+        _logger.info('Validating study configurations')
+        if not self._study_configurations:
+            raise RuntimeError('No study configurations to validate')
 
         errors: list[str] = []
 
-        transformation: dict[str, any]
-        for index, transformation in enumerate(self._transformations):
-            errors.extend(self._get_transformation_errors(index, transformation))
+        if len(self._study_configurations) != len({st.get('study', '') for st in self._study_configurations}):
+            raise RuntimeError('Duplicate study ids found in study configurations')
+
+        sc_index: int
+        study_configuration: dict[str, any]
+        for sc_index, study_configuration in enumerate(self._study_configurations):
+            errors.extend(self._get_study_configuration_errors(sc_index, study_configuration))
 
         error: str
         for error in errors:
@@ -458,7 +518,7 @@ class C3dcEtl:
         wildcards using '+' or '*', where '+' results in replacement only if there is an existing value and
         '*' always results in replacement, whether the existing value is populated or null/blank. The new value
         can be specified with explicit scalar values or macro-like substitution directives as specified below:
-        [uuid] => substitute with a UUID (v4)
+        [uuid] => substitute with a UUID (v4 w/ optional seed value for RNG from config)
         [field:{source field name}] => substitute with specified record's source field value, e.g. [field:TARGET USI]
         """
         output_value: any = None
@@ -557,17 +617,20 @@ class C3dcEtl:
             not hasattr(self, transform_method_name) or
             not callable(transform_method)
         ):
-            #_logger.info('Custom transform method "%s()" not found, falling back to default', transform_method_name)
             return self._transform_record_default(transformation, node_type, source_record)
 
         return transform_method(source_record)
 
-    def _transform_source_data(self, transformation: dict[str, any]) -> dict[str, any]:
+    def _transform_source_data(self, study_id: str, transformation: dict[str, any]) -> dict[str, any]:
         """ Transform and return ETL data transformed using rules specified in config """
-        if not petl.nrows(self._raw_etl_data_tables[transformation.get('name')]):
-            self._load_source_data(transformation)
-            if not petl.nrows(self._raw_etl_data_tables[transformation.get('name')]):
-                raise RuntimeError('No data loaded to transform')
+        if (
+            not self._raw_etl_data_tables.get(study_id, {}).get(transformation.get('name'), {})
+            or
+            not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')])
+        ):
+            self._load_source_data(study_id, transformation)
+            if not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')]):
+                raise RuntimeError(f'No data loaded to transform for study {study_id}')
 
         nodes: dict[str, any] = {
             'diagnoses': [],
@@ -579,19 +642,21 @@ class C3dcEtl:
         study['participant.participant_id'] = []
 
         rec: dict[str, any]
-        for rec in petl.dicts(self._raw_etl_data_tables[transformation.get('name')]):
+        for rec in petl.dicts(self._raw_etl_data_tables[study_id][transformation.get('name')]):
             diagnosis: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, rec)
             if not diagnosis:
                 _logger.warning(
-                    '%s: Unable to build diagnosis node for record %d, skipping',
+                    '%s (%s): Unable to build diagnosis node for record %d, skipping',
                     transformation.get('name'),
+                    study_id,
                     rec['source_file_row_num']
                 )
             participant: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
             if not participant:
                 _logger.warning(
-                    '%s: Unable to build participant node for record %d, skipping',
+                    '%s (%s): Unable to build participant node for record %d, skipping',
                     transformation.get('name'),
+                    study_id,
                     rec['source_file_row_num']
                 )
             if not diagnosis or not participant:
@@ -606,7 +671,8 @@ class C3dcEtl:
             nodes['participants'].append(participant)
 
         nodes['studies'].append(study)
-        self._json_etl_data_sets[transformation.get('name')] = nodes
+        self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
+        self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
 
         _logger.info(
             '1 study, %d diagnosis, %d participant records created for transformation %s',
@@ -615,21 +681,37 @@ class C3dcEtl:
             transformation.get('name')
         )
 
-        return self._json_etl_data_sets[transformation.get('name')]
+        return self._json_etl_data_sets[study_id][transformation.get('name')]
 
-    def _create_json_etl_file(self, transformation: dict[str, any]) -> None:
+    def _transform_study(self, study_configuration: dict[str, any]) -> dict[str, any]:
+        """ Transform and return ETL data for specified study transformation object """
+        transformation: dict[str, any]
+        for transformation in study_configuration.get('transformations', []):
+            self._transform_source_data(study_configuration.get('study'), transformation)
+        return self._raw_etl_data_tables[study_configuration.get('study')]
+
+    def _create_json_etl_file(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Create ETL file for specified raw source data set """
-        _logger.info('Creating ETL file for transformation %s', transformation.get('name'))
+        _logger.info('Creating ETL file for transformation %s ()', transformation.get('name'))
         self._random = random.Random()
         self._random.seed(transformation.get('uuid_seed', None))
-        self._load_source_data(transformation)
-        self._transform_source_data(transformation)
-        self._save_json_etl_data(transformation)
+        self._load_source_data(study_id, transformation)
+        self._transform_source_data(study_id, transformation)
+        self._save_json_etl_data(study_id, transformation)
+
+
+def print_usage() -> None:
+    """ Print script usage """
+    _logger.info('usage: python %s [optional config file name/path if not .env]', sys.argv[0])
 
 
 def main() -> None:
     """ Script entry point """
-    config_file: str = '.env'
+    if len(sys.argv) > 2:
+        print_usage()
+        return
+
+    config_file: str = sys.argv[1] if len(sys.argv) == 2 else '.env'
     if not os.path.exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
     config: dict[str, str] = dotenv.dotenv_values(config_file)
