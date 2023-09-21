@@ -350,6 +350,15 @@ class SchemaCreator:
         schema: dict[str, any] = {}
         schema['type'] = self._get_property_type(name, obj)
         schema['description'] = obj.get('Desc', 'Not specified in source yaml')
+        cdes: list[str] = []
+        terms: list[dict[str, str]] = obj.get('Term', [])
+        term: dict[str, str]
+        for term in terms:
+            term_origin: str = term.get('Origin', '').strip('\'"')
+            term_code: str = term.get('Code', '').strip('\'"')
+            if term_origin and term_code:
+                cdes.append(f'{term_origin}:{term_code}')
+        schema['cde'] = cdes
         if schema['type'] == 'integer':
             if name == 'file_size':
                 schema['mininum'] = 0
