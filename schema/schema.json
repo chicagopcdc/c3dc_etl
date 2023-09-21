@@ -22,11 +22,17 @@
       "properties": {
         "diagnosis_id": {
           "type": "string",
-          "description": "A unique sequence of alphanumeric characters used to identify the participant diagnosis in the investigation or study, which is used for linking metadata."
+          "description": "A unique sequence of alphanumeric characters used to identify the participant diagnosis in the investigation or study, which is used for linking metadata.",
+          "cde": [
+            "caDSR:2534569"
+          ]
         },
         "diagnosis_icd_o": {
           "type": "array",
           "description": "The text term used to describe the type of malignant disease, as categorized by the World Health Organization's (WHO) International Classification of Diseases for Oncology (ICD-O).",
+          "cde": [
+            "caDSR:11326261"
+          ],
           "uniqueItems": true,
           "items": {
             "type": "string",
@@ -1187,15 +1193,22 @@
         },
         "diagnosis_icd_cm": {
           "type": "string",
-          "description": "The diagnosis, in humans, as captured in the 2022 extension of the tenth version of the International Classification of Disease (ICD-10-CM, the disease code subset of ICD-10). Examples - C80.1, C44.510, D14.3-, D49.89."
+          "description": "The diagnosis, in humans, as captured in the 2022 extension of the tenth version of the International Classification of Disease (ICD-10-CM, the disease code subset of ICD-10). Examples - C80.1, C44.510, D14.3-, D49.89.",
+          "cde": [
+            "caDSR:11479873"
+          ]
         },
         "diagnosis_finer_resolution": {
           "type": "string",
-          "description": "Text term used to dprovide finer resolution diagnosis than available in ICD-O or ICD-10-CM."
+          "description": "Text term used to dprovide finer resolution diagnosis than available in ICD-O or ICD-10-CM.",
+          "cde": []
         },
         "disease_phase": {
           "type": "string",
           "description": "The stage or period of an individual's treatment process during which relevant observations were recorded.",
+          "cde": [
+            "caDSR:12217251"
+          ],
           "enum": [
             "Initial Diagnosis",
             "Disease Progression",
@@ -1211,6 +1224,9 @@
         "anatomic_site": {
           "type": "string",
           "description": "The location within the body where cancer begins as captured in the topography codes of the International Classification of Diseases for Oncology, 3rd Edition (ICD-O-3).",
+          "cde": [
+            "caDSR:11341616"
+          ],
           "enum": [
             "Abdomen, NOS",
             "Abdominal esophagus",
@@ -1561,11 +1577,18 @@
         "age_at_diagnosis": {
           "type": "integer",
           "description": "Age at the time of diagnosis expressed in number of days since birth.",
+          "cde": [
+            "caDSR:3225640",
+            "NCIt:C156420"
+          ],
           "maximum": 54750
         },
         "toronto_childhood_cancer_staging": {
           "type": "string",
           "description": "For many of the malignancies that occur in childhood, TNM-based systems that document extent of disease at diagnosis are either inadequate or do not exist at all. Consensus guidelines for use by population cancer registries for staging childhood cancers (the Toronto Childhood Cancer Stage Guidelines) have been developed.",
+          "cde": [
+            "caDSR:13299113"
+          ],
           "enum": [
             "Acute lymphoblastic leukemia CNS1",
             "Acute lymphoblastic leukemia CNS2",
@@ -1645,11 +1668,17 @@
         "age_at_recurrence": {
           "type": "integer",
           "description": "Number of days between the date used for index (DOB) and the date the patient's disease recurred.",
+          "cde": [
+            "caDSR:6154731"
+          ],
           "maximum": 54750
         },
         "last_known_disease_status": {
           "type": "string",
           "description": "Text term that describes the last known state or condition of an individual's neoplasm.",
+          "cde": [
+            "caDSR:5424231"
+          ],
           "enum": [
             "Biochemical evidence of disease without structural correlate",
             "Distant met recurrence/progression",
@@ -1666,11 +1695,17 @@
         "age_at_last_known_disease_status": {
           "type": "integer",
           "description": "Age at the time of last known disease status expressed in number of days since birth.",
+          "cde": [
+            "caDSR:10169253"
+          ],
           "maximum": 54750
         },
         "tumor_grade": {
           "type": "string",
           "description": "Numeric value to express the degree of abnormality of cancer cells, a measure of differentiation and aggressiveness.",
+          "cde": [
+            "caDSR:2785839"
+          ],
           "enum": [
             "G1",
             "G2",
@@ -1687,6 +1722,9 @@
         "tumor_stage_clinical_t": {
           "type": "string",
           "description": "Extent of the primary cancer based on evidence obtained from clinical assessment parameters determined prior to treatment.",
+          "cde": [
+            "caDSR:3440328"
+          ],
           "enum": [
             "T0",
             "T1",
@@ -1728,6 +1766,9 @@
         "tumor_stage_clinical_n": {
           "type": "string",
           "description": "Extent of the regional lymph node involvement for the cancer based on evidence obtained from clinical assessment parameters determined prior to treatment.",
+          "cde": [
+            "caDSR:3440330"
+          ],
           "enum": [
             "N0",
             "N0 (i-)",
@@ -1758,6 +1799,9 @@
         "tumor_stage_clinical_m": {
           "type": "string",
           "description": "Extent of the distant metastasis for the cancer based on evidence obtained from clinical assessment parameters determined prior to treatment.",
+          "cde": [
+            "caDSR:3440331"
+          ],
           "enum": [
             "cM0 (i+)",
             "M0",
@@ -1790,11 +1834,17 @@
       "properties": {
         "participant_id": {
           "type": "string",
-          "description": "A unique sequence of alphanumeric characters used to identify the participant, in the investigation or study, of the specimen at it's point of origin."
+          "description": "A unique sequence of alphanumeric characters used to identify the participant, in the investigation or study, of the specimen at it's point of origin.",
+          "cde": [
+            "caDSR:6867052"
+          ]
         },
         "race": {
           "type": "array",
           "description": "The text for reporting information about race based on the Office of Management and Budget (OMB) categories.",
+          "cde": [
+            "caDSR:2192199"
+          ],
           "uniqueItems": true,
           "items": {
             "type": "string",
@@ -1813,6 +1863,9 @@
         "gender": {
           "type": "string",
           "description": "Text designations that identify gender. Gender is described as the assemblage of properties that distinguish people on the basis of their societal roles. [Explanatory Comment 1 Identification of gender is based upon self-report and may come from a form, questionnaire, interview, etc.]",
+          "cde": [
+            "caDSR:2200604"
+          ],
           "enum": [
             "Female",
             "Female Gender",
@@ -1828,6 +1881,9 @@
         "ethnicity": {
           "type": "array",
           "description": "The text for reporting information about ethnicity based on the Office of Management and Budget (OMB) categories.",
+          "cde": [
+            "caDSR:2192217"
+          ],
           "uniqueItems": true,
           "items": {
             "type": "string",
@@ -1842,7 +1898,10 @@
         },
         "alternate_participant_id": {
           "type": "string",
-          "description": "A synonymous or alternate ID for a participant that is stored in another study or repository."
+          "description": "A synonymous or alternate ID for a participant that is stored in another study or repository.",
+          "cde": [
+            "caDSR:6867052"
+          ]
         },
         "diagnosis.diagnosis_id": {
           "type": "array",
@@ -1885,15 +1944,26 @@
       "properties": {
         "reference_file_id": {
           "type": "string",
-          "description": "A unique identifier for a clinical measure file."
+          "description": "A unique identifier for a clinical measure file.",
+          "cde": [
+            "caDSR:2534569"
+          ]
         },
         "file_name": {
           "type": "string",
-          "description": "The name by which a set of related records (either written or electronic) are known."
+          "description": "The name by which a set of related records (either written or electronic) are known.",
+          "cde": [
+            "caDSR:6115804",
+            "caDSR:7787681"
+          ]
         },
         "file_type": {
           "type": "string",
           "description": "Text that provides a description of a particular kind of set of related records.",
+          "cde": [
+            "caDSR:6983162",
+            "caDSR:7797710"
+          ],
           "enum": [
             "bam",
             "bam_index",
@@ -1949,40 +2019,64 @@
         },
         "file_description": {
           "type": "string",
-          "description": "A freeform description of the file."
+          "description": "A freeform description of the file.",
+          "cde": []
         },
         "file_size": {
           "type": "integer",
           "description": "The numerical quantity documenting the physical magnitude of a set of related electronic records.",
+          "cde": [
+            "caDSR:6115806",
+            "NCIt:C171276"
+          ],
           "mininum": 0
         },
         "md5sum": {
           "type": "string",
-          "description": "md5 hash"
+          "description": "md5 hash",
+          "cde": [
+            "caDSR:6115805"
+          ]
         },
         "source_file_url": {
           "type": "string",
-          "description": "Location of the source_file_url file, using AWS S3 protocol."
+          "description": "Location of the source_file_url file, using AWS S3 protocol.",
+          "cde": [
+            "NCIt:C47922"
+          ]
         },
         "source_code_url": {
           "type": "string",
-          "description": "Location of the source_code_url file, using AWS S3 protocol."
+          "description": "Location of the source_code_url file, using AWS S3 protocol.",
+          "cde": [
+            "NCIt:C47922"
+          ]
         },
         "mapping_documentation_url": {
           "type": "string",
-          "description": "Location of the mapping_documentation_url file, using AWS S3 protocol."
+          "description": "Location of the mapping_documentation_url file, using AWS S3 protocol.",
+          "cde": [
+            "NCIt:C47922"
+          ]
         },
         "dcf_indexd_guid": {
           "type": "string",
-          "description": "An assigned globally unique identifier (GUID) that is assigned for the indexing process, making files available. This is usually not supplied by the submitter, but created in the ingestion process."
+          "description": "An assigned globally unique identifier (GUID) that is assigned for the indexing process, making files available. This is usually not supplied by the submitter, but created in the ingestion process.",
+          "cde": [
+            "caDSR:6584918"
+          ]
         },
         "checksum_algorithm": {
           "type": "string",
-          "description": "Cryptographic checksum algorithm used for 'checksum_value' field. Available for use of something other than md5."
+          "description": "Cryptographic checksum algorithm used for 'checksum_value' field. Available for use of something other than md5.",
+          "cde": []
         },
         "checksum_value": {
           "type": "string",
-          "description": "One or more characters using a irreversible unique number generated from a string of text to identify a set of related electronic records."
+          "description": "One or more characters using a irreversible unique number generated from a string of text to identify a set of related electronic records.",
+          "cde": [
+            "caDSR:6115805"
+          ]
         },
         "study.study_id": {
           "type": "string",
@@ -2008,11 +2102,17 @@
       "properties": {
         "sample_id": {
           "type": "string",
-          "description": "A unique sequence of alphanumeric characters used to identify the sample in the investigation or study."
+          "description": "A unique sequence of alphanumeric characters used to identify the sample in the investigation or study.",
+          "cde": [
+            "caDSR:2003904"
+          ]
         },
         "anatomic_site": {
           "type": "string",
           "description": "The location within the body where cancer begins as captured in the topography codes of the International Classification of Diseases for Oncology, 3rd Edition (ICD-O-3).",
+          "cde": [
+            "caDSR:11341616"
+          ],
           "enum": [
             "Abdomen, NOS",
             "Abdominal esophagus",
@@ -2363,11 +2463,17 @@
         "participant_age_at_collection": {
           "type": "integer",
           "description": "The age of the participant (in days) at the time of sample collection.",
+          "cde": [
+            "caDSR:2731348"
+          ],
           "maximum": 54750
         },
         "diagnosis_icd_o": {
           "type": "array",
           "description": "The text term used to describe the type of malignant disease, as categorized by the World Health Organization's (WHO) International Classification of Diseases for Oncology (ICD-O).",
+          "cde": [
+            "caDSR:11326261"
+          ],
           "uniqueItems": true,
           "items": {
             "type": "string",
@@ -3528,11 +3634,15 @@
         },
         "diagnosis_finer_resolution": {
           "type": "string",
-          "description": "Text term used to dprovide finer resolution diagnosis than available in ICD-O or ICD-10-CM."
+          "description": "Text term used to dprovide finer resolution diagnosis than available in ICD-O or ICD-10-CM.",
+          "cde": []
         },
         "sample_tumor_status": {
           "type": "string",
           "description": "Text term that represents a description of the kind of tissue collected with respect to disease status or proximity to tumor tissue.",
+          "cde": [
+            "caDSR:5432687"
+          ],
           "enum": [
             "Abnormal",
             "Non-neoplastic",
@@ -3547,6 +3657,9 @@
         "tumor_classification": {
           "type": "string",
           "description": "The classification of a tumor based primarily on histopathological characteristics.",
+          "cde": [
+            "caDSR:12922545"
+          ],
           "enum": [
             "Primary",
             "Regional",
@@ -3558,15 +3671,25 @@
         },
         "sample_description": {
           "type": "string",
-          "description": "Text description of a sample or specimen."
+          "description": "Text description of a sample or specimen.",
+          "cde": [
+            "caDSR:2003907",
+            "caDSR:5432687"
+          ]
         },
         "alternate_sample_id": {
           "type": "string",
-          "description": "A synonymous or alternate ID for a sample that is stored in another study or repository."
+          "description": "A synonymous or alternate ID for a sample that is stored in another study or repository.",
+          "cde": [
+            "caDSR:2003904"
+          ]
         },
         "last_known_disease_status": {
           "type": "string",
           "description": "Text term that describes the last known state or condition of an individual's neoplasm.",
+          "cde": [
+            "caDSR:5424231"
+          ],
           "enum": [
             "Biochemical evidence of disease without structural correlate",
             "Distant met recurrence/progression",
@@ -3583,11 +3706,17 @@
         "age_at_last_known_disease_status": {
           "type": "integer",
           "description": "Age at the time of last known disease status expressed in number of days since birth.",
+          "cde": [
+            "caDSR:10169253"
+          ],
           "maximum": 54750
         },
         "toronto_childhood_cancer_staging": {
           "type": "string",
           "description": "For many of the malignancies that occur in childhood, TNM-based systems that document extent of disease at diagnosis are either inadequate or do not exist at all. Consensus guidelines for use by population cancer registries for staging childhood cancers (the Toronto Childhood Cancer Stage Guidelines) have been developed.",
+          "cde": [
+            "caDSR:13299113"
+          ],
           "enum": [
             "Acute lymphoblastic leukemia CNS1",
             "Acute lymphoblastic leukemia CNS2",
@@ -3667,6 +3796,9 @@
         "tumor_grade": {
           "type": "string",
           "description": "Numeric value to express the degree of abnormality of cancer cells, a measure of differentiation and aggressiveness.",
+          "cde": [
+            "caDSR:2785839"
+          ],
           "enum": [
             "G1",
             "G2",
@@ -3683,6 +3815,9 @@
         "tumor_stage_clinical_t": {
           "type": "string",
           "description": "Extent of the primary cancer based on evidence obtained from clinical assessment parameters determined prior to treatment.",
+          "cde": [
+            "caDSR:3440328"
+          ],
           "enum": [
             "T0",
             "T1",
@@ -3724,6 +3859,9 @@
         "tumor_stage_clinical_n": {
           "type": "string",
           "description": "Extent of the regional lymph node involvement for the cancer based on evidence obtained from clinical assessment parameters determined prior to treatment.",
+          "cde": [
+            "caDSR:3440330"
+          ],
           "enum": [
             "N0",
             "N0 (i-)",
@@ -3754,6 +3892,9 @@
         "tumor_stage_clinical_m": {
           "type": "string",
           "description": "Extent of the distant metastasis for the cancer based on evidence obtained from clinical assessment parameters determined prior to treatment.",
+          "cde": [
+            "caDSR:3440331"
+          ],
           "enum": [
             "cM0 (i+)",
             "M0",
@@ -3766,7 +3907,10 @@
         },
         "diagnosis_icd_cm": {
           "type": "string",
-          "description": "The diagnosis, in humans, as captured in the 2022 extension of the tenth version of the International Classification of Disease (ICD-10-CM, the disease code subset of ICD-10). Examples - C80.1, C44.510, D14.3-, D49.89."
+          "description": "The diagnosis, in humans, as captured in the 2022 extension of the tenth version of the International Classification of Disease (ICD-10-CM, the disease code subset of ICD-10). Examples - C80.1, C44.510, D14.3-, D49.89.",
+          "cde": [
+            "caDSR:11479873"
+          ]
         },
         "participant.participant_id": {
           "type": "string",
@@ -3797,43 +3941,67 @@
       "properties": {
         "study_id": {
           "type": "string",
-          "description": "A unique identifier for a study."
+          "description": "A unique identifier for a study.",
+          "cde": [
+            "caDSR:6380045"
+          ]
         },
         "phs_accession": {
           "type": "string",
-          "description": "A stable unique alphanumeric identifier assigned to a study and any objects by the database of Genotypes and Phenotypes (dbGaP)."
+          "description": "A stable unique alphanumeric identifier assigned to a study and any objects by the database of Genotypes and Phenotypes (dbGaP).",
+          "cde": [
+            "caDSR:11524544"
+          ]
         },
         "acl": {
           "type": "string",
-          "description": "Specifies whether the data in a repository is open access or controlled access."
+          "description": "Specifies whether the data in a repository is open access or controlled access.",
+          "cde": [
+            "NCIt:C175887"
+          ]
         },
         "study_name": {
           "type": "string",
-          "description": "The name applied to an investigational project, also known as Study Title."
+          "description": "The name applied to an investigational project, also known as Study Title.",
+          "cde": [
+            "caDSR:3443999"
+          ]
         },
         "study_short_title": {
           "type": "string",
-          "description": "The succinct version of the study title if it exists."
+          "description": "The succinct version of the study title if it exists.",
+          "cde": [
+            "caDSR:3443999"
+          ]
         },
         "study_acronym": {
           "type": "string",
-          "description": "A one word acronym to represent the study."
+          "description": "A one word acronym to represent the study.",
+          "cde": []
         },
         "study_description": {
           "type": "string",
-          "description": "The long form description of the study."
+          "description": "The long form description of the study.",
+          "cde": [
+            "caDSR:3444002"
+          ]
         },
         "consent": {
           "type": "string",
-          "description": "The human readable value of the consent group as designated by dbGaP, examples GRU, HMB, IRB, NPU, etc."
+          "description": "The human readable value of the consent group as designated by dbGaP, examples GRU, HMB, IRB, NPU, etc.",
+          "cde": [
+            "caDSR:7218861"
+          ]
         },
         "consent_number": {
           "type": "integer",
-          "description": "The numeric value of the consent group as designated by dbGaP full accession identifier, phs######.v#.p#.c#."
+          "description": "The numeric value of the consent group as designated by dbGaP full accession identifier, phs######.v#.p#.c#.",
+          "cde": []
         },
         "external_url": {
           "type": "string",
-          "description": "The url of the study (often a dbGaP study page)."
+          "description": "The url of the study (often a dbGaP study page).",
+          "cde": []
         },
         "participant.participant_id": {
           "type": "array",
