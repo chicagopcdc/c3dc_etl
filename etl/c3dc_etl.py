@@ -114,9 +114,7 @@ class C3dcEtl:
         Get internal JSON ETL data object, building if needed
         """
         if not self._json_etl_data_sets:
-            study_configuration: dict[str, any]
-            for study_configuration in self._study_configurations:
-                self._transform_study(study_configuration)
+            self.create_json_etl_files()
         return self._json_etl_data_sets
 
     @property
@@ -140,16 +138,16 @@ class C3dcEtl:
     @staticmethod
     def get_url_content(url: str) -> any:
         """ Retrieve and return contents from specified URL """
-        json_data: any
+        url_content: str | bytes | bytearray
         if url.startswith('file://'):
-            local_path: str = C3dcEtl.url_to_path(url)
-            with open(local_path, 'r', encoding='utf-8') as local_file:
-                json_data = json.load(local_file)
+            with open(C3dcEtl.url_to_path(url), 'rb') as local_file:
+                url_content = local_file.read()
         else:
             with requests.get(url, timeout=30) as response:
                 response.raise_for_status()
-                json_data = json.loads(response.content)
-        return json_data
+                url_content = response.content
+
+        return json.loads(url_content)
 
     @staticmethod
     def guess_file_encoding(file_path: str) -> str:
@@ -193,7 +191,6 @@ class C3dcEtl:
         # remove columns without headers
         tbl = petl.cut(tbl, [h for h in petl.header(tbl) if (h or '').strip()])
         return tbl
-
 
     def load_transformations(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON transformations from configured URLs and merge with local config """
@@ -239,6 +236,7 @@ class C3dcEtl:
 
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON schema from configured URL """
+        # download remote JSON schema file
         self._json_schema = C3dcEtl.get_url_content(self._json_schema_url)
         if save_local_copy:
             with open(f'./{os.path.basename(urlparse(self._json_schema_url).path)}', 'wb') as file:
@@ -412,13 +410,14 @@ class C3dcEtl:
 
         replacement_entry: dict[str, str]
         for replacement_entry in mapping.get('replacement_values', []):
-            old_value: str = replacement_entry.get('old_value', '*')
-            new_value: any = replacement_entry.get('new_value', [])
-            if not new_value or not old_value:
+            if 'old_value' not in replacement_entry or 'new_value' not in replacement_entry:
                 errors.append(
                     f'{transformation_name}: replacement entry missing new or old value: ' +
                     str(replacement_entry)
                 )
+
+            old_value: str = replacement_entry.get('old_value', '*')
+            new_value: any = replacement_entry.get('new_value', '')
 
             if source_field == '[string_literal]' and old_value not in ('+', '*'):
                 errors.append(
@@ -559,52 +558,122 @@ class C3dcEtl:
 
         return output_value
 
+    def _get_type_group_index_mappings(
+        self,
+        transformation: dict[str, any],
+        node_type: C3dcEtlModelNode,
+        clear_cache: bool = False
+    ) -> dict[int, list[dict[str, any]]]:
+        """
+        Collate and return mappings of specified tranformation by type group index if defined, for example if
+        multiple mappings of the same type are needed for a single transformation operation as may be the case
+        for reference files, initial diagnosis + relapse diagnoses, etc
+        """
+        type_group_index_mappings: dict[int, list[dict[str, any]]] = transformation.get(
+            '_type_group_index_mappings',
+            {}
+        ).get(node_type, {})
+        if type_group_index_mappings and not clear_cache:
+            return type_group_index_mappings
+
+        # get mappings for specified node type
+        type_group_index_mappings: dict[int, list[dict[str, any]]] = {}
+        mappings: list[dict[str, any]] = [
+            m for m in transformation.get('mappings', []) if m.get('output_field', '').startswith(f'{node_type}.')
+        ]
+        mapping: dict[str, any]
+        for mapping in mappings:
+            type_group_indexes: list[str] = [i.strip() for i in str(mapping.get('type_group_index', '*')).split(',')]
+            type_group_index: str
+            for type_group_index in type_group_indexes:
+                type_group_index_mappings[type_group_index] = type_group_index_mappings.get(type_group_index) or []
+                type_group_index_mappings[type_group_index].append(mapping)
+
+        # replicate base/default mapping collection to remaining mapping groups
+        type_group_index_mappings = dict(sorted(type_group_index_mappings.items()))
+        if not type_group_index_mappings:
+            return type_group_index_mappings
+
+        base_mappings: list[dict[str, any]] = next(iter(type_group_index_mappings.values()))
+        for type_group_index in list(type_group_index_mappings)[1:]:
+            for mapping in reversed(base_mappings):
+                if not any(
+                    m for m in type_group_index_mappings[type_group_index]
+                        if m.get('output_field') == mapping.get('output_field')
+                ):
+                    type_group_index_mappings[type_group_index].insert(0, mapping)
+
+        # the base/default mapping group is only needed if it's the only group so remove if there are multiple groups
+        if len(type_group_index_mappings) > 1:
+            type_group_index_mappings = {k:type_group_index_mappings[k] for k in list(type_group_index_mappings)[1:]}
+
+        # cache the type group index mapping in the tranformation object for future re-use
+        transformation['_type_group_index_mappings'] = transformation.get('_type_group_index_mappings', {})
+        transformation['_type_group_index_mappings'][node_type] = type_group_index_mappings
+        return type_group_index_mappings
+
     def _transform_record_default(
         self,
         transformation: dict[str, any],
         node_type: C3dcEtlModelNode,
         source_record: dict[str, any] = None
-    ) -> dict[str, any]:
+    ) -> list[dict[str, any]]:
         """ Transform and return result after applying non-customized transformation to specified source record """
         source_record = source_record or {}
-        output_record: dict[str, any] = {}
-        mappings: list[dict[str, any]] = [
-            t for t in transformation.get('mappings') if t.get('output_field', '').startswith(f'{node_type}.')
-        ]
-        mapping: dict[str, any]
-        for mapping in mappings:
-            source_field: str = mapping.get('source_field')
-            source_value: str = source_record.get(source_field, None)
+        output_records: list[dict[str, any]] = []
 
-            replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
-            allowed_values: list[str] = [
-                r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*')
-            ]
-            if allowed_values and source_value not in allowed_values:
-                log_msg = (
-                    '"{source_value}" not specified as allowed value (old_value) in transformation for ' +
-                    'field "{source_field}", skipping creation of {node_type} record for source record ' +
-                    'in row {source_file_row_num}'
-                ).format(
-                    source_value=source_value,
-                    source_field=source_field,
-                    node_type=node_type,
-                    source_file_row_num=source_record['source_file_row_num']
-                )
-                _logger.warning(log_msg)
-                return None
+        type_group_index_mappings: dict[int, list[dict[str, any]]] = self._get_type_group_index_mappings(
+            transformation,
+            node_type
+        )
+        if not type_group_index_mappings:
+            _logger.warning('No mappings found for type %s, unable to transform record', node_type)
+            return []
 
-            output_value: any = self._get_mapped_output_value(mapping, source_record)
-            output_field: str = mapping.get('output_field')[len(f'{node_type}.'):]
-            output_record[output_field] = output_value or source_value
-        return output_record
+        # if there are multiple type group indexes (multiple records are mapped) then default
+        # values to base ("*") values first and then overwrite individual mapped fields for
+        # each mapping sub-group specified for that type group index
+        base_record: dict[str, any] = {}
+        for type_group_index, mappings in type_group_index_mappings.items():
+            output_record: dict[str, any] = {}
+            output_record.update(base_record)
+            mapping: dict[str, any]
+            for mapping in mappings:
+                source_field: str = mapping.get('source_field')
+                source_value: str = source_record.get(source_field, None)
+
+                replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
+                allowed_values: list[str] = [
+                    r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*')
+                ]
+                if allowed_values and source_value not in allowed_values:
+                    log_msg = (
+                        '"{source_value}" not specified as allowed value (old_value) in transformation for ' +
+                        'field "{source_field}", skipping creation of {node_type} record for source record ' +
+                        'in row {source_file_row_num}'
+                    ).format(
+                        source_value=source_value,
+                        source_field=source_field,
+                        node_type=node_type,
+                        source_file_row_num=source_record['source_file_row_num']
+                    )
+                    _logger.warning(log_msg)
+                    return None
+
+                output_value: any = self._get_mapped_output_value(mapping, source_record)
+                output_field: str = mapping.get('output_field')[len(f'{node_type}.'):]
+                output_record[output_field] = output_value if output_value is not None else source_value
+            output_records.append(output_record)
+            if type_group_index == 0:
+                base_record.update(output_record)
+        return output_records
 
     def _build_node(
         self,
         transformation: dict[str, any],
         node_type: C3dcEtlModelNode,
         source_record: dict[str, any] = None
-    ) -> dict[str, any]:
+    ) -> list[dict[str, any]]:
         """
         Build and return specified C3DC model node type. If a custom method named '_transform_record_{node_type}'
         is found then that will be called, otherwise the default base method will be called for all node types
@@ -634,42 +703,66 @@ class C3dcEtl:
         nodes: dict[str, any] = {
             'diagnoses': [],
             'participants': [],
+            'reference_files': [],
             'studies': []
         }
 
+        # build study node and add to node collection
         study: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.STUDY)
+        if len(study) != 1:
+            raise RuntimeError(f'Unexpected number of study nodes built ({len(study)}), check mapping')
+        study = study[0]
         study['participant.participant_id'] = []
+        study['reference_file.reference_file_id'] = []
 
+        # build reference file nodes and add to node collection
+        reference_files: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.REFERENCE_FILE)
+        reference_file: dict[str, any]
+        for reference_file in reference_files:
+            reference_file['study.study_id'] = study['study_id']
+            study['reference_file.reference_file_id'].append(reference_file['reference_file_id'])
+        nodes['reference_files'].extend(reference_files)
+
+        # add diagnosis and participant records to match source data records
         rec: dict[str, any]
         for rec in petl.dicts(self._raw_etl_data_tables[study_id][transformation.get('name')]):
-            diagnosis: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, rec)
-            if not diagnosis:
+            diagnoses: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, rec)
+            if not diagnoses:
                 _logger.warning(
                     '%s (%s): Unable to build diagnosis node for record %d, skipping',
                     transformation.get('name'),
                     study_id,
                     rec['source_file_row_num']
                 )
-            participant: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
-            if not participant:
-                _logger.warning(
-                    '%s (%s): Unable to build participant node for record %d, skipping',
-                    transformation.get('name'),
-                    study_id,
-                    rec['source_file_row_num']
-                )
-            if not diagnosis or not participant:
                 continue
 
-            diagnosis['participant.participant_id'] = participant['participant_id']
-            participant['diagnosis.diagnosis_id'] = [diagnosis['diagnosis_id']]
+            participant: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
+            if len(participant) != 1:
+                _logger.warning(
+                    '%s (%s): Unexpected number of participant nodes (%d) built for record %d, skipping',
+                    transformation.get('name'),
+                    study_id,
+                    len(participant),
+                    rec['source_file_row_num']
+                )
+                participant = None
+                continue
+
+            participant = participant[0]
+            participant['diagnosis.diagnosis_id'] = []
+            diagnosis: dict[str, any]
+            for diagnosis in diagnoses:
+                diagnosis['participant.participant_id'] = participant['participant_id']
+                participant['diagnosis.diagnosis_id'].append(diagnosis['diagnosis_id'])
+
             participant['study.study_id'] = study['study_id']
             study['participant.participant_id'].append(participant['participant_id'])
 
-            nodes['diagnoses'].append(diagnosis)
+            nodes['diagnoses'].extend(diagnoses)
             nodes['participants'].append(participant)
 
         nodes['studies'].append(study)
+
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
         self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
 
@@ -681,13 +774,6 @@ class C3dcEtl:
         )
 
         return self._json_etl_data_sets[study_id][transformation.get('name')]
-
-    def _transform_study(self, study_configuration: dict[str, any]) -> dict[str, any]:
-        """ Transform and return ETL data for specified study transformation object """
-        transformation: dict[str, any]
-        for transformation in study_configuration.get('transformations', []):
-            self._transform_source_data(study_configuration.get('study'), transformation)
-        return self._raw_etl_data_tables[study_configuration.get('study')]
 
     def _create_json_etl_file(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Create JSON ETL data file for specified raw source data set """

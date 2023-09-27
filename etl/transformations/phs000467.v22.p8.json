@@ -95,6 +95,369 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.reference_file_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "[uuid]"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "[uuid]"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "programmatic source code"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 37950
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "315e7ab85a82186b8aca5d1eafcc737a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000467.v22.p8.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 72637
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "0d9c6d24494411cca4945251edaa0e39"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/transformations/phs000467.v22.p8.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "output schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 190290
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "44791ddff143ef93184a8d290b5005be"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 117208
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "6a07ceb0682fd4a57c58474c03b840b4"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_NBL_ClinicalData_Validation_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 94351
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "801bc7a884677b328cdff0757f05acc9"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                        }
+                    ]
+                },
+                {
                     "output_field": "participant.participant_id",
                     "source_field": "TARGET USI"
                 },
@@ -443,6 +806,50 @@
                         {
                             "old_value": "Unknown",
                             "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.toronto_childhood_cancer_staging",
+                    "source_field": "INSS Stage",
+                    "replacement_values": [
+                        {
+                            "old_value": "Stage 1",
+                            "new_value": "Neuroblastoma Stage L1"
+                        },
+                        {
+                            "old_value": "Stage 2a",
+                            "new_value": "Neuroblastoma Stage L2"
+                        },
+                        {
+                            "old_value": "Stage 2b",
+                            "new_value": "Neuroblastoma Stage L2"
+                        },
+                        {
+                            "old_value": "Stage 3",
+                            "new_value": "Neuroblastoma Stage L2"
+                        },
+                        {
+                            "old_value": "Stage 4",
+                            "new_value": "Neuroblastoma Stage M"
+                        },
+                        {
+                            "old_value": "Stage 4s",
+                            "new_value": "Neuroblastoma Stage MS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_grade",
+                    "source_field": "Grade",
+                    "replacement_values": [
+                        {
+                            "old_value": "Undifferentiated or Poorly Differentiated",
+                            "new_value": "High Grade"
+                        },
+                        {
+                            "old_value": "Differentiating",
+                            "new_value": "Low Grade"
                         }
                     ]
                 }
@@ -542,6 +949,369 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.reference_file_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "[uuid]"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "[uuid]"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "programmatic source code"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 37950
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "315e7ab85a82186b8aca5d1eafcc737a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000467.v22.p8.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 57767
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "52bd6f2908467c81ba230d0dbd6fa3c6"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/transformations/phs000467.v22.p8.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "output schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 190290
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "44791ddff143ef93184a8d290b5005be"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 117208
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "6a07ceb0682fd4a57c58474c03b840b4"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_NBL_ClinicalData_Validation_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 94351
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "801bc7a884677b328cdff0757f05acc9"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                        }
+                    ]
+                },
+                {
                     "output_field": "participant.participant_id",
                     "source_field": "TARGET USI"
                 },
@@ -890,6 +1660,50 @@
                         {
                             "old_value": "Unknown",
                             "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.toronto_childhood_cancer_staging",
+                    "source_field": "INSS Stage",
+                    "replacement_values": [
+                        {
+                            "old_value": "Stage 1",
+                            "new_value": "Neuroblastoma Stage L1"
+                        },
+                        {
+                            "old_value": "Stage 2a",
+                            "new_value": "Neuroblastoma Stage L2"
+                        },
+                        {
+                            "old_value": "Stage 2b",
+                            "new_value": "Neuroblastoma Stage L2"
+                        },
+                        {
+                            "old_value": "Stage 3",
+                            "new_value": "Neuroblastoma Stage L2"
+                        },
+                        {
+                            "old_value": "Stage 4",
+                            "new_value": "Neuroblastoma Stage M"
+                        },
+                        {
+                            "old_value": "Stage 4s",
+                            "new_value": "Neuroblastoma Stage MS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_grade",
+                    "source_field": "Grade",
+                    "replacement_values": [
+                        {
+                            "old_value": "Undifferentiated or Poorly Differentiated",
+                            "new_value": "High Grade"
+                        },
+                        {
+                            "old_value": "Differentiating",
+                            "new_value": "Low Grade"
                         }
                     ]
                 }

@@ -1934,11 +1934,10 @@
         "reference_file_id",
         "file_name",
         "file_type",
+        "file_category",
         "file_size",
         "md5sum",
-        "source_file_url",
-        "source_code_url",
-        "mapping_documentation_url",
+        "reference_file_url",
         "dcf_indexd_guid"
       ],
       "properties": {
@@ -1994,6 +1993,7 @@
             "pdf",
             "ped",
             "png",
+            "py",
             "rda",
             "rdata",
             "rds",
@@ -2022,6 +2022,17 @@
           "description": "A freeform description of the file.",
           "cde": []
         },
+        "file_category": {
+          "type": "string",
+          "description": "A freeform description of the file.",
+          "cde": [],
+          "enum": [
+            "programmatic source code",
+            "transformation/mapping",
+            "output schema",
+            "input source data"
+          ]
+        },
         "file_size": {
           "type": "integer",
           "description": "The numerical quantity documenting the physical magnitude of a set of related electronic records.",
@@ -2038,23 +2049,9 @@
             "caDSR:6115805"
           ]
         },
-        "source_file_url": {
+        "reference_file_url": {
           "type": "string",
           "description": "Location of the source_file_url file, using AWS S3 protocol.",
-          "cde": [
-            "NCIt:C47922"
-          ]
-        },
-        "source_code_url": {
-          "type": "string",
-          "description": "Location of the source_code_url file, using AWS S3 protocol.",
-          "cde": [
-            "NCIt:C47922"
-          ]
-        },
-        "mapping_documentation_url": {
-          "type": "string",
-          "description": "Location of the mapping_documentation_url file, using AWS S3 protocol.",
           "cde": [
             "NCIt:C47922"
           ]
