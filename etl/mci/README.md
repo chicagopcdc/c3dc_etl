@@ -1,8 +1,10 @@
-# MCI JSON-to-XLSX data pivoter
+# Script to collate and pivot MCI study data in JSON files
 
 ## Pre-requisites
 Install Python (3.11 used at time of documentation) and add support for dependencies such as
-[PETL](https://github.com/petl-developers/petl)
+[PETL](https://github.com/petl-developers/petl) by, for example,
+[creating and activating a Conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)
+based on the [Conda environment file](https://github.com/chicagopcdc/c3dc_etl/blob/main/conda_environment.yml)
 
 ## Execution Steps
 Call the script with two arguments, the first the path to the file or a directory containing the JSON data to be
