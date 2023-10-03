@@ -1,6 +1,4 @@
 """ C3DC ETL File Creator """
-from __future__ import annotations
-from enum import Enum
 import json
 import logging
 import logging.config
@@ -14,11 +12,13 @@ from urllib.parse import urlparse, ParseResult
 from urllib.request import url2pathname
 import warnings
 
+from c3dc_etl_model_node import C3dcEtlModelNode
 import dotenv
 import jsonschema
 from jsonschema import ValidationError
 import petl
 import requests
+
 
 # suppress openpyxl warning about inability to parse header/footer
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
@@ -65,28 +65,6 @@ logging.config.dictConfig({
 })
 
 
-class C3dcEtlModelNode(str, Enum):
-    """
-    Enum class for ETL timing sub-types
-    """
-    DIAGNOSIS = 'diagnosis'
-    PARTICIPANT = 'participant'
-    REFERENCE_FILE = 'reference_file'
-    SAMPLE = 'sample'
-    STUDY = 'study'
-
-    def __str__(self):
-        return self.value
-
-    @staticmethod
-    def get(node_type: str) -> C3dcEtlModelNode:
-        """ Get C3dcModelNode matching specified node_type or None if not found """
-        try:
-            return C3dcEtlModelNode[node_type.upper()]
-        except KeyError:
-            return None
-
-
 class C3dcEtl:
     """ Build C3DC json ETL file from (XLSX) source file """
     def __init__(self, config: dict[str, str]) -> None:
@@ -109,19 +87,20 @@ class C3dcEtl:
         self._assert_valid_study_configurations()
 
     @property
+    def json_schema(self) -> dict[str, any]:
+        """ Get internal JSON schema, loading if needed """
+        return self._json_schema if self._json_schema else self.load_json_schema()
+
+    @property
     def json_etl_data(self) -> dict[str, any]:
-        """
-        Get internal JSON ETL data object, building if needed
-        """
+        """ Get internal JSON ETL data object, building if needed """
         if not self._json_etl_data_sets:
             self.create_json_etl_files()
         return self._json_etl_data_sets
 
     @property
     def raw_etl_data_tables(self) -> dict[str, any]:
-        """
-        Get internal schema object, building if needed
-        """
+        """ Get internal schema object, building if needed """
         if not self._raw_etl_data_tables:
             study_configuration: dict[str, any]
             for study_configuration in self._study_configurations:

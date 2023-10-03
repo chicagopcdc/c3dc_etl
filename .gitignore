@@ -3,7 +3,7 @@
 .env
 .env_*
 .env.*
-!etl/.env_example
+!etl/**/.env_example
 .pylintrc
 .python-version
 .venv
@@ -14,7 +14,7 @@
 *.html
 *.ini
 *.json
-!etl/transformations/*.json
+!etl/**/transformations/*.json
 !schema/schema.json
 !schema/sample_data.json
 *.log
