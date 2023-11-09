@@ -1,4 +1,5 @@
 """ C3DC ETL File Creator """
+import csv
 import json
 import logging
 import logging.config
@@ -171,6 +172,15 @@ class C3dcEtl:
         tbl = petl.cut(tbl, [h for h in petl.header(tbl) if (h or '').strip()])
         return tbl
 
+    @staticmethod
+    def is_number(value: str):
+        """ Determine whether specified string is number (float or int) """
+        try:
+            float(value)
+        except (TypeError, ValueError):
+            return False
+        return True
+
     def load_transformations(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON transformations from configured URLs and merge with local config """
         # enumerate each per-study transformation config object in local config
@@ -225,6 +235,11 @@ class C3dcEtl:
             raise RuntimeError('Unable to get node types, JSON schema not loaded')
         if '$defs' not in self._json_schema:
             raise RuntimeError('Unable to get node types, JSON schema does not contain root-level "$defs" property')
+
+        # log warnings for remote nodes not found in C3DC model
+        unmapped_def: str
+        for unmapped_def in [k for k in self._json_schema['$defs'] if k != 'nodes' and not C3dcEtlModelNode.get(k)]:
+            _logger.warning('Schema "$defs" child node "%s" not defined in C3dcEtlModelNode enum', unmapped_def)
 
         # cache schema objects matching C3DC model nodes
         self._json_schema_nodes = {k:v for k,v in self._json_schema['$defs'].items() if C3dcEtlModelNode.get(k)}
@@ -282,13 +297,16 @@ class C3dcEtl:
                 study_id
             )
             return True
-        except ValidationError as verr:
+        except ValidationError:
             _logger.warning(
                 'ETL data for transformation %s (study %s) failed schema validation:',
                 transformation_name,
                 study_id
             )
-            _logger.warning(verr.message)
+            validator: jsonschema.Validator = jsonschema.Draft7Validator(self._json_schema)
+            validation_error: ValidationError
+            for validation_error in validator.iter_errors(self._json_etl_data_sets[study_id][transformation_name]):
+                _logger.warning('%s: %s', validation_error.json_path, validation_error.message)
         return False
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
@@ -343,13 +361,14 @@ class C3dcEtl:
 
         errors: list[str] = []
         macro: str
-        for macro in re.findall(r'\[.*?\]', replacement_new_value):
-            macro_text: str = macro.strip(' []').strip()
+        for macro in re.findall(r'\{.*?\}', replacement_new_value):
+            macro_text: str = macro.strip(' {}').strip()
             # source field to be replaced will be specified as '[field: FIELD_NAME]
             if not (
                 (macro_text.startswith('"') and macro_text.endswith('"')) or
                 (macro_text.startswith("'") and macro_text.endswith("'")) or
                 macro_text.lower() == 'uuid' or
+                macro_text.lower() == 'sum' or
                 (
                     macro_text.lower().startswith('field:')
                     and
@@ -373,7 +392,14 @@ class C3dcEtl:
         source_field: str = mapping.get('source_field')
         if not source_field:
             errors.append(f'{transformation_name} ({study_id}): mapping source field not specified: {mapping}')
-        if source_field != '[string_literal]' and source_field not in source_header:
+        if source_field.startswith('[') and source_field.endswith(']'):
+            # strip extra spaces; csv module parsed "field 1, field 2" into ["field 1", " field 2"]
+            source_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+            if not {s for s in source_fields if s != 'string_literal'}.issubset(set(source_header)):
+                errors.append(f'{transformation_name} ({study_id}): source field not present in source data: {mapping}')
+                _logger.warning({s for s in source_fields if s != 'string_literal'})
+
+        elif source_field not in source_header:
             errors.append(f'{transformation_name} ({study_id}): source field not present in source data: {mapping}')
         output_field: str = mapping.get('output_field')
         if not output_field:
@@ -495,12 +521,14 @@ class C3dcEtl:
         wildcards using '+' or '*', where '+' results in replacement only if there is an existing value and
         '*' always results in replacement, whether the existing value is populated or null/blank. The new value
         can be specified with explicit scalar values or macro-like substitution directives as specified below:
-        [uuid] => substitute with a UUID (v4 w/ optional seed value for RNG from config)
-        [field:{source field name}] => substitute with specified record's source field value, e.g. [field:TARGET USI]
+        {uuid} => substitute with a UUID (v4 w/ optional seed value for RNG from config)
+        {sum} => substitute with sum of values for specified fields in 'source_field' propery
+        {field:source_field_name} => substitute with specified record's source field value, e.g. {field:TARGET USI}
         """
+        msg: str
         output_value: any = None
 
-        source_field: str = mapping.get('source_field')
+        source_field: str = mapping.get('source_field').strip(' \'"')
         source_value: str = source_record.get(source_field, None)
 
         replacement_entry: dict[str, str]
@@ -511,19 +539,53 @@ class C3dcEtl:
             new_vals: list[any] = new_value if isinstance(new_value, (list, set, tuple)) else [new_value]
             new_val: any
             for i, new_val in enumerate(new_vals):
-                if '[' not in str(new_val) and ']' not in str(new_val):
+                if not (str(new_val).startswith('{') and str(new_val).endswith('}')):
                     continue
-                macros: list[str] = re.findall(r'\[.*?\]', new_val)
-                macro: str
-                for macro in macros:
-                    macro_text: str = macro.strip(' []').strip()
-                    if macro_text.lower().startswith('field:'):
-                        # source field to be replaced will be specified as '[field: FIELD_NAME]
-                        macro_field: str = macro_text[len('field:'):]
-                        if macro_field in source_record:
-                            new_val = new_val.replace(macro, source_record[macro_field])
-                    elif macro_text.lower() == 'uuid':
-                        new_val = new_val.replace(macro, str(self._generate_uuid()))
+                macros: list[str] = re.findall(r'\{.*?\}', new_val)
+                if not macros:
+                    continue
+                macro: str = macros[0]
+                macro_text: str = macro.strip(' {}').strip()
+                if macro_text.lower() == 'uuid':
+                    new_val = new_val.replace(macro, str(self._generate_uuid()))
+                elif macro_text.lower().startswith('field:'):
+                    # source field to be replaced will be specified as '[field: FIELD_NAME]
+                    macro_field: str = macro_text[len('field:'):].strip()
+                    if macro_field not in source_record:
+                        msg = f'Macro field not found in source record: "{macro_field}"'
+                        _logger.critical(msg)
+                        raise RuntimeError(msg)
+                    new_val = new_val.replace(macro, source_record[macro_field])
+                elif macro_text.lower() == 'sum':
+                    # source field should contain list of source fields to be added together
+                    if not (source_field.startswith('[') and source_field.endswith(']')):
+                        msg = (
+                            f'Invalid source field "{source_field} for "sum" macro in row ' +
+                            f'{source_record["source_file_row_num"]}, must be comma-delimited ' +
+                            '(csv) string within square brackets, e.g. "[field1, field2]"'
+                        )
+                        _logger.critical(msg)
+                        raise RuntimeError(msg)
+                    # strip extra spaces; csv module parsed "field 1, field 2" into ["field 1", " field 2"]
+                    source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+                    addends: list[float | int] = []
+                    source_field_name: str
+                    for source_field_name in source_field_names:
+                        addend: str = source_record.get(source_field_name, f'{source_field_name} not found')
+                        if not str(addend or '').strip():
+                            # set output sum to blank/null if any addend is invalid/blank/null
+                            return None
+
+                        if not C3dcEtl.is_number(addend):
+                            msg = (
+                                f'Invalid source field value "{addend}" for "sum" macro in row ' +
+                                f'{source_record["source_file_row_num"]}, must be a number"'
+                            )
+                            _logger.critical(msg)
+                            raise RuntimeError(msg)
+                        addend = float(addend)
+                        addends.append(addend if not addend.is_integer() else int(addend))
+                    new_val = sum(addends)
                 new_vals[i] = new_val
             new_value = new_vals if isinstance(new_value, (list, set, tuple)) else new_vals[0]
             if (
@@ -609,6 +671,23 @@ class C3dcEtl:
             _logger.warning('No mappings found for type %s, unable to transform record', node_type)
             return []
 
+        # a single source field can be mapped to multiple target fields, for example
+        # 'First Event' => survival.first_event, survival.event_free_survival_status
+        # so pre-load all allowed values for each source field to determine when a
+        # source record contains invalid/unmapped values and should be skipped/ignored
+        mapping: dict[str, any]
+        allowed_values: list[str]
+        source_field_allowed_values: dict[str, list[str]] = {}
+        for type_group_index, mappings in type_group_index_mappings.items():
+            for mapping in mappings:
+                source_field: str = mapping.get('source_field')
+                replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
+                allowed_values = [
+                    r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*', '')
+                ]
+                source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
+                source_field_allowed_values[source_field].extend(allowed_values)
+
         # if there are multiple type group indexes (multiple records are mapped) then default
         # values to base ("*") values first and then overwrite individual mapped fields for
         # each mapping sub-group specified for that type group index
@@ -616,28 +695,29 @@ class C3dcEtl:
         for type_group_index, mappings in type_group_index_mappings.items():
             output_record: dict[str, any] = {}
             output_record.update(base_record)
-            mapping: dict[str, any]
             for mapping in mappings:
                 source_field: str = mapping.get('source_field')
                 source_value: str = source_record.get(source_field, None)
+                output_field: str = mapping.get('output_field')[len(f'{node_type}.'):]
 
-                replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
-                allowed_values: list[str] = [
-                    r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*')
-                ]
+                # check source value against all of this source field's mapped replacement values
+                # in case there are multiple output field mappings for this source field
+                allowed_values = source_field_allowed_values.get(source_field, [])
                 if allowed_values and source_value not in allowed_values:
                     log_msg = (
-                        '"{source_value}" not specified as allowed value (old_value) in transformation for ' +
-                        'field "{source_field}", skipping creation of {node_type} record for source record ' +
-                        'in row {source_file_row_num}'
-                    ).format(
-                        source_value=source_value,
-                        source_field=source_field,
-                        node_type=node_type,
-                        source_file_row_num=source_record['source_file_row_num']
+                        f'"{source_value}" not specified as allowed value (old_value) in transformation(s) for ' +
+                        f'source field "{source_field}", source record row {source_record.get("source_file_row_num")}'
                     )
                     _logger.warning(log_msg)
                     return None
+
+                # check source value against mapped replacement values for this particular output field
+                replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
+                allowed_values = [
+                    r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*', '')
+                ]
+                if allowed_values and source_value not in allowed_values:
+                    continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
                 output_field: str = mapping.get('output_field')[len(f'{node_type}.'):]
@@ -683,7 +763,8 @@ class C3dcEtl:
             'diagnoses': [],
             'participants': [],
             'reference_files': [],
-            'studies': []
+            'studies': [],
+            'survivals': []
         }
 
         # build study node and add to node collection
@@ -702,13 +783,23 @@ class C3dcEtl:
             study['reference_file.reference_file_id'].append(reference_file['reference_file_id'])
         nodes['reference_files'].extend(reference_files)
 
-        # add diagnosis and participant records to match source data records
+        # add diagnosis, survival, and participant records to match source data records
         rec: dict[str, any]
         for rec in petl.dicts(self._raw_etl_data_tables[study_id][transformation.get('name')]):
             diagnoses: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, rec)
             if not diagnoses:
                 _logger.warning(
                     '%s (%s): Unable to build diagnosis node for record %d, skipping',
+                    transformation.get('name'),
+                    study_id,
+                    rec['source_file_row_num']
+                )
+                continue
+
+            survivals: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, rec)
+            if not survivals:
+                _logger.warning(
+                    '%s (%s): Unable to build survival node for record %d, skipping',
                     transformation.get('name'),
                     study_id,
                     rec['source_file_row_num']
@@ -734,10 +825,17 @@ class C3dcEtl:
                 diagnosis['participant.participant_id'] = participant['participant_id']
                 participant['diagnosis.diagnosis_id'].append(diagnosis['diagnosis_id'])
 
+            participant['survival.survival_id'] = []
+            survival: dict[str, any]
+            for survival in survivals:
+                survival['participant.participant_id'] = participant['participant_id']
+                participant['survival.survival_id'].append(survival['survival_id'])
+
             participant['study.study_id'] = study['study_id']
             study['participant.participant_id'].append(participant['participant_id'])
 
             nodes['diagnoses'].extend(diagnoses)
+            nodes['survivals'].extend(survivals)
             nodes['participants'].append(participant)
 
         nodes['studies'].append(study)
