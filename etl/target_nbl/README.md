@@ -94,7 +94,10 @@ aka the 'remote' configuration file described above. The script can be used for 
 maintaining the JSON transformation/mapping config file manually.
 
 ### Execution steps
-1. Download the internal shared document as separate CSV files for each mapping sheet in the document
+1. Download the internal shared document as separate CSV files for each mapping sheet in the document. The
+   'Microsoft Excel (.xlsx)' download option shortens and truncates the sheet/tab names, which makes it difficult for
+   an automated script to detect the source-file => mapping entries. This may be supported in the future as more
+   mappings are added, increasing the time and effort required to manually download a CSV file for each mapped sheet.
 1. Create a local file named `.env_mapping_unpivoter` containing the configuration vars described below and execute the
    script without any arguments:
    ```

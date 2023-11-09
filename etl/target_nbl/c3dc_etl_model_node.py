@@ -12,6 +12,7 @@ class C3dcEtlModelNode(str, Enum):
     REFERENCE_FILE = 'reference_file'
     SAMPLE = 'sample'
     STUDY = 'study'
+    SURVIVAL = 'survival'
 
     def __str__(self):
         return self.value

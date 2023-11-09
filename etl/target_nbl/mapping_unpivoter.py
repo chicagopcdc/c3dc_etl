@@ -7,7 +7,6 @@ import os
 import sys
 import warnings
 
-from c3dc_etl_model_node import C3dcEtlModelNode
 from c3dc_etl import C3dcEtl
 import dotenv
 
@@ -56,8 +55,7 @@ logging.config.dictConfig({
     }
 })
 
-
-class MappingUnpivoter:
+class MappingUnpivoter: #pylint: disable=too-few-public-methods
     """ Unpivot tabular transformation field mappings to JSON format """
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config

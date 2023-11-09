@@ -4,7 +4,8 @@ import logging
 import logging.config
 import os
 import pathlib
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, ParseResult
+from urllib.request import url2pathname
 
 import dotenv
 import requests
@@ -91,6 +92,27 @@ class SchemaCreator:
         self._schema_file_path: str = self._config.get('SCHEMA_FILE_PATH', './schema.json')
         self._schema: dict[str, any] = {}
 
+    @staticmethod
+    def url_to_path(url: str) -> str:
+        """ Convert specified URL to path specific to local platform """
+        url_parts: ParseResult = urlparse(url)
+        host = f"{os.path.sep}{os.path.sep}{url_parts.netloc}{os.path.sep}"
+        return os.path.normpath(os.path.join(host, url2pathname(url_parts.path)))
+
+    @staticmethod
+    def get_url_content(url: str) -> any:
+        """ Retrieve and return contents from specified URL """
+        url_content: str | bytes | bytearray
+        if url.startswith('file://'):
+            with open(SchemaCreator.url_to_path(url), 'rb') as local_file:
+                url_content = local_file.read()
+        else:
+            with requests.get(url, timeout=30) as response:
+                response.raise_for_status()
+                url_content = response.content
+
+        return url_content
+
     def download_source_files(self) -> None:
         """ Download source files from configured URLs """
         source_files: dict[str, str] = {
@@ -101,11 +123,15 @@ class SchemaCreator:
         download_path: str
         for download_url, download_path in source_files.items():
             _logger.debug('Downloading %s to file %s', download_url, download_path)
-            with requests.get(download_url, timeout=30) as response:
-                if not response.ok:
-                    response.raise_for_status()
+
+            if not (
+                os.path.exists(download_path) and
+                download_url.startswith('file://') and
+                os.path.samefile(download_path, SchemaCreator.url_to_path(download_url))
+            ):
+                url_content: str | bytes | bytearray = SchemaCreator.get_url_content(download_url)
                 with open(download_path, 'wb') as file:
-                    file.write(response.content)
+                    file.write(url_content)
 
     @property
     def schema(self) -> dict[str, any]:
@@ -270,10 +296,20 @@ class SchemaCreator:
         if node_required_props:
             schema['required'] = self._node_props_required[name]
 
+        errors: list[str] = []
         schema['properties'] = {}
         prop: str
         for prop in obj['Props']:
+            if prop not in self._schema_props:
+                errors.append(f'Error building node "{name}": property "{prop}" not found in props schema file')
+                continue
             schema['properties'][prop] = self._schema_props[prop]
+        if errors:
+            error: str
+            for error in errors:
+                _logger.critical(error)
+            raise RuntimeError(f'One or more properties for node "{name}" not found in properties schema')
+
         return schema
 
     def _build_and_populate_node_relationships(self) -> None:
@@ -387,20 +423,23 @@ class SchemaCreator:
             return type_value.lower()
 
         if isinstance(type_value, dict):
-            if type_value.get('value_type', '') != 'list':
+            value_type_name: str = type_value.get('value_type', '')
+            if not value_type_name:
                 log_msg = (
                     f'YAML property {name} sub-property Type does not have "value_type" ' +
-                    'set to "list", unable to determine JSON schema type'
+                    'attribute defined, unable to determine JSON schema type'
                 )
-            elif 'Enum' not in type_value:
+            elif value_type_name == 'list' and 'Enum' not in type_value:
                 log_msg = (
                     f'YAML property {name} sub-property Type has "value_type" set to "list" ' +
                     'but does not have "Enum" defined, unable to determine JSON schema type'
                 )
+
             if log_msg:
                 _logger.critical(log_msg)
+                _logger.critical(obj)
                 raise RuntimeError(log_msg)
-            return 'array'
+            return 'array' if value_type_name == 'list' else value_type_name
 
         log_msg = f'YAML property {name} does not have Type or Enum defined, unable to determine JSON schema type'
         _logger.critical(log_msg)
@@ -412,7 +451,7 @@ class SchemaCreator:
             return list(obj['Enum'])
 
         if 'Type' in obj and isinstance(obj['Type'], dict):
-            if obj['Type'].get('value_type', '') == 'list' and 'Enum' in obj['Type']:
+            if 'Enum' in obj['Type']:
                 return obj['Type']['Enum']
             log_msg: str = (
                 f'YAML property {name} is dict but does not have "value_type" set ' +
