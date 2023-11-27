@@ -101,7 +101,7 @@ class C3dcEtl:
 
     @property
     def raw_etl_data_tables(self) -> dict[str, any]:
-        """ Get internal schema object, building if needed """
+        """ Get internal source data tables, loading if needed """
         if not self._raw_etl_data_tables:
             study_configuration: dict[str, any]
             for study_configuration in self._study_configurations:
@@ -342,6 +342,14 @@ class C3dcEtl:
             raise RuntimeError(f'"properties" not found in JSON schema node for type "{node_type}"')
         return self._json_schema_nodes[node_type]['properties']
 
+    def _is_json_schema_node_property_required(self, node_type_dot_property_name: str) -> bool:
+        """ Determine if JSON schema property for specified output field ('node_name.field_name') is required """
+        if '.' not in node_type_dot_property_name:
+            raise RuntimeError(f'Invalid node.property specified: {node_type_dot_property_name}')
+        node_type: str = node_type_dot_property_name.split('.')[0]
+        property_name: str = node_type_dot_property_name.split('.')[-1]
+        return property_name in self._json_schema_nodes.get(node_type, {}).get('required', [])
+
     def _get_replacement_new_value_errors(
         self,
         source_header: list[str],
@@ -393,7 +401,7 @@ class C3dcEtl:
         if not source_field:
             errors.append(f'{transformation_name} ({study_id}): mapping source field not specified: {mapping}')
         if source_field.startswith('[') and source_field.endswith(']'):
-            # strip extra spaces; csv module parsed "field 1, field 2" into ["field 1", " field 2"]
+            # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
             source_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
             if not {s for s in source_fields if s != 'string_literal'}.issubset(set(source_header)):
                 errors.append(f'{transformation_name} ({study_id}): source field not present in source data: {mapping}')
@@ -566,7 +574,7 @@ class C3dcEtl:
                         )
                         _logger.critical(msg)
                         raise RuntimeError(msg)
-                    # strip extra spaces; csv module parsed "field 1, field 2" into ["field 1", " field 2"]
+                    # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
                     source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
                     addends: list[float | int] = []
                     source_field_name: str
@@ -683,8 +691,12 @@ class C3dcEtl:
                 source_field: str = mapping.get('source_field')
                 replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
                 allowed_values = [
-                    r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*', '')
+                    r['old_value'] for r in replacement_entries
+                        if r.get('old_value') not in ('+', '*', None) and r.get('new_value')
                 ]
+                # empty string ("") and None are treated equally for matching/comparision purposes
+                if '' in allowed_values:
+                    allowed_values.append(None)
                 source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
                 source_field_allowed_values[source_field].extend(allowed_values)
 
@@ -698,31 +710,83 @@ class C3dcEtl:
             for mapping in mappings:
                 source_field: str = mapping.get('source_field')
                 source_value: str = source_record.get(source_field, None)
-                output_field: str = mapping.get('output_field')[len(f'{node_type}.'):]
 
                 # check source value against all of this source field's mapped replacement values
                 # in case there are multiple output field mappings for this source field
                 allowed_values = source_field_allowed_values.get(source_field, [])
-                if allowed_values and source_value not in allowed_values:
-                    log_msg = (
-                        f'"{source_value}" not specified as allowed value (old_value) in transformation(s) for ' +
-                        f'source field "{source_field}", source record row {source_record.get("source_file_row_num")}'
+                source_value_allowed: bool = (
+                    allowed_values
+                    and
+                    (
+                        (not isinstance(source_value, (list, set, tuple)) and source_value in allowed_values)
+                        or
+                        (
+                            isinstance(source_value, (list, set, tuple))
+                            and
+                            set(source_value or {}).issubset(set(allowed_values))
+                        )
                     )
-                    _logger.warning(log_msg)
-                    return None
+                )
+                if allowed_values and not source_value_allowed:
+                    _logger.warning(
+                        (
+                            '"%s" not specified as allowed value (old_value) in transformation(s) for source field ' +
+                            '"%s", source record "%s"'
+                        ),
+                        source_value,
+                        source_field,
+                        source_record.get('source_file_row_num')
+                    )
+                    return []
 
-                # check source value against mapped replacement values for this particular output field
+                # check source value against mapped replacement values for this particular output field mapping
                 replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
                 allowed_values = [
-                    r['old_value'] for r in replacement_entries if r.get('old_value', '') not in ('+', '*', '')
+                    r['old_value'] for r in replacement_entries
+                        if r.get('old_value') not in ('+', '*', None) and r.get('new_value')
                 ]
-                if allowed_values and source_value not in allowed_values:
+
+                # empty string ("") and None are treated equally for matching/comparision purposes
+                if '' in allowed_values:
+                    allowed_values.append(None)
+                source_value_allowed = (
+                    allowed_values
+                    and
+                    (
+                        (not isinstance(source_value, (list, set, tuple)) and source_value in allowed_values)
+                        or
+                        (
+                            isinstance(source_value, (list, set, tuple))
+                            and
+                            set(source_value or {}).issubset(set(allowed_values))
+                        )
+                    )
+                )
+                if allowed_values and not source_value_allowed:
+                    _logger.info('value "%s" not allowed for source field "%s"', source_value, source_field)
+                    _logger.info(allowed_values)
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
-                output_field: str = mapping.get('output_field')[len(f'{node_type}.'):]
-                output_record[output_field] = output_value if output_value is not None else source_value
-            output_records.append(output_record)
+                output_field: str = mapping.get('output_field')
+
+                output_field_property: str = output_field[len(f'{node_type}.'):]
+                output_record[output_field_property] = output_value if output_value is not None else source_value
+                if (
+                    not output_record[output_field_property]
+                    and
+                    self._is_json_schema_node_property_required(output_field)
+                ):
+                    _logger.warning(
+                        'Required output field "%s" (source field "%s") has null value for source record "%s"',
+                        output_field,
+                        source_field,
+                        source_record.get("source_file_row_num")
+                    )
+                    return []
+
+            if output_record:
+                output_records.append(output_record)
             if type_group_index == 0:
                 base_record.update(output_record)
         return output_records
@@ -789,27 +853,25 @@ class C3dcEtl:
             diagnoses: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, rec)
             if not diagnoses:
                 _logger.warning(
-                    '%s (%s): Unable to build diagnosis node for record %d, skipping',
+                    '%s (%s): Unable to build diagnosis node for source record %d',
                     transformation.get('name'),
                     study_id,
                     rec['source_file_row_num']
                 )
-                continue
 
             survivals: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, rec)
             if not survivals:
                 _logger.warning(
-                    '%s (%s): Unable to build survival node for record %d, skipping',
+                    '%s (%s): Unable to build survival node for source record %d',
                     transformation.get('name'),
                     study_id,
                     rec['source_file_row_num']
                 )
-                continue
 
             participant: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
             if len(participant) != 1:
                 _logger.warning(
-                    '%s (%s): Unexpected number of participant nodes (%d) built for record %d, skipping',
+                    '%s (%s): Unexpected number of participant nodes (%d) built for source record %d, excluding',
                     transformation.get('name'),
                     study_id,
                     len(participant),
@@ -844,8 +906,9 @@ class C3dcEtl:
         self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
 
         _logger.info(
-            '1 study, %d diagnosis, %d participant records created for transformation %s',
+            '1 study, %d diagnosis, %d survival, %d participant records created for transformation %s',
             len(nodes['diagnoses']),
+            len(nodes['survivals']),
             len(nodes['participants']),
             transformation.get('name')
         )
