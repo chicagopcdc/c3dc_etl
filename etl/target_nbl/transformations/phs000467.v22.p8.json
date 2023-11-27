@@ -154,7 +154,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 37560
+                            "new_value": 46415
                         }
                     ]
                 },
@@ -165,7 +165,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "79afb71f88443c9297c0e8bfad8db7f8"
+                            "new_value": "1369b6fd03fa11975acb36ccaba814de"
                         }
                     ]
                 },
@@ -231,7 +231,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 96139
+                            "new_value": 96441
                         }
                     ]
                 },
@@ -242,7 +242,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "c5595a7a9b9b2b31760d9b553766a521"
+                            "new_value": "0679caebb5227718a5ae410b7ffeec5e"
                         }
                     ]
                 },
@@ -308,7 +308,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 190290
+                            "new_value": 197376
                         }
                     ]
                 },
@@ -319,7 +319,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "1e006f23f35042ad37ecf2eeb6a21f10"
+                            "new_value": "3ea297d4c9ea00bfe02d5650d950f3b9"
                         }
                     ]
                 },
@@ -478,7 +478,7 @@
                     ]
                 },
                 {
-                    "output_field": "participant.gender",
+                    "output_field": "participant.sex_at_birth",
                     "source_field": "Gender",
                     "type_group_index": "*",
                     "replacement_values": [
@@ -986,7 +986,7 @@
                         {
                             "old_value": "Unknown",
                             "new_value": [
-                                "C80.9 : Unknown primary site"
+                                "Unknown"
                             ]
                         }
                     ]
@@ -1116,19 +1116,12 @@
                 {
                     "output_field": "survival.first_event",
                     "source_field": "First Event",
-                    "type_group_index": "",
+                    "type_group_index": "*",
                     "replacement_values": [
                         {
                             "old_value": "Censored",
                             "new_value": "Death"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "survival.first_event",
-                    "source_field": "First Event",
-                    "type_group_index": "*",
-                    "replacement_values": [
+                        },
                         {
                             "old_value": "Death",
                             "new_value": "Death"
@@ -1159,6 +1152,17 @@
                         {
                             "old_value": "*",
                             "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Primary"
                         }
                     ]
                 }
@@ -1317,7 +1321,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 37560
+                            "new_value": 46415
                         }
                     ]
                 },
@@ -1328,7 +1332,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "79afb71f88443c9297c0e8bfad8db7f8"
+                            "new_value": "1369b6fd03fa11975acb36ccaba814de"
                         }
                     ]
                 },
@@ -1394,7 +1398,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 96139
+                            "new_value": 96441
                         }
                     ]
                 },
@@ -1405,7 +1409,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "c5595a7a9b9b2b31760d9b553766a521"
+                            "new_value": "0679caebb5227718a5ae410b7ffeec5e"
                         }
                     ]
                 },
@@ -1471,7 +1475,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 190290
+                            "new_value": 197376
                         }
                     ]
                 },
@@ -1482,7 +1486,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "1e006f23f35042ad37ecf2eeb6a21f10"
+                            "new_value": "3ea297d4c9ea00bfe02d5650d950f3b9"
                         }
                     ]
                 },
@@ -1641,7 +1645,7 @@
                     ]
                 },
                 {
-                    "output_field": "participant.gender",
+                    "output_field": "participant.sex_at_birth",
                     "source_field": "Gender",
                     "type_group_index": "*",
                     "replacement_values": [
@@ -2149,7 +2153,7 @@
                         {
                             "old_value": "Unknown",
                             "new_value": [
-                                "C80.9 : Unknown primary site"
+                                "Unknown"
                             ]
                         }
                     ]
@@ -2279,19 +2283,12 @@
                 {
                     "output_field": "survival.first_event",
                     "source_field": "First Event",
-                    "type_group_index": "",
+                    "type_group_index": "*",
                     "replacement_values": [
                         {
                             "old_value": "Censored",
                             "new_value": "Death"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "survival.first_event",
-                    "source_field": "First Event",
-                    "type_group_index": "*",
-                    "replacement_values": [
+                        },
                         {
                             "old_value": "Death",
                             "new_value": "Death"
@@ -2322,6 +2319,17 @@
                         {
                             "old_value": "*",
                             "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Primary"
                         }
                     ]
                 }

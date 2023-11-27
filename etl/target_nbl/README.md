@@ -11,7 +11,7 @@ The c3dc_etl.py script ingests the source data in tabular (XLSX) format and tran
 data file.
 
 ### Execution steps
-Create a local file named `.env` as per the [example](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/.env_example)
+Create a local file named `.env` as per the [example](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/.env_example)
 and execute the script without any arguments:
 ```
 python c3dc_etl.py
@@ -89,7 +89,7 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
 ## Mapping unpivoter utility script
 The mapping unpivoter script can be used to transform the development team's internal shared document containing
 harmonized data mapping definitions to the
-[publicly available JSON transformation/mapping deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/transformations),
+[publicly available JSON transformation/mapping deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations),
 aka the 'remote' configuration file described above. The script can be used for convenience in lieu of editing and
 maintaining the JSON transformation/mapping config file manually.
 
