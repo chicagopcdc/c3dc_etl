@@ -1,5 +1,5 @@
 {
-    "version": "20231109.1",
+    "version": "20231122.1",
     "transformations": [
         {
             "name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
@@ -176,7 +176,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/c3dc_etl.py"
                         }
                     ]
                 },
@@ -231,7 +231,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 96441
+                            "new_value": 96483
                         }
                     ]
                 },
@@ -242,7 +242,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "0679caebb5227718a5ae410b7ffeec5e"
+                            "new_value": "7d6fc61a7bfecb517b0fa653d5437c12"
                         }
                     ]
                 },
@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/transformations/phs000467.v22.p8.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/transformations/phs000467.v22.p8.json"
                         }
                     ]
                 },
@@ -319,7 +319,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3ea297d4c9ea00bfe02d5650d950f3b9"
+                            "new_value": "75db2b7dc80e594aa98e78041d3132ec"
                         }
                     ]
                 },
@@ -1038,6 +1038,17 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Primary"
+                        }
+                    ]
+                },
+                {
                     "output_field": "survival.survival_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -1152,17 +1163,6 @@
                         {
                             "old_value": "*",
                             "new_value": "{sum}"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "diagnosis.tumor_classification",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "Primary"
                         }
                     ]
                 }
@@ -1343,7 +1343,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/c3dc_etl.py"
                         }
                     ]
                 },
@@ -1398,7 +1398,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 96441
+                            "new_value": 96483
                         }
                     ]
                 },
@@ -1409,7 +1409,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "0679caebb5227718a5ae410b7ffeec5e"
+                            "new_value": "7d6fc61a7bfecb517b0fa653d5437c12"
                         }
                     ]
                 },
@@ -1431,7 +1431,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/transformations/phs000467.v22.p8.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/transformations/phs000467.v22.p8.json"
                         }
                     ]
                 },
@@ -1486,7 +1486,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3ea297d4c9ea00bfe02d5650d950f3b9"
+                            "new_value": "75db2b7dc80e594aa98e78041d3132ec"
                         }
                     ]
                 },
@@ -2205,6 +2205,17 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Primary"
+                        }
+                    ]
+                },
+                {
                     "output_field": "survival.survival_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -2319,17 +2330,6 @@
                         {
                             "old_value": "*",
                             "new_value": "{sum}"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "diagnosis.tumor_classification",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "Primary"
                         }
                     ]
                 }
