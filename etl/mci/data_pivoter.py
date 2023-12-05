@@ -65,14 +65,10 @@ def pivot_json_data_to_xlsx(input_path: str, output_path: str) -> None:
             _logger.warning('File extension not JSON as expected')
     else:
         _logger.info('Finding all JSON files within %s', input_path)
-        dir_paths: list[str] = [input_path]
-        while dir_paths:
-            dir_path: str
-            dir_names: list[str]
-            file_names: list[str]
-            for dir_path, dir_names, file_names in os.walk(dir_paths.pop()):
-                source_paths.extend(os.path.join(dir_path, f) for f in file_names if f.endswith('.json'))
-                dir_paths.extend(os.path.join(dir_path, d) for d in dir_names)
+        dir_path: str
+        file_names: list[str]
+        for dir_path, _, file_names in os.walk(input_path):
+            source_paths.extend(os.path.join(dir_path, f) for f in file_names if f.endswith('.json'))
 
     _logger.info('Converting %d file(s) to XLSX from %s', len(source_paths), input_path)
 
@@ -133,7 +129,7 @@ def pivot_json_data_to_xlsx(input_path: str, output_path: str) -> None:
     _logger.info('Saving data to %s', output_path)
 
     # build composite table from all form fields for each subject and save to first sheet
-    _logger.info('Saving full-width joined records to fist sheet')
+    _logger.info('Saving full-width joined records to first sheet')
     tbl_all: any = None
     for all_form_dict_list in all_form_dict_lists.values():
         tbl: any = petl.fromdicts(all_form_dict_list)
