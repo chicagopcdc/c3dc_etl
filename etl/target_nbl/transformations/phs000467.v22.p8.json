@@ -1,5 +1,5 @@
 {
-    "version": "20231122.1",
+    "version": "20231227.1",
     "transformations": [
         {
             "name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
@@ -115,6 +115,17 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
@@ -181,17 +192,6 @@
                     ]
                 },
                 {
-                    "output_field": "reference_file.dcf_indexd_guid",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "{uuid}"
-                        }
-                    ]
-                },
-                {
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
@@ -231,7 +231,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 96483
+                            "new_value": 97665
                         }
                     ]
                 },
@@ -242,7 +242,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7d6fc61a7bfecb517b0fa653d5437c12"
+                            "new_value": "b0adc5c90b7f263e46977fc4dc0e0ae8"
                         }
                     ]
                 },
@@ -308,7 +308,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 197376
+                            "new_value": 197678
                         }
                     ]
                 },
@@ -319,7 +319,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "75db2b7dc80e594aa98e78041d3132ec"
+                            "new_value": "3e4d4d378732655a021a4bb13cad3d7c"
                         }
                     ]
                 },
@@ -374,7 +374,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 117208
+                            "new_value": 116645
                         }
                     ]
                 },
@@ -385,7 +385,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "6a07ceb0682fd4a57c58474c03b840b4"
+                            "new_value": "3a7b53798f5648260a5a7361908e731a"
                         }
                     ]
                 },
@@ -396,7 +396,18 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                            "new_value": "s3://cds-447-target-c3dc/target-nbl/TARGET_NBL_ClinicalData_Discovery_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/92192aee-a4e7-11ee-b42e-1ed67ff2713c"
                         }
                     ]
                 },
@@ -440,7 +451,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 94351
+                            "new_value": 93809
                         }
                     ]
                 },
@@ -451,7 +462,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "801bc7a884677b328cdff0757f05acc9"
+                            "new_value": "1bfb52b96cd485f3fdf9d328d4d8f1ee"
                         }
                     ]
                 },
@@ -462,7 +473,18 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                            "new_value": "s3://cds-447-target-c3dc/target-nbl/TARGET_NBL_ClinicalData_Validation_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/92192b84-a4e7-11ee-b42f-1ed67ff2713c"
                         }
                     ]
                 },
@@ -1282,6 +1304,17 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
@@ -1348,17 +1381,6 @@
                     ]
                 },
                 {
-                    "output_field": "reference_file.dcf_indexd_guid",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "{uuid}"
-                        }
-                    ]
-                },
-                {
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
@@ -1398,7 +1420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 96483
+                            "new_value": 97665
                         }
                     ]
                 },
@@ -1409,7 +1431,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7d6fc61a7bfecb517b0fa653d5437c12"
+                            "new_value": "b0adc5c90b7f263e46977fc4dc0e0ae8"
                         }
                     ]
                 },
@@ -1475,7 +1497,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 197376
+                            "new_value": 197678
                         }
                     ]
                 },
@@ -1486,7 +1508,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "75db2b7dc80e594aa98e78041d3132ec"
+                            "new_value": "3e4d4d378732655a021a4bb13cad3d7c"
                         }
                     ]
                 },
@@ -1541,7 +1563,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 117208
+                            "new_value": 116645
                         }
                     ]
                 },
@@ -1552,7 +1574,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "6a07ceb0682fd4a57c58474c03b840b4"
+                            "new_value": "3a7b53798f5648260a5a7361908e731a"
                         }
                     ]
                 },
@@ -1563,7 +1585,18 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                            "new_value": "s3://cds-447-target-c3dc/target-nbl/TARGET_NBL_ClinicalData_Discovery_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/92192aee-a4e7-11ee-b42e-1ed67ff2713c"
                         }
                     ]
                 },
@@ -1607,7 +1640,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 94351
+                            "new_value": 93809
                         }
                     ]
                 },
@@ -1618,7 +1651,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "801bc7a884677b328cdff0757f05acc9"
+                            "new_value": "1bfb52b96cd485f3fdf9d328d4d8f1ee"
                         }
                     ]
                 },
@@ -1629,7 +1662,18 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FTARGET%20clinical%20data&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
+                            "new_value": "s3://cds-447-target-c3dc/target-nbl/TARGET_NBL_ClinicalData_Validation_20220125.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/92192b84-a4e7-11ee-b42f-1ed67ff2713c"
                         }
                     ]
                 },
