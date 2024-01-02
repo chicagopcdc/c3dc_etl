@@ -574,6 +574,8 @@ class C3dcEtl:
             _logger.critical(participant)
             raise RuntimeError(msg)
 
+        dcf_indexd_guid: str = source_file_manifest.get('guid')
+
         source_file_name: str = f'{usi}.json'
         source_file_parent_path: str = transformation.get('source_file_path')
         source_file_path: str = os.path.join(source_file_parent_path, source_file_name)
@@ -590,6 +592,7 @@ class C3dcEtl:
         url: str = source_file_manifest.get('url', '')
 
         output_field_new_values: dict[str, any] = {
+            'reference_file.dcf_indexd_guid': dcf_indexd_guid,
             'reference_file.file_name': source_file_name,
             'reference_file.file_type': 'json',
             'reference_file.file_category': 'input source data',
