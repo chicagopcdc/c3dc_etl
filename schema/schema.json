@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/2023-11-22",
+  "$id": "https://datascience.cancer.gov/schemas/2023-12-27",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -26,9 +26,9 @@
       "properties": {
         "diagnosis_id": {
           "type": "string",
-          "description": "A unique sequence of alphanumeric characters used to identify the participant diagnosis in the investigation or study, which is used for linking metadata.",
+          "description": "sequence of characters used to uniquely identify, name, or characterize the presence and nature of a disease or condition.",
           "cde": [
-            "caDSR:2534569"
+            "caDSR:14540952"
           ]
         },
         "diagnosis_classification": {
@@ -899,6 +899,7 @@
             "9362/3 : Pineoblastoma",
             "9363/0 : Melanotic neuroectodermal tumor",
             "9260/3 : Ewing sarcoma",
+            "9364/3 : Ewing sarcoma",
             "9365/3 : Askin tumor",
             "9370/0 : Benign notochordal cell tumor",
             "9370/3 : Chordoma, NOS",
@@ -1272,9 +1273,9 @@
         },
         "anatomic_site": {
           "type": "array",
-          "description": "The location within the body where cancer begins as captured in the topography codes of the International Classification of Diseases for Oncology, 3rd Edition (ICD-O-3).",
+          "description": "The location within the body as captured in the topography label of the International Classification of Diseases for Oncology, 3rd Edition (ICD-O-3).",
           "cde": [
-            "caDSR:11341616"
+            "caDSR:14156279"
           ],
           "uniqueItems": true,
           "items": {
@@ -1728,9 +1729,9 @@
         },
         "tumor_grade": {
           "type": "string",
-          "description": "Numeric value to express the degree of abnormality of cancer cells, a measure of differentiation and aggressiveness.",
+          "description": "A text term to express the degree of abnormality of cancer cells as a measure of differentiation and aggressiveness.",
           "cde": [
-            "caDSR:2785839"
+            "caDSR:11325685"
           ],
           "enum": [
             "G1",
@@ -1860,9 +1861,9 @@
       "properties": {
         "participant_id": {
           "type": "string",
-          "description": "A unique sequence of alphanumeric characters used to identify the participant, in the investigation or study, of the specimen at it's point of origin.",
+          "description": "A sequence of letters, numbers, or characters that uniquely identifies the subject who has taken part in the investigation or research study.",
           "cde": [
-            "caDSR:6867052"
+            "caDSR:12220014"
           ]
         },
         "race": {
@@ -1925,9 +1926,9 @@
         },
         "alternate_participant_id": {
           "type": "string",
-          "description": "A synonymous or alternate ID for a participant that is stored in another study or repository.",
+          "description": "An alternate sequence of letters, numbers, or characters that uniquely identifies the subject who has taken part in the investigation or research study.",
           "cde": [
-            "caDSR:6867052"
+            "caDSR:14528097"
           ]
         },
         "diagnosis.diagnosis_id": {
@@ -2143,9 +2144,9 @@
         },
         "anatomic_site": {
           "type": "array",
-          "description": "The location within the body where cancer begins as captured in the topography codes of the International Classification of Diseases for Oncology, 3rd Edition (ICD-O-3).",
+          "description": "The location within the body as captured in the topography label of the International Classification of Diseases for Oncology, 3rd Edition (ICD-O-3).",
           "cde": [
-            "caDSR:11341616"
+            "caDSR:14156279"
           ],
           "uniqueItems": true,
           "items": {
@@ -3382,6 +3383,7 @@
             "9362/3 : Pineoblastoma",
             "9363/0 : Melanotic neuroectodermal tumor",
             "9260/3 : Ewing sarcoma",
+            "9364/3 : Ewing sarcoma",
             "9365/3 : Askin tumor",
             "9370/0 : Benign notochordal cell tumor",
             "9370/3 : Chordoma, NOS",
@@ -3769,28 +3771,29 @@
         },
         "last_known_disease_status": {
           "type": "string",
-          "description": "Text term that describes the last known state or condition of an individual's neoplasm.",
+          "description": "The most recently documented condition or state of an individual's disease.",
           "cde": [
-            "caDSR:5424231"
+            "caDSR:12447172"
           ],
           "enum": [
             "Biochemical evidence of disease without structural correlate",
-            "Distant met recurrence/progression",
-            "Loco-regional recurrence/progression",
-            "Never Tumor Free",
-            "New Tumor Event (remission/relapse)",
-            "Tumor free",
-            "Tumor Free at Follow-up",
+            "Distant Metastasis",
+            "Localized Disease",
+            "New Tumor Event",
+            "Not Allowed To Collect",
+            "Not Applicable",
+            "Not Reported",
+            "Regional Disease",
+            "Tumor Free",
             "Unknown",
-            "Unknown tumor status",
-            "With tumor"
+            "With Tumor"
           ]
         },
         "age_at_last_known_disease_status": {
           "type": "integer",
-          "description": "Age at the time of last known disease status expressed in number of days since birth.",
+          "description": "Subject Age at Last Known Disease Status Day Count",
           "cde": [
-            "caDSR:10169253"
+            "caDSR:14589579"
           ],
           "maximum": 54750
         },
@@ -3878,9 +3881,9 @@
         },
         "tumor_grade": {
           "type": "string",
-          "description": "Numeric value to express the degree of abnormality of cancer cells, a measure of differentiation and aggressiveness.",
+          "description": "A text term to express the degree of abnormality of cancer cells as a measure of differentiation and aggressiveness.",
           "cde": [
-            "caDSR:2785839"
+            "caDSR:11325685"
           ],
           "enum": [
             "G1",
@@ -4017,9 +4020,9 @@
       "properties": {
         "study_id": {
           "type": "string",
-          "description": "A unique identifier for a study.",
+          "description": "A sequence of characters used to identify, name, or characterize a pediatric study.",
           "cde": [
-            "caDSR:6380045"
+            "caDSR:12960571"
           ]
         },
         "phs_accession": {
@@ -4031,29 +4034,31 @@
         },
         "acl": {
           "type": "string",
-          "description": "Specifies whether the data in a repository is open access or controlled access.",
+          "description": "A free text field used to document whether the data in a repository is open access or controlled access.",
           "cde": [
-            "NCIt:C175887"
+            "caDSR:11555664"
           ]
         },
         "study_name": {
           "type": "string",
-          "description": "The name applied to an investigational project, also known as Study Title.",
+          "description": "The narrative title used as a textual label for a research data collection.",
           "cde": [
-            "caDSR:3443999"
+            "caDSR:11459810"
           ]
         },
         "study_short_title": {
           "type": "string",
-          "description": "The succinct version of the study title if it exists.",
+          "description": "The acronym or abbreviated form of the title for a research data collection.",
           "cde": [
-            "caDSR:3443999"
+            "caDSR:11459812"
           ]
         },
         "study_acronym": {
           "type": "string",
-          "description": "A one word acronym to represent the study.",
-          "cde": []
+          "description": "The acronym or abbreviated form of the title for a research data collection.",
+          "cde": [
+            "caDSR:11459812"
+          ]
         },
         "study_description": {
           "type": "string",
@@ -4064,15 +4069,17 @@
         },
         "consent": {
           "type": "string",
-          "description": "The human readable value of the consent group as designated by dbGaP, examples GRU, HMB, IRB, NPU, etc.",
+          "description": "Words which describe a set of study participants who have signed the same consent agreement and that will be included in the dbGaP repository.",
           "cde": [
-            "caDSR:7218861"
+            "caDSR:14534329"
           ]
         },
         "consent_number": {
           "type": "integer",
-          "description": "The numeric value of the consent group as designated by dbGaP full accession identifier, phs######.v#.p#.c#.",
-          "cde": []
+          "description": "A numeral or string of numerals used to identify the set of study participants who have signed the same consent agreement and that will be included in the dbGaP repository.",
+          "cde": [
+            "caDSR:14534330"
+          ]
         },
         "external_url": {
           "type": "string",

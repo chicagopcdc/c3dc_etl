@@ -10,6 +10,7 @@
 .vscode/settings.json
 
 # files by extension
+*.bak
 *.csv
 *.html
 *.ini
