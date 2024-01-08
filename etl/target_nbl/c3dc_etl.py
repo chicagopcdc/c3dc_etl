@@ -906,10 +906,11 @@ class C3dcEtl:
         self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
 
         _logger.info(
-            '1 study, %d diagnosis, %d survival, %d participant records created for transformation %s',
+            '1 study, %d diagnosis, %d survival, %d participant, %d reference file records built for transformation %s',
             len(nodes['diagnoses']),
             len(nodes['survivals']),
             len(nodes['participants']),
+            len(nodes['reference_files']),
             transformation.get('name')
         )
 
