@@ -174,7 +174,8 @@ class C3dcEtl:
                     if source_field == '[string_literal]':
                         continue
                     if source_field.startswith('[') and source_field.endswith(']'):
-                        # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
+                        # composite/derived source field, strip extra spaces; note csv
+                        # module parses "field1, field2" into ["field1", " field2"]
                         sub_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
                         sub_field: str
                         for sub_field in sub_fields:
@@ -331,21 +332,31 @@ class C3dcEtl:
                         raise RuntimeError(msg)
                     rec[source_field_name] = obj.get(source_field_name)
 
-                # get properties such as DEMOGRAPHY=>DM_BRTHDAT that are defined within form
+                # get properties such as DEMOGRAPHY=>DM_BRTHDAT that are defined within forms
+                form_id: str
                 data_fields: list[dict[str, any]]
-                for data_fields in [f.get('data', {}) for f in obj.get('forms', [])]:
+                for form_id, data_fields in {f.get('form_id'):f.get('data', {}) for f in obj.get('forms', [])}.items():
                     data_field: dict[str, any]
                     for data_field in [
-                        d for d in data_fields if d.get('form_field_id') in self._source_field_output_types
+                        d for d in data_fields
+                            if d.get('form_field_id') in self._source_field_output_types or
+                                f'{form_id}.{d.get("form_field_id")}' in self._source_field_output_types
                     ]:
                         source_field_name = data_field.get('form_field_id')
+                        form_id_field_id = f'{form_id}.{source_field_name}'
+                        # use the full form-qualified name if specified in mapping (e.g. to avoid dupes)
+                        if form_id_field_id in self._source_field_output_types:
+                            source_field_name = form_id_field_id
                         source_field_output_type = self._source_field_output_types[source_field_name]
 
                         if source_field_output_type == 'array':
                             rec[source_field_name] = rec.get(source_field_name, [])
                             rec[source_field_name].append(data_field.get('value'))
                         elif source_field_name in rec:
-                            msg = f'Duplicate source field "{source_field_name}" found in file "{source_file_name}"'
+                            msg = (
+                                f'Duplicate source field "{source_field_name}" ({form_id_field_id}) ' +
+                                f'found in file "{source_file_name}"'
+                            )
                             _logger.fatal(msg)
                             raise RuntimeError(msg)
                         else:
@@ -381,6 +392,13 @@ class C3dcEtl:
         if 'properties' not in self._json_schema_nodes[node_type]:
             raise RuntimeError(f'"properties" not found in JSON schema node for type "{node_type}"')
         return self._json_schema_nodes[node_type]['properties']
+
+    def _get_json_schema_node_required_properties(self, node_type: C3dcEtlModelNode) -> dict[str, any]:
+        """ Get required properties for specified node in JSON schema  """
+        node_properties: dict[str, any] = self._get_json_schema_node_properties(node_type)
+        return {
+            k:v for k,v in node_properties.items() if self._is_json_schema_node_property_required(f'{node_type}.{k}')
+        }
 
     def _is_json_schema_node_property_required(self, node_type_dot_property_name: str) -> bool:
         """ Determine if JSON schema property for specified output field ('node_name.field_name') is required """
@@ -885,6 +903,8 @@ class C3dcEtl:
                 source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
                 source_field_allowed_values[source_field].extend(allowed_values)
 
+        output_source_field_map: dict[str, str] = {}
+
         # if there are multiple type group indexes (multiple records are mapped) then default
         # values to base ("*") values first and then overwrite individual mapped fields for
         # each mapping sub-group specified for that type group index
@@ -893,8 +913,14 @@ class C3dcEtl:
             output_record: dict[str, any] = {}
             output_record.update(base_record)
             for mapping in mappings:
+                output_field: str = mapping.get('output_field')
+                output_field_property: str = output_field[len(f'{node_type}.'):]
+
                 source_field: str = mapping.get('source_field')
                 source_value: str = source_record.get(source_field, None)
+
+                if output_field not in output_source_field_map:
+                    output_source_field_map[output_field] = source_field
 
                 # check source value against all of this source field's mapped replacement values
                 # in case there are multiple output field mappings for this source field
@@ -922,7 +948,7 @@ class C3dcEtl:
                         source_field,
                         source_record.get('source_file_name')
                     )
-                    return []
+                    continue
 
                 # check source value against mapped replacement values for this particular output field mapping
                 replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
@@ -952,27 +978,41 @@ class C3dcEtl:
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
-                output_field: str = mapping.get('output_field')
-
-                output_field_property: str = output_field[len(f'{node_type}.'):]
                 output_record[output_field_property] = output_value if output_value is not None else source_value
-                if (
-                    not output_record[output_field_property]
-                    and
-                    self._is_json_schema_node_property_required(output_field)
-                ):
+
+            # verify that record is valid and contains all required properties
+            record_valid: bool = True
+            required_properties: dict[str, any] = self._get_json_schema_node_required_properties(node_type)
+            required_property: str
+            for required_property in required_properties:
+                schema_field: str = f'{node_type}.{required_property}'
+                source_field: str = output_source_field_map[schema_field]
+                if output_record.get(required_property, None) in ('', None):
+                    record_valid = False
                     _logger.warning(
                         'Required output field "%s" (source field "%s") has null value for source record file "%s"',
-                        output_field,
+                        schema_field,
                         source_field,
                         source_record.get("source_file_name")
                     )
-                    return []
+                elif required_property.startswith('age_') and output_record.get(required_property, None) == 0:
+                    record_valid = False
+                    _logger.warning(
+                        'Required output field "%s" (source field "%s") has invalid value for source record file "%s"',
+                        schema_field,
+                        source_field,
+                        source_record.get("source_file_name")
+                    )
+
+            if not record_valid:
+                # record failed validation, move on to next type group index
+                continue
 
             if output_record:
                 output_records.append(output_record)
             if type_group_index == 0:
                 base_record.update(output_record)
+
         return output_records
 
     def _build_node(

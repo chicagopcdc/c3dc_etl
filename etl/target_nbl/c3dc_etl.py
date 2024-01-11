@@ -342,6 +342,13 @@ class C3dcEtl:
             raise RuntimeError(f'"properties" not found in JSON schema node for type "{node_type}"')
         return self._json_schema_nodes[node_type]['properties']
 
+    def _get_json_schema_node_required_properties(self, node_type: C3dcEtlModelNode) -> dict[str, any]:
+        """ Get required properties for specified node in JSON schema  """
+        node_properties: dict[str, any] = self._get_json_schema_node_properties(node_type)
+        return {
+            k:v for k,v in node_properties.items() if self._is_json_schema_node_property_required(f'{node_type}.{k}')
+        }
+
     def _is_json_schema_node_property_required(self, node_type_dot_property_name: str) -> bool:
         """ Determine if JSON schema property for specified output field ('node_name.field_name') is required """
         if '.' not in node_type_dot_property_name:
@@ -671,7 +678,7 @@ class C3dcEtl:
         source_record = source_record or {}
         output_records: list[dict[str, any]] = []
 
-        type_group_index_mappings: dict[int, list[dict[str, any]]] = self._get_type_group_index_mappings(
+        type_group_index_mappings: dict[str, list[dict[str, any]]] = self._get_type_group_index_mappings(
             transformation,
             node_type
         )
@@ -683,9 +690,11 @@ class C3dcEtl:
         # 'First Event' => survival.first_event, survival.event_free_survival_status
         # so pre-load all allowed values for each source field to determine when a
         # source record contains invalid/unmapped values and should be skipped/ignored
-        mapping: dict[str, any]
         allowed_values: list[str]
         source_field_allowed_values: dict[str, list[str]] = {}
+        type_group_index: str
+        mappings: list[dict[str, any]]
+        mapping: dict[str, any]
         for type_group_index, mappings in type_group_index_mappings.items():
             for mapping in mappings:
                 source_field: str = mapping.get('source_field')
@@ -700,6 +709,8 @@ class C3dcEtl:
                 source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
                 source_field_allowed_values[source_field].extend(allowed_values)
 
+        output_source_field_map: dict[str, str] = {}
+
         # if there are multiple type group indexes (multiple records are mapped) then default
         # values to base ("*") values first and then overwrite individual mapped fields for
         # each mapping sub-group specified for that type group index
@@ -708,8 +719,14 @@ class C3dcEtl:
             output_record: dict[str, any] = {}
             output_record.update(base_record)
             for mapping in mappings:
+                output_field: str = mapping.get('output_field')
+                output_field_property: str = output_field[len(f'{node_type}.'):]
+
                 source_field: str = mapping.get('source_field')
                 source_value: str = source_record.get(source_field, None)
+
+                if output_field not in output_source_field_map:
+                    output_source_field_map[output_field] = source_field
 
                 # check source value against all of this source field's mapped replacement values
                 # in case there are multiple output field mappings for this source field
@@ -737,7 +754,7 @@ class C3dcEtl:
                         source_field,
                         source_record.get('source_file_row_num')
                     )
-                    return []
+                    continue
 
                 # check source value against mapped replacement values for this particular output field mapping
                 replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
@@ -764,31 +781,43 @@ class C3dcEtl:
                 )
                 if allowed_values and not source_value_allowed:
                     _logger.info('value "%s" not allowed for source field "%s"', source_value, source_field)
-                    _logger.info(allowed_values)
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
-                output_field: str = mapping.get('output_field')
-
-                output_field_property: str = output_field[len(f'{node_type}.'):]
                 output_record[output_field_property] = output_value if output_value is not None else source_value
-                if (
-                    not output_record[output_field_property]
-                    and
-                    self._is_json_schema_node_property_required(output_field)
-                ):
+
+            # verify that record is valid and contains all required properties
+            record_valid: bool = True
+            required_properties: dict[str, any] = self._get_json_schema_node_required_properties(node_type)
+            required_property: str
+            for required_property in required_properties:
+                schema_field: str = f'{node_type}.{required_property}'
+                if output_record.get(required_property, None) in ('', None):
+                    record_valid = False
                     _logger.warning(
-                        'Required output field "%s" (source field "%s") has null value for source record "%s"',
-                        output_field,
+                        'Required output field "%s" (source field "%s") has null value for source record file "%s"',
+                        schema_field,
                         source_field,
                         source_record.get("source_file_row_num")
                     )
-                    return []
+                elif required_property.startswith('age_') and output_record.get(required_property, None) == 0:
+                    record_valid = False
+                    _logger.warning(
+                        'Required output field "%s" (source field "%s") has invalid value for source record file "%s"',
+                        schema_field,
+                        source_field,
+                        source_record.get("source_file_row_num")
+                    )
+
+            if not record_valid:
+                # record failed validation, move on to next type group index
+                continue
 
             if output_record:
                 output_records.append(output_record)
             if type_group_index == 0:
                 base_record.update(output_record)
+
         return output_records
 
     def _build_node(
