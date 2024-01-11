@@ -194,12 +194,18 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
         unpivoted_mapping['source_field']: str = pivoted_mapping['Source Variable Name']
         unpivoted_mapping['type_group_index']: str = str(pivoted_mapping['Type Group Index'])
         unpivoted_mapping['replacement_values']: list[dict[str, any]] = unpivoted_mapping.get('replacement_values', [])
-        unpivoted_mapping['replacement_values'].append(
-            {
-                'old_value': json.loads(pivoted_mapping['Source Permissible Values Term'] or '""'),
-                'new_value': json.loads(pivoted_mapping['Target Permissible Values Term'] or '""')
-            }
-        )
+        try:
+            unpivoted_mapping['replacement_values'].append(
+                {
+                    'old_value': json.loads(pivoted_mapping['Source Permissible Values Term'] or '""'),
+                    'new_value': json.loads(pivoted_mapping['Target Permissible Values Term'] or '""')
+                }
+            )
+        except json.decoder.JSONDecodeError as err:
+            _logger.error('Error loading replacement values while unpivoting mapping:')
+            _logger.error(err)
+            _logger.error(pivoted_mapping)
+            raise
         return unpivoted_mapping
 
 def print_usage() -> None:
