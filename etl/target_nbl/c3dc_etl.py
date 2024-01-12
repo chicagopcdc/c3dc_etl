@@ -800,14 +800,6 @@ class C3dcEtl:
                         source_field,
                         source_record.get("source_file_row_num")
                     )
-                elif required_property.startswith('age_') and output_record.get(required_property, None) == 0:
-                    record_valid = False
-                    _logger.warning(
-                        'Required output field "%s" (source field "%s") has invalid value for source record file "%s"',
-                        schema_field,
-                        source_field,
-                        source_record.get("source_file_row_num")
-                    )
 
             if not record_valid:
                 # record failed validation, move on to next type group index
