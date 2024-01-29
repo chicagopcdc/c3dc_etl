@@ -74,6 +74,7 @@ class C3dcEtl:
         self._json_schema_url: str = config.get('JSON_SCHEMA_URL')
         self._json_schema: dict[str, any] = {}
         self._json_schema_nodes: dict[str, any] = {}
+        self._json_schema_property_enum_values: dict[str, list[str]] = {}
         self._json_etl_data_sets: dict[str, any] = {}
         self._raw_etl_data_objects: dict[str, dict[str, list[dict[str, any]]]] = {}
         self._random: random.Random = random.Random()
@@ -139,6 +140,19 @@ class C3dcEtl:
         except (TypeError, ValueError):
             return False
         return True
+
+    @staticmethod
+    def is_allowed_value(value: any, allowed_values: set[any]) -> bool:
+        """ Determine whether specified value is contained in or subset of specified allowed values """
+        return (
+            allowed_values
+            and
+            (
+                (not isinstance(value, (list, set, tuple)) and value in allowed_values)
+                or
+                (isinstance(value, (list, set, tuple)) and set(value or {}).issubset(allowed_values))
+            )
+        )
 
     def load_transformations(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON transformations from configured URLs and merge with local config """
@@ -222,6 +236,22 @@ class C3dcEtl:
 
         # cache schema objects matching C3DC model nodes
         self._json_schema_nodes = {k:v for k,v in self._json_schema['$defs'].items() if C3dcEtlModelNode.get(k)}
+
+        # cache allowed values for enum properties
+        self._json_schema_property_enum_values.clear()
+        node_type: str
+        for node_type in self._json_schema_nodes:
+            enum_properties: dict[str, any] = {
+                k:v for k,v in self._get_json_schema_node_properties(node_type).items()
+                    if 'enum' in v or 'enum' in v.get('items', {})
+            }
+            prop_name: str
+            prop_props: dict[str, any]
+            for prop_name, prop_props in enum_properties.items():
+                enum_values: list[str] = prop_props.get('enum', None)
+                enum_values = prop_props.get('items', {}).get('enum', []) if enum_values is None else enum_values
+                self._json_schema_property_enum_values[f'{node_type}.{prop_name}'] = enum_values
+
         return self._json_schema
 
     def validate_json_etl_data(self) -> None:
@@ -616,6 +646,7 @@ class C3dcEtl:
             'reference_file.file_category': 'input source data',
             'reference_file.file_size': file_size,
             'reference_file.md5sum': md5sum,
+            'reference_file.file_description': 'JSON file containing input source data',
             'reference_file.reference_file_url': url
         }
 
@@ -862,6 +893,24 @@ class C3dcEtl:
         transformation['_type_group_index_mappings'][node_type] = type_group_index_mappings
         return type_group_index_mappings
 
+    def _get_allowed_values(self, mapping: dict[str, any]) -> set[str]:
+        """ Get allowed values for specified mapping """
+        replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
+        allowed_values = set(
+            r.get('old_value') for r in replacement_entries
+                if r.get('old_value') not in ('+', '*', None) and r.get('new_value')
+        )
+        # don't include default value in allowed values unless output property is enum
+        default_value: any = mapping.get('default_value')
+        if default_value is not None and mapping.get('output_field') in self._json_schema_property_enum_values:
+            if not isinstance(default_value, (list, set, tuple)):
+                default_value = set([default_value])
+            allowed_values.update(default_value)
+        # empty string ("") and None are treated equally for matching/comparison purposes
+        if '' in allowed_values:
+            allowed_values.add(None)
+        return allowed_values
+
     def _transform_record_default(
         self,
         transformation: dict[str, any],
@@ -884,7 +933,7 @@ class C3dcEtl:
         # 'First Event' => survival.first_event, survival.event_free_survival_status
         # so pre-load all allowed values for each source field to determine when a
         # source record contains invalid/unmapped values and should be skipped/ignored
-        allowed_values: list[str]
+        allowed_values: set[str]
         source_field_allowed_values: dict[str, list[str]] = {}
         type_group_index: str
         mappings: list[dict[str, any]]
@@ -892,16 +941,8 @@ class C3dcEtl:
         for type_group_index, mappings in type_group_index_mappings.items():
             for mapping in mappings:
                 source_field: str = mapping.get('source_field')
-                replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
-                allowed_values = [
-                    r['old_value'] for r in replacement_entries
-                        if r.get('old_value') not in ('+', '*', None) and r.get('new_value')
-                ]
-                # empty string ("") and None are treated equally for matching/comparision purposes
-                if '' in allowed_values:
-                    allowed_values.append(None)
                 source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
-                source_field_allowed_values[source_field].extend(allowed_values)
+                source_field_allowed_values[source_field].extend(self._get_allowed_values(mapping))
 
         output_source_field_map: dict[str, str] = {}
 
@@ -916,28 +957,20 @@ class C3dcEtl:
                 output_field: str = mapping.get('output_field')
                 output_field_property: str = output_field[len(f'{node_type}.'):]
 
+                default_value: any = mapping.get('default_value')
+
                 source_field: str = mapping.get('source_field')
                 source_value: str = source_record.get(source_field, None)
+                if source_value in ('', None) and default_value is not None:
+                    source_value = default_value
 
                 if output_field not in output_source_field_map:
                     output_source_field_map[output_field] = source_field
 
                 # check source value against all of this source field's mapped replacement values
                 # in case there are multiple output field mappings for this source field
-                allowed_values = source_field_allowed_values.get(source_field, [])
-                source_value_allowed: bool = (
-                    allowed_values
-                    and
-                    (
-                        (not isinstance(source_value, (list, set, tuple)) and source_value in allowed_values)
-                        or
-                        (
-                            isinstance(source_value, (list, set, tuple))
-                            and
-                            set(source_value or {}).issubset(set(allowed_values))
-                        )
-                    )
-                )
+                allowed_values = source_field_allowed_values.get(source_field, set())
+                source_value_allowed: bool = C3dcEtl.is_allowed_value(source_value, allowed_values)
                 if allowed_values and not source_value_allowed:
                     _logger.warning(
                         (
@@ -951,33 +984,14 @@ class C3dcEtl:
                     continue
 
                 # check source value against mapped replacement values for this particular output field mapping
-                replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
-                allowed_values = [
-                    r['old_value'] for r in replacement_entries
-                        if r.get('old_value') not in ('+', '*', None) and r.get('new_value')
-                ]
-
-                # empty string ("") and None are treated equally for matching/comparision purposes
-                if '' in allowed_values:
-                    allowed_values.append(None)
-                source_value_allowed = (
-                    allowed_values
-                    and
-                    (
-                        (not isinstance(source_value, (list, set, tuple)) and source_value in allowed_values)
-                        or
-                        (
-                            isinstance(source_value, (list, set, tuple))
-                            and
-                            set(source_value or {}).issubset(set(allowed_values))
-                        )
-                    )
-                )
+                allowed_values = self._get_allowed_values(mapping)
+                source_value_allowed = C3dcEtl.is_allowed_value(source_value, allowed_values)
                 if allowed_values and not source_value_allowed:
                     _logger.info('value "%s" not allowed for source field "%s"', source_value, source_field)
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
+
                 output_record[output_field_property] = output_value if output_value is not None else source_value
 
             # verify that record is valid and contains all required properties
@@ -986,13 +1000,12 @@ class C3dcEtl:
             required_property: str
             for required_property in required_properties:
                 schema_field: str = f'{node_type}.{required_property}'
-                source_field: str = output_source_field_map[schema_field]
                 if output_record.get(required_property, None) in ('', None):
                     record_valid = False
                     _logger.warning(
                         'Required output field "%s" (source field "%s") has null value for source record file "%s"',
                         schema_field,
-                        source_field,
+                        output_source_field_map.get(schema_field, '*not mapped*'),
                         source_record.get("source_file_name")
                     )
 
