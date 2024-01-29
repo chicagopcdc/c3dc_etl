@@ -113,6 +113,27 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
                     if not unpivoted_mapping:
                         continue
 
+                    # check for consistent default values for this output field's mappings
+                    if unpivoted_mapping['default_value'] is not None:
+                        existing_default_values: set[any] = set()
+                        default_value: any
+                        for default_value in [
+                            m['default_value'] for m in unpivoted_mappings
+                                if m['output_field'] == unpivoted_mapping['output_field'] and
+                                    m['default_value'] is not None
+                        ]:
+                            if not isinstance(default_value, (list, set, tuple)):
+                                default_value = set([default_value])
+                            existing_default_values.update(default_value)
+                        if isinstance(unpivoted_mapping['default_value'], (list, set, tuple)):
+                            existing_default_values.update(unpivoted_mapping['default_value'])
+                        else:
+                            existing_default_values.add(unpivoted_mapping['default_value'])
+                        if len(existing_default_values) > 1:
+                            raise RuntimeError(
+                                f'Invalid mapping for output field "{unpivoted_mapping["output_field"]}", ' +
+                                f'multiple default values specified: {existing_default_values}')
+
                     # check for existing unpivoted mapping for this pivoted mapping's output field and type
                     # group, if found then this field mapping has multiple replacement values so append
                     existing_unpivoted_mappings: list[dict[str, any]] = [
@@ -187,12 +208,14 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
                 'Mapping has invalid "Target Variable Name", skipping: "%s"',
                 pivoted_mapping.get('Target Variable Name', '')
             )
+
             return {}
 
         unpivoted_mapping: dict[str, any] = {}
         unpivoted_mapping['output_field']: str = pivoted_mapping['Target Variable Name']
         unpivoted_mapping['source_field']: str = pivoted_mapping['Source Variable Name']
         unpivoted_mapping['type_group_index']: str = str(pivoted_mapping['Type Group Index'])
+        unpivoted_mapping['default_value']: any = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
         unpivoted_mapping['replacement_values']: list[dict[str, any]] = unpivoted_mapping.get('replacement_values', [])
         try:
             unpivoted_mapping['replacement_values'].append(
