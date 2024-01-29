@@ -1,5 +1,5 @@
 {
-    "version": "20240112.1",
+    "version": "20240125.1",
     "transformations": [
         {
             "name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
@@ -8,6 +8,7 @@
                     "output_field": "study.study_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -19,6 +20,7 @@
                     "output_field": "study.phs_accession",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -30,6 +32,7 @@
                     "output_field": "study.acl",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -41,6 +44,7 @@
                     "output_field": "study.study_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -52,6 +56,7 @@
                     "output_field": "study.study_short_title",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -63,6 +68,7 @@
                     "output_field": "study.study_acronym",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -74,6 +80,7 @@
                     "output_field": "study.consent",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -85,6 +92,7 @@
                     "output_field": "study.consent_number",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -93,9 +101,22 @@
                     ]
                 },
                 {
+                    "output_field": "study.external_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000467.v22.p8"
+                        }
+                    ]
+                },
+                {
                     "output_field": "study.study_description",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -107,6 +128,7 @@
                     "output_field": "reference_file.reference_file_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -118,6 +140,7 @@
                     "output_field": "reference_file.dcf_indexd_guid",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -129,6 +152,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -140,6 +164,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -151,6 +176,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -162,10 +188,11 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 47519
+                            "new_value": 48377
                         }
                     ]
                 },
@@ -173,10 +200,23 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "4d243a37b05bf63af15440d4b669a1f8"
+                            "new_value": "19fbb6f2c24a013df0d7bec73d78094c"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Python script implementation of ETL process"
                         }
                     ]
                 },
@@ -184,6 +224,7 @@
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -195,6 +236,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -206,6 +248,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -217,6 +260,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -228,10 +272,11 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 97665
+                            "new_value": 112867
                         }
                     ]
                 },
@@ -239,10 +284,11 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "c8cf8967a95e2da0f5ed37a258f37d66"
+                            "new_value": "4686a7285996285e6170f0820a5e1b4c"
                         }
                     ]
                 },
@@ -250,10 +296,11 @@
                     "output_field": "reference_file.file_description",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
                         }
                     ]
                 },
@@ -261,6 +308,7 @@
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -272,6 +320,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -283,6 +332,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -294,6 +344,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -305,10 +356,11 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 198098
+                            "new_value": 196645
                         }
                     ]
                 },
@@ -316,6 +368,7 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -324,9 +377,22 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON schema representation of YAML C3DC model schema"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -338,6 +404,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -349,6 +416,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -360,6 +428,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -371,6 +440,7 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -382,6 +452,7 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -390,9 +461,22 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -404,6 +488,7 @@
                     "output_field": "reference_file.dcf_indexd_guid",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -415,6 +500,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -426,6 +512,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -437,6 +524,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -448,6 +536,7 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -459,6 +548,7 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -467,9 +557,22 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -481,6 +584,7 @@
                     "output_field": "reference_file.dcf_indexd_guid",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -492,6 +596,7 @@
                     "output_field": "participant.participant_id",
                     "source_field": "TARGET USI",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -503,6 +608,7 @@
                     "output_field": "participant.sex_at_birth",
                     "source_field": "Gender",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "Female",
@@ -518,6 +624,9 @@
                     "output_field": "participant.race",
                     "source_field": "Race",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "American Indian or Alaska Native",
@@ -567,6 +676,9 @@
                     "output_field": "participant.ethnicity",
                     "source_field": "Ethnicity",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "Hispanic or Latino",
@@ -592,6 +704,7 @@
                     "output_field": "diagnosis.diagnosis_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -603,6 +716,7 @@
                     "output_field": "diagnosis.disease_phase",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -614,6 +728,7 @@
                     "output_field": "diagnosis.diagnosis_classification_system",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -624,7 +739,8 @@
                 {
                     "output_field": "diagnosis.diagnosis_verification_status",
                     "source_field": "[string_literal]",
-                    "type_group_index": "",
+                    "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -635,7 +751,8 @@
                 {
                     "output_field": "diagnosis.diagnosis_basis",
                     "source_field": "[string_literal]",
-                    "type_group_index": "",
+                    "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -649,6 +766,7 @@
                     "output_field": "diagnosis.age_at_diagnosis",
                     "source_field": "Age at Diagnosis in Days",
                     "type_group_index": "*",
+                    "default_value": -999,
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -657,9 +775,46 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.tumor_stage_clinical_t",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_n",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_m",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_comment",
                     "source_field": "Diagnostic Category",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Ganglioneuroblastoma, intermixed",
@@ -691,6 +846,7 @@
                     "output_field": "diagnosis.diagnosis_classification",
                     "source_field": "Diagnostic Category",
                     "type_group_index": "*",
+                    "default_value": "999 : Unknown, to be completed later",
                     "replacement_values": [
                         {
                             "old_value": "Ganglioneuroblastoma, intermixed",
@@ -722,6 +878,9 @@
                     "output_field": "diagnosis.anatomic_site",
                     "source_field": "ICDO",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "C16.9",
@@ -1017,6 +1176,9 @@
                     "output_field": "diagnosis.toronto_childhood_cancer_staging",
                     "source_field": "INSS Stage",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "Stage 1",
@@ -1041,6 +1203,10 @@
                         {
                             "old_value": "Stage 4s",
                             "new_value": "Neuroblastoma Stage MS"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
@@ -1048,6 +1214,9 @@
                     "output_field": "diagnosis.tumor_grade",
                     "source_field": "Grade",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "Undifferentiated or Poorly Differentiated",
@@ -1056,6 +1225,10 @@
                         {
                             "old_value": "Differentiating",
                             "new_value": "Low Grade"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
@@ -1063,6 +1236,7 @@
                     "output_field": "diagnosis.tumor_classification",
                     "source_field": "[string_literal]",
                     "type_group_index": "",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1074,6 +1248,7 @@
                     "output_field": "survival.survival_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1085,6 +1260,7 @@
                     "output_field": "survival.last_known_survival_status",
                     "source_field": "Vital Status",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Alive",
@@ -1108,6 +1284,7 @@
                     "output_field": "survival.age_at_last_known_survival_status",
                     "source_field": "[Age at Diagnosis in Days, Overall Survival Time in Days]",
                     "type_group_index": "*",
+                    "default_value": -999,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1119,6 +1296,7 @@
                     "output_field": "survival.event_free_survival_status",
                     "source_field": "First Event",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Censored",
@@ -1150,6 +1328,7 @@
                     "output_field": "survival.first_event",
                     "source_field": "First Event",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Censored",
@@ -1181,6 +1360,7 @@
                     "output_field": "survival.age_at_event_free_survival_status",
                     "source_field": "[Age at Diagnosis in Days, Event Free Survival Time in Days]",
                     "type_group_index": "*",
+                    "default_value": -999,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1197,6 +1377,7 @@
                     "output_field": "study.study_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1208,6 +1389,7 @@
                     "output_field": "study.phs_accession",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1219,6 +1401,7 @@
                     "output_field": "study.acl",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1230,6 +1413,7 @@
                     "output_field": "study.study_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1241,6 +1425,7 @@
                     "output_field": "study.study_short_title",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1252,6 +1437,7 @@
                     "output_field": "study.study_acronym",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1263,6 +1449,7 @@
                     "output_field": "study.consent",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1274,6 +1461,7 @@
                     "output_field": "study.consent_number",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1282,9 +1470,22 @@
                     ]
                 },
                 {
+                    "output_field": "study.external_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000467.v22.p8"
+                        }
+                    ]
+                },
+                {
                     "output_field": "study.study_description",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1296,6 +1497,7 @@
                     "output_field": "reference_file.reference_file_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1307,6 +1509,7 @@
                     "output_field": "reference_file.dcf_indexd_guid",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1318,6 +1521,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1329,6 +1533,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1340,6 +1545,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1351,10 +1557,11 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 47519
+                            "new_value": 48377
                         }
                     ]
                 },
@@ -1362,10 +1569,23 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "4d243a37b05bf63af15440d4b669a1f8"
+                            "new_value": "19fbb6f2c24a013df0d7bec73d78094c"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Python script implementation of ETL process"
                         }
                     ]
                 },
@@ -1373,6 +1593,7 @@
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1384,6 +1605,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1395,6 +1617,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1406,6 +1629,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1417,10 +1641,11 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 97665
+                            "new_value": 112867
                         }
                     ]
                 },
@@ -1428,10 +1653,11 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "c8cf8967a95e2da0f5ed37a258f37d66"
+                            "new_value": "4686a7285996285e6170f0820a5e1b4c"
                         }
                     ]
                 },
@@ -1439,10 +1665,11 @@
                     "output_field": "reference_file.file_description",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
                         }
                     ]
                 },
@@ -1450,6 +1677,7 @@
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1461,6 +1689,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1472,6 +1701,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1483,6 +1713,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1494,10 +1725,11 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 198098
+                            "new_value": 196645
                         }
                     ]
                 },
@@ -1505,6 +1737,7 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1513,9 +1746,22 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON schema representation of YAML C3DC model schema"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "3",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1527,6 +1773,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1538,6 +1785,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1549,6 +1797,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1560,6 +1809,7 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1571,6 +1821,7 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1579,9 +1830,22 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1593,6 +1857,7 @@
                     "output_field": "reference_file.dcf_indexd_guid",
                     "source_field": "[string_literal]",
                     "type_group_index": "4",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1604,6 +1869,7 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1615,6 +1881,7 @@
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1626,6 +1893,7 @@
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1637,6 +1905,7 @@
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1648,6 +1917,7 @@
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1656,9 +1926,22 @@
                     ]
                 },
                 {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1670,6 +1953,7 @@
                     "output_field": "reference_file.dcf_indexd_guid",
                     "source_field": "[string_literal]",
                     "type_group_index": "5",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1681,6 +1965,7 @@
                     "output_field": "participant.participant_id",
                     "source_field": "TARGET USI",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -1692,6 +1977,7 @@
                     "output_field": "participant.sex_at_birth",
                     "source_field": "Gender",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "Female",
@@ -1707,6 +1993,9 @@
                     "output_field": "participant.race",
                     "source_field": "Race",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "American Indian or Alaska Native",
@@ -1756,6 +2045,9 @@
                     "output_field": "participant.ethnicity",
                     "source_field": "Ethnicity",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "Hispanic or Latino",
@@ -1781,6 +2073,7 @@
                     "output_field": "diagnosis.diagnosis_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1792,6 +2085,7 @@
                     "output_field": "diagnosis.disease_phase",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1803,6 +2097,7 @@
                     "output_field": "diagnosis.diagnosis_classification_system",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1813,7 +2108,8 @@
                 {
                     "output_field": "diagnosis.diagnosis_verification_status",
                     "source_field": "[string_literal]",
-                    "type_group_index": "",
+                    "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1824,7 +2120,8 @@
                 {
                     "output_field": "diagnosis.diagnosis_basis",
                     "source_field": "[string_literal]",
-                    "type_group_index": "",
+                    "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1838,6 +2135,7 @@
                     "output_field": "diagnosis.age_at_diagnosis",
                     "source_field": "Age at Diagnosis in Days",
                     "type_group_index": "*",
+                    "default_value": -999,
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -1846,9 +2144,46 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.tumor_stage_clinical_t",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_n",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_m",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_comment",
                     "source_field": "Diagnostic Category",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Ganglioneuroblastoma, intermixed",
@@ -1880,6 +2215,7 @@
                     "output_field": "diagnosis.diagnosis_classification",
                     "source_field": "Diagnostic Category",
                     "type_group_index": "*",
+                    "default_value": "999 : Unknown, to be completed later",
                     "replacement_values": [
                         {
                             "old_value": "Ganglioneuroblastoma, intermixed",
@@ -1911,6 +2247,9 @@
                     "output_field": "diagnosis.anatomic_site",
                     "source_field": "ICDO",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "C16.9",
@@ -2206,6 +2545,9 @@
                     "output_field": "diagnosis.toronto_childhood_cancer_staging",
                     "source_field": "INSS Stage",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "Stage 1",
@@ -2230,6 +2572,10 @@
                         {
                             "old_value": "Stage 4s",
                             "new_value": "Neuroblastoma Stage MS"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
@@ -2237,6 +2583,9 @@
                     "output_field": "diagnosis.tumor_grade",
                     "source_field": "Grade",
                     "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "Undifferentiated or Poorly Differentiated",
@@ -2245,6 +2594,10 @@
                         {
                             "old_value": "Differentiating",
                             "new_value": "Low Grade"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
@@ -2252,6 +2605,7 @@
                     "output_field": "diagnosis.tumor_classification",
                     "source_field": "[string_literal]",
                     "type_group_index": "",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2263,6 +2617,7 @@
                     "output_field": "survival.survival_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2274,6 +2629,7 @@
                     "output_field": "survival.last_known_survival_status",
                     "source_field": "Vital Status",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Alive",
@@ -2297,6 +2653,7 @@
                     "output_field": "survival.age_at_last_known_survival_status",
                     "source_field": "[Age at Diagnosis in Days, Overall Survival Time in Days]",
                     "type_group_index": "*",
+                    "default_value": -999,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2308,6 +2665,7 @@
                     "output_field": "survival.event_free_survival_status",
                     "source_field": "First Event",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Censored",
@@ -2339,6 +2697,7 @@
                     "output_field": "survival.first_event",
                     "source_field": "First Event",
                     "type_group_index": "*",
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Censored",
@@ -2370,6 +2729,7 @@
                     "output_field": "survival.age_at_event_free_survival_status",
                     "source_field": "[Age at Diagnosis in Days, Event Free Survival Time in Days]",
                     "type_group_index": "*",
+                    "default_value": -999,
                     "replacement_values": [
                         {
                             "old_value": "*",
