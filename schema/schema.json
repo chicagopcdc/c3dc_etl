@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/2023-12-27",
+  "$id": "https://datascience.cancer.gov/schemas/2024-01-25",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -18,10 +18,16 @@
         "diagnosis_classification_system",
         "diagnosis_verification_status",
         "diagnosis_basis",
+        "diagnosis_comment",
         "disease_phase",
         "tumor_classification",
         "anatomic_site",
-        "age_at_diagnosis"
+        "age_at_diagnosis",
+        "toronto_childhood_cancer_staging",
+        "tumor_grade",
+        "tumor_stage_clinical_t",
+        "tumor_stage_clinical_n",
+        "tumor_stage_clinical_m"
       ],
       "properties": {
         "diagnosis_id": {
@@ -1204,7 +1210,9 @@
             "NCIt: C42673"
           ],
           "enum": [
+            "CNS Diagnosis Category",
             "ICD-O-3.2",
+            "WHO CNS5 Integrated Diagnosis",
             "Unknown",
             "Not Reported"
           ]
@@ -1250,14 +1258,14 @@
           ],
           "enum": [
             "Initial Diagnosis",
-            "Disease Progression",
+            "Not Reported",
+            "Post-Mortem",
+            "Progression",
             "Refractory",
+            "Relapse",
             "Recurrent Disease",
-            "Disease Relapse/Progression",
-            "Complete Remission",
-            "Post-treatment",
-            "Unknown",
-            "Not Reported"
+            "Relapse/Progression",
+            "Unknown"
           ]
         },
         "tumor_classification": {
@@ -1644,14 +1652,14 @@
           "type": "integer",
           "description": "Age at the time of diagnosis expressed in number of days since birth.",
           "cde": [
-            "caDSR:3225640",
+            "caDSR:10609539",
             "NCIt:C156420"
           ],
           "maximum": 54750
         },
         "toronto_childhood_cancer_staging": {
           "type": "string",
-          "description": "For many of the malignancies that occur in childhood, TNM-based systems that document extent of disease at diagnosis are either inadequate or do not exist at all. Consensus guidelines for use by population cancer registries for staging childhood cancers (the Toronto Childhood Cancer Stage Guidelines) have been developed.",
+          "description": "Cancer stage as captured by the Toronto Childhood Cancer Stage Guidelines.",
           "cde": [
             "caDSR:13299113"
           ],
@@ -1728,7 +1736,8 @@
             "Testicular germ cell tumor Stage IIIA",
             "Testicular germ cell tumor Stage IIIB",
             "Testicular germ cell tumor Stage IIIC",
-            "Testicular germ cell tumor Stage IS"
+            "Testicular germ cell tumor Stage IS",
+            "Not Reported"
           ]
         },
         "tumor_grade": {
@@ -1747,7 +1756,8 @@
             "High Grade",
             "Intermediate Grade",
             "Low Grade",
-            "Not Applicable"
+            "Not Applicable",
+            "Not Reported"
           ]
         },
         "tumor_stage_clinical_t": {
@@ -1791,7 +1801,8 @@
             "Tis (DCIS)",
             "Tis (LCIS)",
             "Tis (Paget's)",
-            "TX"
+            "TX",
+            "Not Reported"
           ]
         },
         "tumor_stage_clinical_n": {
@@ -1824,7 +1835,8 @@
             "N3b",
             "N3c",
             "N4",
-            "NX"
+            "NX",
+            "Not Reported"
           ]
         },
         "tumor_stage_clinical_m": {
@@ -1840,7 +1852,8 @@
             "M1a",
             "M1b",
             "M1c",
-            "MX"
+            "MX",
+            "Not Reported"
           ]
         },
         "participant.participant_id": {
@@ -1904,7 +1917,7 @@
               "Hispanic or Latino",
               "Not allowed to collect",
               "Not Hispanic or Latino",
-              "Not reported",
+              "Not Reported",
               "Unknown"
             ]
           }
@@ -1926,13 +1939,6 @@
             "Decline to answer",
             "None of These Describe Me",
             "Prefer Not to Answer"
-          ]
-        },
-        "alternate_participant_id": {
-          "type": "string",
-          "description": "An alternate sequence of letters, numbers, or characters that uniquely identifies the subject who has taken part in the investigation or research study.",
-          "cde": [
-            "caDSR:14528097"
           ]
         },
         "diagnosis.diagnosis_id": {
@@ -1973,6 +1979,7 @@
         "reference_file_id",
         "file_name",
         "file_type",
+        "file_description",
         "file_category",
         "file_size",
         "md5sum",
@@ -2102,18 +2109,6 @@
             "caDSR:6584918"
           ]
         },
-        "checksum_algorithm": {
-          "type": "string",
-          "description": "Cryptographic checksum algorithm used for 'checksum_value' field. Available for use of something other than md5.",
-          "cde": []
-        },
-        "checksum_value": {
-          "type": "string",
-          "description": "One or more characters using a irreversible unique number generated from a string of text to identify a set of related electronic records.",
-          "cde": [
-            "caDSR:6115805"
-          ]
-        },
         "study.study_id": {
           "type": "string",
           "description": "of_reference_file: many_to_one, [src] reference_file => [dst] study"
@@ -2135,8 +2130,15 @@
         "diagnosis_classification_system",
         "diagnosis_verification_status",
         "diagnosis_basis",
+        "diagnosis_comment",
         "sample_tumor_status",
-        "tumor_classification"
+        "tumor_classification",
+        "sample_description",
+        "toronto_childhood_cancer_staging",
+        "tumor_grade",
+        "tumor_stage_clinical_t",
+        "tumor_stage_clinical_n",
+        "tumor_stage_clinical_m"
       ],
       "properties": {
         "sample_id": {
@@ -3692,7 +3694,9 @@
             "NCIt: C42673"
           ],
           "enum": [
+            "CNS Diagnosis Category",
             "ICD-O-3.2",
+            "WHO CNS5 Integrated Diagnosis",
             "Unknown",
             "Not Reported"
           ]
@@ -3740,6 +3744,7 @@
             "Abnormal",
             "Non-neoplastic",
             "Normal",
+            "Not Reported",
             "Peritumoral",
             "Tumor",
             "Unavailable",
@@ -3770,44 +3775,9 @@
             "caDSR:5432687"
           ]
         },
-        "alternate_sample_id": {
-          "type": "string",
-          "description": "A synonymous or alternate ID for a sample that is stored in another study or repository.",
-          "cde": [
-            "caDSR:2003904"
-          ]
-        },
-        "last_known_disease_status": {
-          "type": "string",
-          "description": "The most recently documented condition or state of an individual's disease.",
-          "cde": [
-            "caDSR:12447172"
-          ],
-          "enum": [
-            "Biochemical evidence of disease without structural correlate",
-            "Distant Metastasis",
-            "Localized Disease",
-            "New Tumor Event",
-            "Not Allowed To Collect",
-            "Not Applicable",
-            "Not Reported",
-            "Regional Disease",
-            "Tumor Free",
-            "Unknown",
-            "With Tumor"
-          ]
-        },
-        "age_at_last_known_disease_status": {
-          "type": "integer",
-          "description": "Subject Age at Last Known Disease Status Day Count",
-          "cde": [
-            "caDSR:14589579"
-          ],
-          "maximum": 54750
-        },
         "toronto_childhood_cancer_staging": {
           "type": "string",
-          "description": "For many of the malignancies that occur in childhood, TNM-based systems that document extent of disease at diagnosis are either inadequate or do not exist at all. Consensus guidelines for use by population cancer registries for staging childhood cancers (the Toronto Childhood Cancer Stage Guidelines) have been developed.",
+          "description": "Cancer stage as captured by the Toronto Childhood Cancer Stage Guidelines.",
           "cde": [
             "caDSR:13299113"
           ],
@@ -3884,7 +3854,8 @@
             "Testicular germ cell tumor Stage IIIA",
             "Testicular germ cell tumor Stage IIIB",
             "Testicular germ cell tumor Stage IIIC",
-            "Testicular germ cell tumor Stage IS"
+            "Testicular germ cell tumor Stage IS",
+            "Not Reported"
           ]
         },
         "tumor_grade": {
@@ -3903,7 +3874,8 @@
             "High Grade",
             "Intermediate Grade",
             "Low Grade",
-            "Not Applicable"
+            "Not Applicable",
+            "Not Reported"
           ]
         },
         "tumor_stage_clinical_t": {
@@ -3947,7 +3919,8 @@
             "Tis (DCIS)",
             "Tis (LCIS)",
             "Tis (Paget's)",
-            "TX"
+            "TX",
+            "Not Reported"
           ]
         },
         "tumor_stage_clinical_n": {
@@ -3980,7 +3953,8 @@
             "N3b",
             "N3c",
             "N4",
-            "NX"
+            "NX",
+            "Not Reported"
           ]
         },
         "tumor_stage_clinical_m": {
@@ -3996,7 +3970,8 @@
             "M1a",
             "M1b",
             "M1c",
-            "MX"
+            "MX",
+            "Not Reported"
           ]
         },
         "participant.participant_id": {
@@ -4018,12 +3993,15 @@
       "additionalProperties": false,
       "required": [
         "study_id",
+        "phs_accession",
         "acl",
+        "study_name",
         "study_short_title",
         "study_acronym",
         "study_description",
         "consent",
-        "consent_number"
+        "consent_number",
+        "external_url"
       ],
       "properties": {
         "study_id": {
@@ -4128,7 +4106,9 @@
         "survival_id",
         "last_known_survival_status",
         "age_at_last_known_survival_status",
-        "event_free_survival_status"
+        "event_free_survival_status",
+        "age_at_event_free_survival_status",
+        "first_event"
       ],
       "properties": {
         "survival_id": {

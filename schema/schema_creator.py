@@ -183,6 +183,15 @@ class SchemaCreator:
         self._schema.clear()
         schema: dict[str, any] = self._build_schema_root()
         self._schema.update(schema)
+
+        # verify that all properties in YAML schema are assigned to parent model objects
+        assigned_properties: set[str] = set(
+            prop for props in [list(v['properties'].keys()) for v in self._schema_nodes.values()] for prop in props
+        )
+        unassigned_properties: set[str] = set(self._schema_props.keys()).difference(assigned_properties)
+        if unassigned_properties:
+            _logger.warning('Properties not assigned to schema node: %s', unassigned_properties)
+
         return self._schema
 
     def _build_schema_root(self) -> dict[str, any]:
