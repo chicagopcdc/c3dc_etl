@@ -15,6 +15,7 @@
 *.html
 *.ini
 *.json
+*.sh
 !etl/**/transformations/*.json
 !schema/schema.json
 !schema/sample_data.json

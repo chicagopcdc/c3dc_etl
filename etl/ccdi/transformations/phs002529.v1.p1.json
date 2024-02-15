@@ -1,8 +1,8 @@
 {
-    "version": "20240125.1",
+    "version": "20240207.1",
     "transformations": [
         {
-            "name": "phs002518_CCDI-USC_v1.5.0_Updater20230817_CatchERR20230817_v1.7.1_Updater20231129_CatchERR20231129.xlsx",
+            "name": "phs002529_CCDI_v1.5.2_JoineRy20240111_Updater_v1.7.2_20240122_qc_CatchERR20240130.xlsx",
             "mappings": [
                 {
                     "output_field": "study.study_id",
@@ -18,13 +18,13 @@
                 },
                 {
                     "output_field": "study.phs_accession",
-                    "source_field": "[string_literal]",
+                    "source_field": "study.phs_accession",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "*",
-                            "new_value": "phs002518"
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
@@ -54,25 +54,25 @@
                 },
                 {
                     "output_field": "study.study_short_title",
-                    "source_field": "[string_literal]",
+                    "source_field": "study.study_short_title",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "*",
-                            "new_value": "OncoKids Cancer Panel: Pediatric Cancers"
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
                 {
                     "output_field": "study.study_acronym",
-                    "source_field": "[string_literal]",
+                    "source_field": "study.study_acronym",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "*",
-                            "new_value": "CCDI-CHLA"
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
@@ -108,7 +108,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs002518.v1.p1"
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs002529.v1.p1"
                         }
                     ]
                 },
@@ -240,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs002518.v1.p1.json"
+                            "new_value": "phs002529.v1.p1.json"
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 31815
+                            "new_value": 31784
                         }
                     ]
                 },
@@ -288,7 +288,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7abaa94e6ac06da3b5769447be6f36ae"
+                            "new_value": "dda79ee776a8ccabf581b38790acd945"
                         }
                     ]
                 },
@@ -312,7 +312,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240215.1.ccdi/etl/ccdi/transformations/phs002518.v1.p1.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240215.1.ccdi/etl/ccdi/transformations/phs002529.v1.p1.json"
                         }
                     ]
                 },
@@ -408,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs002518_CCDI-USC_v1.5.0_Updater20230817_CatchERR20230817_v1.7.1_Updater20231129_CatchERR20231129.xlsx"
+                            "new_value": "phs002529_CCDI_v1.5.2_JoineRy20240111_Updater_v1.7.2_20240122_qc_CatchERR20240130.xlsx"
                         }
                     ]
                 },
@@ -444,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 2193146
+                            "new_value": 2567777
                         }
                     ]
                 },
@@ -456,7 +456,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7689ef63cabd8678274eb4884ad03a7b"
+                            "new_value": "e2093a3dd2824e388c9ac7f73b6211c4"
                         }
                     ]
                 },
@@ -480,7 +480,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/phs002518-USC/phs002518_CCDI-USC_v1.5.0_Updater20230817_CatchERR20230817_v1.7.1_Updater20231129_CatchERR20231129.xls"
+                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/CCDI-Datasets/phs002529/phs002529_CCDI_v1.5.2_JoineRy20240111_Updater_v1.7.2_20240122_qc_CatchERR20240130.xlsx?d=w5e5c243e675f47e9a1a7a9a008c729ba&csf=1&web=1&e=DC7bgS"
                         }
                     ]
                 },

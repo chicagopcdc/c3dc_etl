@@ -217,6 +217,7 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
         unpivoted_mapping['type_group_index']: str = str(pivoted_mapping['Type Group Index'])
         unpivoted_mapping['default_value']: any = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
         unpivoted_mapping['replacement_values']: list[dict[str, any]] = unpivoted_mapping.get('replacement_values', [])
+
         try:
             unpivoted_mapping['replacement_values'].append(
                 {
@@ -224,6 +225,10 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
                     'new_value': json.loads(pivoted_mapping['Target Permissible Values Term'] or '""')
                 }
             )
+
+            repl_vals: dict[str, str] = json.loads(pivoted_mapping.get('Replacement Values', '{}') or '{}')
+            replacement_values: list[dict[str, str]] = [{'old_value': k, 'new_value': v} for k,v in repl_vals.items()]
+            unpivoted_mapping['replacement_values'].extend(replacement_values)
         except json.decoder.JSONDecodeError as err:
             _logger.error('Error loading replacement values while unpivoting mapping:')
             _logger.error(err)
