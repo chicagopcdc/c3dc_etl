@@ -718,7 +718,9 @@ class C3dcEtl:
         msg: str
         output_value: any = None
 
-        source_field: str = mapping.get('source_field').strip(' \'"')
+        node_type: str = source_record.get('type', '')
+        source_tab: str = self._output_type_source_tabs.get(node_type)
+        source_field: str = self._get_source_field(mapping, node_type, source_tab)
         source_value: str = source_record.get(source_field, None)
 
         replacement_entry: dict[str, str]
@@ -845,7 +847,7 @@ class C3dcEtl:
 
     def _get_source_field(self, mapping: dict[str, any], node_type: C3dcEtlModelNode, source_tab: str) -> str:
         """ Get source field for specified mapping, node type and source tab """
-        source_field: str = mapping.get('source_field')
+        source_field: str = mapping.get('source_field').strip(' \'"')
         if source_field.startswith(f'{node_type}.'):
             source_field = source_field[len(f'{node_type}.'):]
         elif source_tab and source_tab != node_type and source_field.startswith(f'{source_tab}.'):

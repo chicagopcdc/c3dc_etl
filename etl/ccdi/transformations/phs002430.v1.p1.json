@@ -1,8 +1,8 @@
 {
-    "version": "20240125.1",
+    "version": "20240207.1",
     "transformations": [
         {
-            "name": "phs002518_CCDI-USC_v1.5.0_Updater20230817_CatchERR20230817_v1.7.1_Updater20231129_CatchERR20231129.xlsx",
+            "name": "UCSF_CCDI_Submission_Template_phs002430.xlsx",
             "mappings": [
                 {
                     "output_field": "study.study_id",
@@ -18,13 +18,13 @@
                 },
                 {
                     "output_field": "study.phs_accession",
-                    "source_field": "[string_literal]",
+                    "source_field": "study.phs_accession",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "*",
-                            "new_value": "phs002518"
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
@@ -42,7 +42,19 @@
                 },
                 {
                     "output_field": "study.study_name",
-                    "source_field": "study.study_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "FIXME: STUDY NAME PLACEHOLDER"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_short_title",
+                    "source_field": "study.study_short_title",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
@@ -53,26 +65,14 @@
                     ]
                 },
                 {
-                    "output_field": "study.study_short_title",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "OncoKids Cancer Panel: Pediatric Cancers"
-                        }
-                    ]
-                },
-                {
                     "output_field": "study.study_acronym",
-                    "source_field": "[string_literal]",
+                    "source_field": "study.study_acronym",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "*",
-                            "new_value": "CCDI-CHLA"
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
@@ -108,7 +108,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs002518.v1.p1"
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs002430.v1.p1"
                         }
                     ]
                 },
@@ -240,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs002518.v1.p1.json"
+                            "new_value": "phs002430.v1.p1.json"
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 31815
+                            "new_value": 31981
                         }
                     ]
                 },
@@ -288,7 +288,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7abaa94e6ac06da3b5769447be6f36ae"
+                            "new_value": "1b4fc5f83b9adbe9b44c7e1031f8c090"
                         }
                     ]
                 },
@@ -312,7 +312,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240215.1.ccdi/etl/ccdi/transformations/phs002518.v1.p1.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240215.1.ccdi/etl/ccdi/transformations/phs002430.v1.p1.json"
                         }
                     ]
                 },
@@ -408,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs002518_CCDI-USC_v1.5.0_Updater20230817_CatchERR20230817_v1.7.1_Updater20231129_CatchERR20231129.xlsx"
+                            "new_value": "UCSF_CCDI_Submission_Template_phs002430.xlsx"
                         }
                     ]
                 },
@@ -444,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 2193146
+                            "new_value": 1417612
                         }
                     ]
                 },
@@ -456,7 +456,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7689ef63cabd8678274eb4884ad03a7b"
+                            "new_value": "8e06372532f31c9170dd1548b23ee41c"
                         }
                     ]
                 },
@@ -480,7 +480,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/phs002518-USC/phs002518_CCDI-USC_v1.5.0_Updater20230817_CatchERR20230817_v1.7.1_Updater20231129_CatchERR20231129.xls"
+                            "new_value": "https://nih.sharepoint.com/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FNCI%2DCBIIT%2DFNLCCDI%2FShared%20Documents%2FC3DC%2F2%2DExecuting%2FCCDI%2DDatasets%2Fphs002430&viewid=29362fce%2D80f9%2D4aff%2Da37b%2D76c7a669b722"
                         }
                     ]
                 },
@@ -645,6 +645,12 @@
                         {
                             "old_value": "",
                             "new_value": ""
+                        },
+                        {
+                            "old_value": "C80 : UNKNOWN PRIMARY SITE",
+                            "new_value": [
+                                "C80.9 : Unknown primary site"
+                            ]
                         }
                     ]
                 },
