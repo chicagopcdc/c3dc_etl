@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/2024-02-15",
+  "$id": "https://datascience.cancer.gov/schemas/2024-02-16",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -4253,7 +4253,6 @@
         "study_id",
         "phs_accession",
         "acl",
-        "study_name",
         "study_short_title",
         "study_acronym",
         "study_description",
@@ -4281,13 +4280,6 @@
           "description": "A free text field used to document whether the data in a repository is open access or controlled access.",
           "cde": [
             "caDSR:11555664"
-          ]
-        },
-        "study_name": {
-          "type": "string",
-          "description": "The narrative title used as a textual label for a research data collection.",
-          "cde": [
-            "caDSR:11459810"
           ]
         },
         "study_short_title": {
