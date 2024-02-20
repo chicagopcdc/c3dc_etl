@@ -1,5 +1,5 @@
 {
-    "version": "20240216.1",
+    "version": "20240220.1",
     "transformations": [
         {
             "name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/etl/target_nbl/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240220.1/etl/target_nbl/c3dc_etl.py"
                         }
                     ]
                 },
@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 111909
+                            "new_value": 111927
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "1161c23950eb72df4da169851c5e3105"
+                            "new_value": "1e057f7c7076d37eb6ddb4df5a7e6c25"
                         }
                     ]
                 },
@@ -300,7 +300,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/etl/target_nbl/transformations/phs000467.v22.p8.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240220.1/etl/target_nbl/transformations/phs000467.v22.p8.json"
                         }
                     ]
                 },
@@ -384,7 +384,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240220.1/schema/schema.json"
                         }
                     ]
                 },
@@ -1320,7 +1320,7 @@
                     "replacement_values": [
                         {
                             "old_value": "Censored",
-                            "new_value": "Death"
+                            "new_value": "Not Applicable"
                         },
                         {
                             "old_value": "Death",
@@ -1573,7 +1573,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/etl/target_nbl/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240220.1/etl/target_nbl/c3dc_etl.py"
                         }
                     ]
                 },
@@ -1621,7 +1621,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 111909
+                            "new_value": 111927
                         }
                     ]
                 },
@@ -1633,7 +1633,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "1161c23950eb72df4da169851c5e3105"
+                            "new_value": "1e057f7c7076d37eb6ddb4df5a7e6c25"
                         }
                     ]
                 },
@@ -1657,7 +1657,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/etl/target_nbl/transformations/phs000467.v22.p8.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240220.1/etl/target_nbl/transformations/phs000467.v22.p8.json"
                         }
                     ]
                 },
@@ -1741,7 +1741,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240220.1/schema/schema.json"
                         }
                     ]
                 },
@@ -2677,7 +2677,7 @@
                     "replacement_values": [
                         {
                             "old_value": "Censored",
-                            "new_value": "Death"
+                            "new_value": "Not Applicable"
                         },
                         {
                             "old_value": "Death",
