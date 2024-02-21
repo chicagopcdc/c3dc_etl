@@ -1,5 +1,8 @@
 """ Unpivoter for to convert internal field mapping to deliverable transformation mapping """
+from __future__ import annotations
+
 import csv
+import hashlib
 import json
 import logging
 import logging.config
@@ -53,6 +56,7 @@ logging.config.dictConfig({
         }
     }
 })
+
 
 class MappingUnpivoter: #pylint: disable=too-few-public-methods
     """ Unpivot tabular transformation field mappings to JSON format """
@@ -163,8 +167,13 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
                 }
                 self._transformation_config['transformations'].append(transformation)
 
-        _logger.info('Saving unpivoted transformation mappings to %s', self._output_file)
         # save transformation config to output file specified in config
+        _logger.info('Saving unpivoted transformation mappings to %s', self._output_file)
+        with open(self._output_file, mode='w', encoding='utf-8') as json_fp:
+            json.dump(self._transformation_config, json_fp, indent=4)
+
+        self._update_transformation_mapping_reference_file_mappings()
+        _logger.info('Saving updated unpivoted transformation mappings to %s', self._output_file)
         with open(self._output_file, mode='w', encoding='utf-8') as json_fp:
             json.dump(self._transformation_config, json_fp, indent=4)
 
@@ -212,11 +221,11 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
             return {}
 
         unpivoted_mapping: dict[str, any] = {}
-        unpivoted_mapping['output_field']: str = pivoted_mapping['Target Variable Name']
-        unpivoted_mapping['source_field']: str = pivoted_mapping['Source Variable Name']
-        unpivoted_mapping['type_group_index']: str = str(pivoted_mapping['Type Group Index'])
-        unpivoted_mapping['default_value']: any = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
-        unpivoted_mapping['replacement_values']: list[dict[str, any]] = unpivoted_mapping.get('replacement_values', [])
+        unpivoted_mapping['output_field'] = pivoted_mapping['Target Variable Name']
+        unpivoted_mapping['source_field'] = pivoted_mapping['Source Variable Name']
+        unpivoted_mapping['type_group_index'] = str(pivoted_mapping['Type Group Index'])
+        unpivoted_mapping['default_value'] = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
+        unpivoted_mapping['replacement_values'] = unpivoted_mapping.get('replacement_values', [])
 
         try:
             unpivoted_mapping['replacement_values'].append(
@@ -235,6 +244,131 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
             _logger.error(pivoted_mapping)
             raise
         return unpivoted_mapping
+
+    def _get_ref_file_size_and_md5sum_mappings(
+        self,
+        mappings: list[dict[str, any]],
+        type_group_index: str,
+    ) -> list[dict[str, any]]:
+        """ Get all 'reference_file.*' mappings in list of mappings for specified type group index value """
+        ref_file_mappings: list[dict[str, any]] = [
+            m for m in mappings
+                if m.get('type_group_index') == type_group_index and
+                    m.get('output_field', '').startswith('reference_file.')
+        ]
+        file_name_match: list[dict[str, any]] = [
+            m for m in ref_file_mappings
+                if m.get('output_field') == 'reference_file.file_name' and any(
+                    r for r in m.get('replacement_values', [])
+                        if r.get('new_value') == os.path.basename(self._output_file)
+                )
+        ]
+        file_cat_match: list[dict[str, any]] = [
+            m for m in ref_file_mappings
+                if m.get('output_field') == 'reference_file.file_category' and any(
+                    r for r in m.get('replacement_values', [])
+                        if r.get('new_value') == 'transformation/mapping'
+                )
+        ]
+        file_size_match: list[dict[str, any]] = [
+            m for m in ref_file_mappings
+                if m.get('output_field') == 'reference_file.file_size' and any(
+                    r for r in m.get('replacement_values', [])
+                        if r.get('new_value') == 0
+                )
+        ]
+        file_md5sum_match: list[dict[str, any]] = [
+            m for m in ref_file_mappings
+                if m.get('output_field') == 'reference_file.md5sum' and any(
+                    r for r in m.get('replacement_values', [])
+                        if r.get('new_value') == ''
+                )
+        ]
+        if file_name_match and file_cat_match and file_size_match and file_md5sum_match:
+            return [
+                m for m in ref_file_mappings
+                    if m.get('output_field') in ('reference_file.file_size', 'reference_file.md5sum')
+            ]
+        return []
+
+
+    def _update_transformation_mapping_reference_file_mappings(self) -> list[dict[str, any]]:
+        """ Find mapping entries for reference file size and md5 sum in transformation config for output file """
+        _logger.info('Updating transformation/mapping reference file values for file size and md5 sum')
+        # get size and md5 hash of output file to set matching reference file properties
+        mapping_file_size: int = os.path.getsize(self._output_file)
+
+        md5: hashlib._Hash = hashlib.md5()
+        with open(self._output_file, mode='rb') as json_fp:
+            chunk: any
+            for chunk in iter(lambda: json_fp.read(4096), b''):
+                md5.update(chunk)
+        mapping_file_md5sum: str = md5.hexdigest()
+
+        ref_file_field_value_map: dict[str, any] = {
+            'reference_file.file_size': mapping_file_size,
+            'reference_file.md5sum': mapping_file_md5sum
+        }
+
+        output_file_name: str = os.path.basename(self._output_file)
+
+        # update file size and md5 values of matching transformation/mapping ref file entries for each transformation
+        for xform_cfg in self._transformation_config.get('transformations', []):
+            reference_file_tgis: list[str] = []
+            mapping: dict[str, any]
+            # get type group index values of relevant transformation/mapping files
+            # by matching reference file's file name property to our output file
+            for mapping in [
+                m for m in xform_cfg['mappings']
+                    if m.get('type_group_index') and
+                        m.get('output_field') == 'reference_file.file_name' and
+                        any(r for r in m.get('replacement_values', []) if r.get('new_value') == output_file_name)
+            ]:
+                reference_file_tgis.append(mapping.get('type_group_index'))
+
+            if not reference_file_tgis:
+                _logger.warning(
+                    'No reference file mapping for "%s" found in transformation "%s"',
+                    output_file_name,
+                    xform_cfg.get('name')
+                )
+            # set file size and md5sum values for each reference file set circumscribed by type group index
+            tgi: str
+            for tgi in set(reference_file_tgis):
+                ref_file_size_md5sum_mappings: list[dict[str, any]] = self._get_ref_file_size_and_md5sum_mappings(
+                    xform_cfg['mappings'],
+                    tgi
+                )
+                output_field: str
+                new_value: any
+                for output_field, new_value in ref_file_field_value_map.items():
+                    ref_file_mapping: dict[str, any] = [
+                        m for m in ref_file_size_md5sum_mappings if m.get('output_field') == output_field
+                    ]
+                    if not ref_file_mapping:
+                        raise RuntimeError(
+                            f'Mapping for "{output_field}" not found for transformation {xform_cfg.get("name")} ' +
+                            f'(type group index {tgi})'
+                        )
+                    ref_file_mapping = ref_file_mapping[0]
+                    replacement_value: dict[str, any]
+                    for replacement_value in ref_file_mapping.get('replacement_values', []):
+                        if replacement_value['new_value'] not in ('', 0):
+                            raise RuntimeError(
+                                f'Unexpected value for "new_value" in mapping replacement_values: {ref_file_mapping}'
+                            )
+                        _logger.info(
+                            (
+                                'Setting "%s" replacement "new_value" properties to "%s" for ' +
+                                    'type_group_index "%s" in transformation "%s"'
+                            ),
+                            output_field,
+                            new_value,
+                            tgi,
+                            xform_cfg.get('name')
+                        )
+                        replacement_value['new_value'] = new_value
+
 
 def print_usage() -> None:
     """ Print script usage """
