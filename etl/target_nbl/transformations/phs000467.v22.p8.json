@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 111927
+                            "new_value": 111977
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "1e057f7c7076d37eb6ddb4df5a7e6c25"
+                            "new_value": "40d29d2d05ebdce1e9930d46203d25a2"
                         }
                     ]
                 },
@@ -348,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 208458
+                            "new_value": 208558
                         }
                     ]
                 },
@@ -360,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "2174d2942fb914a7222f81eda75aca56"
+                            "new_value": "615864beec0399bc2882dc0c04ddb297"
                         }
                     ]
                 },
@@ -725,7 +725,7 @@
                     ]
                 },
                 {
-                    "output_field": "diagnosis.diagnosis_certainty",
+                    "output_field": "diagnosis.diagnosis_verification_status",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -831,7 +831,7 @@
                     ]
                 },
                 {
-                    "output_field": "diagnosis.diagnosis",
+                    "output_field": "diagnosis.diagnosis_classification",
                     "source_field": "Diagnostic Category",
                     "type_group_index": "*",
                     "default_value": "999 : Unknown, to be completed later",
@@ -1621,7 +1621,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 111927
+                            "new_value": 111977
                         }
                     ]
                 },
@@ -1633,7 +1633,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "1e057f7c7076d37eb6ddb4df5a7e6c25"
+                            "new_value": "40d29d2d05ebdce1e9930d46203d25a2"
                         }
                     ]
                 },
@@ -1705,7 +1705,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 208458
+                            "new_value": 208558
                         }
                     ]
                 },
@@ -1717,7 +1717,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "2174d2942fb914a7222f81eda75aca56"
+                            "new_value": "615864beec0399bc2882dc0c04ddb297"
                         }
                     ]
                 },
@@ -2082,7 +2082,7 @@
                     ]
                 },
                 {
-                    "output_field": "diagnosis.diagnosis_certainty",
+                    "output_field": "diagnosis.diagnosis_verification_status",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -2188,7 +2188,7 @@
                     ]
                 },
                 {
-                    "output_field": "diagnosis.diagnosis",
+                    "output_field": "diagnosis.diagnosis_classification",
                     "source_field": "Diagnostic Category",
                     "type_group_index": "*",
                     "default_value": "999 : Unknown, to be completed later",

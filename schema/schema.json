@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/2024-02-16",
+  "$id": "https://datascience.cancer.gov/schemas/2024-02-20",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -14,9 +14,9 @@
       "additionalProperties": false,
       "required": [
         "diagnosis_id",
-        "diagnosis",
+        "diagnosis_classification",
         "diagnosis_classification_system",
-        "diagnosis_certainty",
+        "diagnosis_verification_status",
         "diagnosis_basis",
         "diagnosis_comment",
         "disease_phase",
@@ -37,7 +37,7 @@
             "caDSR:14540952"
           ]
         },
-        "diagnosis": {
+        "diagnosis_classification": {
           "type": "string",
           "description": "The text term used to describe the type of malignant disease, as categorized by diagnosis_classification_system property.",
           "cde": [
@@ -1341,7 +1341,7 @@
             "Not Reported"
           ]
         },
-        "diagnosis_certainty": {
+        "diagnosis_verification_status": {
           "type": "string",
           "description": "The type of generic chronology for which the diagnosis was obtained.",
           "cde": [],
@@ -2255,9 +2255,9 @@
         "sample_id",
         "anatomic_site",
         "participant_age_at_collection",
-        "diagnosis",
+        "diagnosis_classification",
         "diagnosis_classification_system",
-        "diagnosis_certainty",
+        "diagnosis_verification_status",
         "diagnosis_basis",
         "diagnosis_comment",
         "sample_tumor_status",
@@ -2656,7 +2656,7 @@
           ],
           "maximum": 54750
         },
-        "diagnosis": {
+        "diagnosis_classification": {
           "type": "string",
           "description": "The text term used to describe the type of malignant disease, as categorized by diagnosis_classification_system property.",
           "cde": [
@@ -3960,7 +3960,7 @@
             "Not Reported"
           ]
         },
-        "diagnosis_certainty": {
+        "diagnosis_verification_status": {
           "type": "string",
           "description": "The type of generic chronology for which the diagnosis was obtained.",
           "cde": [],
