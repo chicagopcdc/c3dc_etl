@@ -6,16 +6,37 @@ Install Python (3.11 used at time of documentation) and add support for dependen
 [creating and activating a Conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)
 based on the [Conda environment file](https://github.com/chicagopcdc/c3dc_etl/blob/main/conda_environment.yml)
 
-## ETL script
-The c3dc_etl.py script ingests the source data in tabular (XLSX) format and transforms it into a harmonized (JSON)
-data file.
+## Data harmonization process and input dependencies
+The c3dc_etl.py script ingests the source data in tabular (XLSX) format, transforms it into a harmonized (JSON)
+data file by applying the mapping rules in the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations)
+and then performs validation against the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
+of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc).
 
-### Execution steps
-Create a local file named `.env` as per the [example](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/.env_example)
-and execute the script without any arguments:
-```
-python c3dc_etl.py
-```
+### C3DC model JSON schema
+The data harmonization script uses the [C3DC JSON schema file](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
+for reference and validation, which is converted from the [C3DC model's](https://github.com/CBIIT/c3dc-model/tree/main/model-desc)
+source YAML files. See the [C3DC JSON schema readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/README.md)
+for more information.
+
+### Mapping unpivoter utility script
+The mapping unpivoter script can be used to transform the development team's internal shared document containing
+harmonized data mapping definitions to the [publicly available JSON transformation/mapping
+deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations), aka the 'remote'
+configuration file described below referenced in the `transformations_url` property. The script can be used for
+convenience in lieu of editing and maintaining the JSON transformation/mapping config file manually. See the
+[readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for details.
+
+## ETL execution
+1. Create/update the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
+of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc) if needed.
+1. Create/update the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations)
+   if needed.
+1. Create a local file named `.env` (see below for configuration details) as per the
+   [example](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/.env_example) and execute the script
+   without any arguments:
+   ```
+   python c3dc_etl.py
+   ```
 
 ### Configuration
 Configuration has been divided into local and remote file instances. The local configuration file contains settings
@@ -58,7 +79,9 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
     * `source_field`: The source file field whose data value will be harmonized and saved to the `output_field`, e.g.
        `TARGET USI`, `Age at Diagnosis in Days`, `INSS Stage`, etc. The special value `[string_literal]` can be
        specified to indicate that the harmonized output value is derived from a static text value rather than a
-       specific source file field.
+       specific source file field. Multiple fields can be specified as a comma-separated
+       ([CSV rules](https://docs.python.org/3/library/csv.html)) list for use by 'macro-like' functions such as
+       `{sum}` as described below.
     * `type_group_index`: An identifier that indicates if this field is for a multi-record mapping and, if so, how
       those mappings will be grouped together. This var can be omitted for single record mappings, which are for
       fields associated with a single output record per source record such as `participant`. Every record in the
@@ -71,63 +94,48 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
       mapping group. The wildcard value `*` can be used to indicate mappings that apply to all records of that type
       such as `reference_file.reference_file_id`, for which all `reference_file` records will have their
       `reference_file_id` value set to a programmatically-generated UUID.
+    * `default_value`: The default value to set the `output_field` to when the `source_field` value is blank/null.
     * `replacement_values`: A list of `replacement_value` objects that specify how 'old' source data values will be
       harmonized. Each `replacement_value` pair will be processed in sequence and the harmonized output value will be
       set to `new_value` if the source data matches the value or criteria specifed in `old_value`.
         * `old_value`: The old/existing value that will be mapped to the `new_value`. In addition to explicit values,
           the special characters `*` and `+` can be specified to indicate that the source data value will be
           replaced with `new_value` if the source data value is anything including null (`*`) or non-null (`+`).
-          Partial wildcards such as `prefix*`, `*suffix`, and `*contains*` are not supported.
+          Partial wildcards such as `prefix*`, `*suffix`, and `*contains*` are NOT supported.
         * `new_value`: The value with which the source data should be replaced in the harmonized data output. In
           addition to explicit values, the following special values are also allowed:  
-          `[uuid]`: substitute with a UUID (v4); see the description for `uuid_seed` config var for information on how
-            UUIDs are generated.  
-          `[field:{source field name}]`: substitute with the specified source field value for the current source
-            record, for example `[field:TARGET USI]`.
+          * `{uuid}`: substitute with a UUID (v4); see the description for `uuid_seed` config var for information
+            on how UUIDs are generated.  
+          * `{field:source field name}`: substitute with the specified source field value for the current source
+            record, for example `{field:TARGET USI}`.
+          * `{sum}`: substitute with the sum of the values for the source fields specified in `source_field`
 
-
-## Mapping unpivoter utility script
-The mapping unpivoter script can be used to transform the development team's internal shared document containing
-harmonized data mapping definitions to the
-[publicly available JSON transformation/mapping deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations),
-aka the 'remote' configuration file described above. The script can be used for convenience in lieu of editing and
-maintaining the JSON transformation/mapping config file manually.
-
-### Execution steps
-1. Download the internal shared document as separate CSV files for each mapping sheet in the document. The
-   'Microsoft Excel (.xlsx)' download option shortens and truncates the sheet/tab names, which makes it difficult for
-   an automated script to detect the source-file => mapping entries. This may be supported in the future as more
-   mappings are added, increasing the time and effort required to manually download a CSV file for each mapped sheet.
-1. Create a local file named `.env_mapping_unpivoter` containing the configuration vars described below and execute the
-   script without any arguments:
-   ```
-   python mapping_unpivoter.py
-   ```
-
-### Configuration
-* `VERSION`: The value of the `version` config var to set for the `STUDY_CONFIGURATION` object contained in the
-  resulting output file.
-* `JSON_SCHEMA_URL`: The location of the JSON schema file that will be loaded and referenced to validate the
-  `output_field` values contained in the source mapping files.
-* `OUTPUT_FILE`: The local path to the file where the resulting JSON transformation/mapping will be saved.
-* `TRANSFORMATION_MAPPINGS_FILES`: A string-ified list of objects specifying the source mapping file for a given
-  transformation name. Each item will result in a `transformation` object in the output JSON config file having the
-  `name` config var set to the value of `transformation_name` and the `mappings` config var set to the collection of
-  mapping objects resulting from 'unpivoting' the contents of the file at the path specified in `mappings_file`.
-
-#### Example `.env_mapping_unpivoter` configuration file:
+## Sample ETL execution shell script
+The commands below can be adapted and executed in a shell script such as `c3dc_etl.sh` for convenience.
 ```
-VERSION='YYYYMMDD.N'
-JSON_SCHEMA_URL='https://raw.githubusercontent.com/chicagopcdc/c3dc_etl/main/schema/schema.json'
-OUTPUT_FILE='./transformations/phs000467.v22.p8.json'
-TRANSFORMATION_MAPPINGS_FILES='[
-    {
-        "transformation_name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
-        "mappings_file": "/path/to/internal_tabular_mappings_file_for_target_nbl_cde_20170525_discovery_20220125.csv"
-    },
-    {
-        "transformation_name": "TARGET_NBL_ClinicalData_Validation_20220125.xlsx",
-        "mappings_file": "/path/to/internal_tabular_mappings_file_for_target_nbl_cde_20170525_validation_20220125.csv"
-    }
-]'
+# Creation of Target NBL harmonized data file and transformation/mapping file involves the following steps:
+# 1) If updating schema: update schema version var in ../../schema/.env and then either execute
+#    ../../schema/schema_creator.py manually or uncomment schema script commands below
+# 2) Update transformation/mapping version in ../../mapping_unpivoter/.env_mapping_unpivoter_target_nbl_phs000467
+# 3) Create transformation/mapping file using mapping unpivoter script
+# 4) Run ETL to create harmonized data file
+
+# activate conda env first with e.g. 'conda activate c3dc_etl'; check conda_environment.yml for package dependencies
+
+# exit on error
+set -e
+
+# if updating schema, uncomment the following after updating the version var in the ../../schema.env file:
+# cd ../../schema
+# python schema_creator.py
+
+# update version var in ../../mapping_unpivoter/.env_mapping_unpivoter_target_nbl_phs000467 and then create
+# transformation/mapping file; assuming starting dir is './etl/target_nbl' where '.' is project root dir
+cd ../../mapping_unpivoter
+python mapping_unpivoter.py unpivot_transformation_mappings .env_mapping_unpivoter_target_nbl_phs000467
+cp mapping_unpivoter.log mapping_unpivoter_target_nbl.log
+
+# run ETL script to create harmonized data file
+cd ../etl/target_nbl
+python c3dc_etl.py
 ```

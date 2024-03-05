@@ -1,12 +1,12 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/2024-02-21",
+  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-02-27",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
-  "$ref": "https://datascience.cancer.gov/schemas/nodes",
+  "$ref": "https://datascience.cancer.gov/schemas/c3dc/nodes",
   "$defs": {
     "diagnosis": {
-      "$id": "https://datascience.cancer.gov/schemas/diagnosis",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/diagnosis",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Diagnosis",
       "description": "Not specified in source yaml",
@@ -16,7 +16,6 @@
         "diagnosis_id",
         "diagnosis",
         "diagnosis_classification_system",
-        "diagnosis_certainty",
         "diagnosis_basis",
         "diagnosis_comment",
         "disease_phase",
@@ -1341,17 +1340,6 @@
             "Not Reported"
           ]
         },
-        "diagnosis_certainty": {
-          "type": "string",
-          "description": "The type of generic chronology for which the diagnosis was obtained.",
-          "cde": [],
-          "enum": [
-            "Provisional",
-            "Final",
-            "Unknown",
-            "Not Reported"
-          ]
-        },
         "diagnosis_basis": {
           "type": "array",
           "description": "The type of event for which the diagnosis was obtained.",
@@ -1992,7 +1980,7 @@
       }
     },
     "participant": {
-      "$id": "https://datascience.cancer.gov/schemas/participant",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/participant",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Participant",
       "description": "Not specified in source yaml",
@@ -2098,7 +2086,7 @@
       }
     },
     "reference_file": {
-      "$id": "https://datascience.cancer.gov/schemas/reference_file",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/reference_file",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Reference_file",
       "description": "Not specified in source yaml",
@@ -2245,7 +2233,7 @@
       }
     },
     "sample": {
-      "$id": "https://datascience.cancer.gov/schemas/sample",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/sample",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Sample",
       "description": "Not specified in source yaml",
@@ -2257,7 +2245,6 @@
         "participant_age_at_collection",
         "diagnosis",
         "diagnosis_classification_system",
-        "diagnosis_certainty",
         "diagnosis_basis",
         "diagnosis_comment",
         "sample_tumor_status",
@@ -3960,17 +3947,6 @@
             "Not Reported"
           ]
         },
-        "diagnosis_certainty": {
-          "type": "string",
-          "description": "The type of generic chronology for which the diagnosis was obtained.",
-          "cde": [],
-          "enum": [
-            "Provisional",
-            "Final",
-            "Unknown",
-            "Not Reported"
-          ]
-        },
         "diagnosis_basis": {
           "type": "array",
           "description": "The type of event for which the diagnosis was obtained.",
@@ -4243,7 +4219,7 @@
       }
     },
     "study": {
-      "$id": "https://datascience.cancer.gov/schemas/study",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/study",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Study",
       "description": "Not specified in source yaml",
@@ -4346,7 +4322,7 @@
       }
     },
     "survival": {
-      "$id": "https://datascience.cancer.gov/schemas/survival",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/survival",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Survival",
       "description": "Not specified in source yaml",
@@ -4433,7 +4409,7 @@
       }
     },
     "nodes": {
-      "$id": "https://datascience.cancer.gov/schemas/nodes",
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/nodes",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "Nodes",
       "description": "Top-level node container",
@@ -4441,37 +4417,37 @@
         "diagnoses": {
           "type": "array",
           "items": {
-            "$ref": "https://datascience.cancer.gov/schemas/diagnosis"
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/diagnosis"
           }
         },
         "participants": {
           "type": "array",
           "items": {
-            "$ref": "https://datascience.cancer.gov/schemas/participant"
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/participant"
           }
         },
         "reference_files": {
           "type": "array",
           "items": {
-            "$ref": "https://datascience.cancer.gov/schemas/reference_file"
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/reference_file"
           }
         },
         "samples": {
           "type": "array",
           "items": {
-            "$ref": "https://datascience.cancer.gov/schemas/sample"
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/sample"
           }
         },
         "studies": {
           "type": "array",
           "items": {
-            "$ref": "https://datascience.cancer.gov/schemas/study"
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/study"
           }
         },
         "survivals": {
           "type": "array",
           "items": {
-            "$ref": "https://datascience.cancer.gov/schemas/survival"
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/survival"
           }
         }
       }

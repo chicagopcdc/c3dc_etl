@@ -85,7 +85,7 @@ def pivot_json_data_to_xlsx(input_path: str, output_path: str) -> None:
         if files_processed % 100 == 0:
             _logger.info('%d files processed', files_processed)
 
-        # load subject json source data 
+        # load subject json source data
         subject_data: dict[str, any]
         with open(source_path, mode='r', encoding='utf-8') as json_file:
             subject_data = json.load(json_file)

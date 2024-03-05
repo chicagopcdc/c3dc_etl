@@ -7,8 +7,12 @@ Install Python (3.11 used at time of documentation) and add support for dependen
 based on the [Conda environment file](https://github.com/chicagopcdc/c3dc_etl/blob/main/conda_environment.yml)
 
 ## Script to collate and pivot study data in JSON files
+The MCI source data is provided as individual JSON files per subject. To make it easier to browse and inspect the
+data, the data pivoter script gathers and pivots the source data into a single Excel (XLSX) workbook containing
+a worksheet for each 'form', with properties mapped to columns, and one row per subject. A comprehensive sheet
+(`ALL_FORMS`) is also present that contains all subjects and properties found across all source files.
 
-### Execution Steps
+### Data pivoter script execution
 Call the script with two arguments, the first the path to the file or a directory containing the JSON data to be
 pivoted and the second the destination file where the pivoted data should be saved. If a directory is passed as
 an input then data from all JSON files within that directory and sub-directories will be pivoted. If the destination
@@ -19,12 +23,41 @@ Example command:
 python data_pivoter.py /path/to/cog_mci_ingested_json_files/ cog_mci_ingested_pivoted_data.xlsx
 ```
 
-After completion, an updated transformation mapping file (e.g. phs002790.v4.p1.ref_files.json) will be created
-in the same directory that contains the ETL script. This file consists of the original transformation mapping
-file with `reference_file` entries for each source file appended. This file serves as the comprehensive
-transformation mapping file to be delivered along with the JSON schema and ETL script. The amended transformation
-mapping file will NOT be created if there are any `reference_file` entries in the original transformation mapping
-having `file_category` equal to `input source data`.
+## Data harmonization process and input dependencies
+The c3dc_etl.py script ingests the source data JSON files, collating and transforming them into a single harmonized
+(JSON) data file by applying the mapping rules in the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations)
+and then performs validation against the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
+of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc).
+
+Note: the transformation mapping JSON file contains `reference_file` entries for harmonization inputs such as
+the ETL script, JSON schema, input source files and the transformation mapping file itself. These `reference_file`
+mapping entries are transformed into `reference_file` records that are injected into the harmonized data output
+file by the ETL script. The ETL script can add the necessary `reference_file` mapping records to the transformation
+mapping file to eliminate the need to manually maintain the `reference_file` entries for each input source file in
+the transformation mapping file. The ETL script will catalog the input source files as they are harmonized and, if
+there are no `reference_file` entries in the transformation mapping file having `file_category` set to
+`input source data`, it will add `reference_file` mapping entries to a copy of the transformation mapping file. The
+ETL script can then be executed again using the amended transformation mapping file, which will result in the
+`reference_file` input source file entries being written to the harmonized data output file.
+
+Thus the execution of the MCI ETL will typically be a two-step process, with the first step creating an amended
+transformation mapping file containing the `input source data` reference file entries (the harmonized data output
+file will still be created but should be discarded) and the second step creating the 'final' harmonized data
+output file.
+
+### C3DC model JSON schema
+The data harmonization script uses the [C3DC JSON schema file](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
+for reference and validation, which is converted from the [C3DC model's](https://github.com/CBIIT/c3dc-model/tree/main/model-desc)
+source YAML files. See the [C3DC JSON schema readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/README.md)
+for more information.
+
+### Mapping unpivoter utility script
+The mapping unpivoter script can be used to transform the development team's internal shared document containing
+harmonized data mapping definitions to the [publicly available JSON transformation/mapping
+deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations), aka the 'remote'
+configuration file described below referenced in the `transformations_url` property. The script can be used for
+convenience in lieu of editing and maintaining the JSON transformation/mapping config file manually. See the
+[readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for details.
 
 ## ETL script
 The c3dc_etl.py script ingests the source data in tabular (XLSX) format and transforms it into a harmonized (JSON)
@@ -106,49 +139,49 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
           `[field:{source field name}]`: substitute with the specified source field value for the current source
             record, for example `[field:TARGET USI]`.
 
-
-## Mapping unpivoter utility script
-The mapping unpivoter script can be used to transform the development team's internal shared document containing
-harmonized data mapping definitions to the
-[publicly available JSON transformation/mapping deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/mci/transformations),
-aka the 'remote' configuration file described above. The script can be used for convenience in lieu of editing and
-maintaining the JSON transformation/mapping config file manually.
-
-### Execution steps
-1. Download the internal shared document as separate CSV files for each mapping sheet in the document. The
-   'Microsoft Excel (.xlsx)' download option shortens and truncates the sheet/tab names, which makes it difficult for
-   an automated script to detect the source-file => mapping entries. This may be supported in the future as more
-   mappings are added, increasing the time and effort required to manually download a CSV file for each mapped sheet.
-1. Create a local file named `.env_mapping_unpivoter` containing the configuration vars described below and execute the
-   script without any arguments:
-   ```
-   python mapping_unpivoter.py
-   ```
-
-### Configuration
-* `VERSION`: The value of the `version` config var to set for the `STUDY_CONFIGURATION` object contained in the
-  resulting output file.
-* `JSON_SCHEMA_URL`: The location of the JSON schema file that will be loaded and referenced to validate the
-  `output_field` values contained in the source mapping files.
-* `OUTPUT_FILE`: The local path to the file where the resulting JSON transformation/mapping will be saved.
-* `TRANSFORMATION_MAPPINGS_FILES`: A string-ified list of objects specifying the source mapping file for a given
-  transformation name. Each item will result in a `transformation` object in the output JSON config file having the
-  `name` config var set to the value of `transformation_name` and the `mappings` config var set to the collection of
-  mapping objects resulting from 'unpivoting' the contents of the file at the path specified in `mappings_file`.
-
-#### Example `.env_mapping_unpivoter` configuration file:
+## Sample ETL execution shell script
+The commands below can be adapted and executed in a shell script such as `c3dc_etl.sh` for convenience.
 ```
-VERSION='YYYYMMDD.N'
-JSON_SCHEMA_URL='https://raw.githubusercontent.com/chicagopcdc/c3dc_etl/main/schema/schema.json'
-OUTPUT_FILE='./transformations/phs000467.v22.p8.json'
-TRANSFORMATION_MAPPINGS_FILES='[
-    {
-        "transformation_name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
-        "mappings_file": "/path/to/internal_tabular_mappings_file_for_target_nbl_cde_20170525_discovery_20220125.csv"
-    },
-    {
-        "transformation_name": "TARGET_NBL_ClinicalData_Validation_20220125.xlsx",
-        "mappings_file": "/path/to/internal_tabular_mappings_file_for_target_nbl_cde_20170525_validation_20220125.csv"
-    }
-]'
+# Creation of MCI harmonized data file and transformation/mapping file involves the following steps:
+# 1) If updating schema: update schema version var in ../../schema/.env and then either execute
+#    ../../schema/schema_creator.py manually or uncomment schema script commands below
+# 2) Update transformation/mapping version in ../../mapping_unpivoter/.env_mapping_unpivoter_mci_phs002790
+# 3) Create base transformation/mapping file without reference file entries for input source data files
+# 4) Run ETL to add reference file entries for input source data files e.g. in ./COG_MCI_json_ingest2.
+#    Harmonized data file created in this step should be ignored/discarded.
+# 5) Update reference file size and md5sum entries for transformation/mapping file (self/referential,
+#    from 0 and '' initial values respectively)
+# 6) Run ETL again to create final harmonized data file with updated reference file entries 
+
+# activate conda env first with e.g. 'conda activate c3dc_etl'; check conda_environment.yml for package dependencies
+
+# exit on error
+set -e
+
+# if updating schema, uncomment the following after updating the version var in the ../../schema.env file:
+# cd ../../schema
+# python schema_creator.py
+
+# update version var in ../../mapping_unpivoter/.env_mapping_unpivoter_mci_phs002790 and then create base
+# transformation/mapping file; assuming starting dir is './etl/mci' where '.' is project root dir
+cd ../../mapping_unpivoter
+python mapping_unpivoter.py unpivot_transformation_mappings .env_mapping_unpivoter_mci_phs002790
+cp mapping_unpivoter.log mapping_unpivoter_mci_1.log
+
+# run ETL script to create transformation/mapping file containing ref file entries for input source data files
+cd ../etl/mci
+python c3dc_etl.py
+
+# save copy of current transformation/mapping file and overwrite with updated version created in last step
+cp transformations/phs002790.v4.p1.json transformations/phs002790.v4.p1.json.bak
+mv phs002790.v4.p1.ref_files.json transformations/phs002790.v4.p1.json
+
+# update transformation/mapping file's reference file size and md5sum mappings
+cd ../../mapping_unpivoter
+python mapping_unpivoter.py update_reference_file_mappings .env_mapping_unpivoter_mci_phs002790
+cp mapping_unpivoter.log mapping_unpivoter_mci_2.log
+
+# run ETL script again to create final harmonized data file
+cd ../etl/mci
+python c3dc_etl.py
 ```
