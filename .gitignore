@@ -3,11 +3,11 @@
 .env
 .env_*
 .env.*
-!etl/**/.env_example
 .pylintrc
 .python-version
 .venv
 .vscode/settings.json
+!**/.env_example
 
 # files by extension
 *.bak
@@ -16,9 +16,6 @@
 *.ini
 *.json
 *.sh
-!etl/**/transformations/*.json
-!schema/schema.json
-!schema/sample_data.json
 *.log
 *.log.*
 *.pickle
@@ -29,6 +26,9 @@
 *.yaml
 *.yml
 !conda_environment.yml
+!etl/**/transformations/*.json
+!schema/schema.json
+!schema/sample_data.json
 
 # directories
 __pycache__/

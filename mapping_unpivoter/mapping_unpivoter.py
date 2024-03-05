@@ -9,6 +9,7 @@ import logging.config
 import os
 import sys
 
+from contextlib import ContextDecorator
 from urllib.parse import urlparse, ParseResult
 from urllib.request import url2pathname
 
@@ -58,8 +59,15 @@ logging.config.dictConfig({
 })
 
 
-class MappingUnpivoter: #pylint: disable=too-few-public-methods
+class MappingUnpivoter(ContextDecorator):
     """ Unpivot tabular transformation field mappings to JSON format """
+    TRUE_STRINGS: tuple[str, ...] = (str(True).lower(), 't', 'yes', 'y', '1')
+
+    REF_FILE_CATEGORY_PROG_SOURCE_CODE: str = 'programmatic source code'
+    REF_FILE_CATEGORY_XFORM_MAP: str = 'transformation/mapping'
+    REF_FILE_CATEGORY_OUTPUT_SCHEMA: str = 'output schema'
+    REF_FILE_CATEGORY_INPUT_SOURCE_DATA: str = 'input source data'
+
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
         self._version: str = config.get('VERSION')
@@ -67,14 +75,23 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
         self._json_schema: dict[str, any] = {}
         self._node_type_properties: list[str] = []
         self._output_file: str = config.get('OUTPUT_FILE')
+        self._etl_script_file: str = config.get('ETL_SCRIPT_FILE')
+        self._json_schema_file = './schema.json'
         self._transformation_mappings_files: list[dict[str, any]] = json.loads(
             config.get('TRANSFORMATION_MAPPINGS_FILES', '[]')
         )
         self._transformation_config: dict[str, any] = {'version': self._version, 'transformations': []}
-        self._transformation_mappings: dict[str, list[dict[str, any]]] = {}
 
+    def __enter__(self) -> None:
+        """ download the JSON schema to a local file """
         self._load_json_schema()
         self._cache_node_type_properties()
+        return self
+
+    def __exit__(self, exc_type, exc, exc_tb) -> None:
+        """ delete the local copy of the JSON schema"""
+        if os.path.exists(self._json_schema_file):
+            os.remove(self._json_schema_file)
 
     @staticmethod
     def url_to_path(url: str) -> str:
@@ -84,7 +101,7 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
         return os.path.normpath(os.path.join(host, url2pathname(url_parts.path)))
 
     @staticmethod
-    def get_url_content(url: str) -> any:
+    def get_url_content(url: str, local_save_path: str = None) -> any:
         """ Retrieve and return contents from specified URL """
         url_content: str | bytes | bytearray
         if url.startswith('file://'):
@@ -95,7 +112,27 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
                 response.raise_for_status()
                 url_content = response.content
 
+        if local_save_path:
+            with open(local_save_path, 'wb') as write_fp:
+                write_fp.write(url_content)
+
         return json.loads(url_content)
+
+    def load_transformation_config_output_file(self) -> None:
+        """ Load existing transformation config from (output) file specified in config """
+        _logger.info('Loading transformation config from "%s"', self._output_file)
+
+        if not os.path.isfile(self._output_file):
+            raise RuntimeError(f'Transformation/mapping output file "{self._output_file}" not found')
+
+        with open(self._output_file, 'r', encoding='utf-8') as fp:
+            self._transformation_config = json.load(fp)
+
+    def save_transformation_config_output_file(self) -> None:
+        """ Save transformation config to output file specified in config """
+        _logger.info('Saving transformation config to "%s"', self._output_file)
+        with open(self._output_file, mode='w', encoding='utf-8') as fp:
+            json.dump(self._transformation_config, fp, indent=4)
 
     def unpivot_transformation_mappings(self) -> None:
         """ Unpivot tablular mapping data to JSON """
@@ -169,18 +206,138 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
 
         # save transformation config to output file specified in config
         _logger.info('Saving unpivoted transformation mappings to %s', self._output_file)
-        with open(self._output_file, mode='w', encoding='utf-8') as json_fp:
-            json.dump(self._transformation_config, json_fp, indent=4)
+        self.save_transformation_config_output_file()
 
-        self._update_transformation_mapping_reference_file_mappings()
-        _logger.info('Saving updated unpivoted transformation mappings to %s', self._output_file)
-        with open(self._output_file, mode='w', encoding='utf-8') as json_fp:
-            json.dump(self._transformation_config, json_fp, indent=4)
+    def update_all_reference_file_mappings(self) -> None:
+        """
+        Update reference file size and md5 sum mappings for all reference files specified
+        in configuration: ETL script, schema, transformation/mapping, input source data
+        """
+        ref_files_to_update: dict[str, str] = {}
+        ref_files_to_update[self._json_schema_file] = MappingUnpivoter.REF_FILE_CATEGORY_OUTPUT_SCHEMA
+        if self._etl_script_file:
+            ref_files_to_update[self._etl_script_file] = MappingUnpivoter.REF_FILE_CATEGORY_PROG_SOURCE_CODE
+        for transformation_mappings_file in self._transformation_mappings_files:
+            if transformation_mappings_file.get('source_data_file'):
+                ref_files_to_update[transformation_mappings_file['source_data_file']] = \
+                    MappingUnpivoter.REF_FILE_CATEGORY_INPUT_SOURCE_DATA
+
+        ref_file_to_update: str
+        ref_file_category: str
+        for ref_file_to_update, ref_file_category in ref_files_to_update.items():
+            self.update_reference_file_mappings(ref_file_to_update, ref_file_category)
+        self.save_transformation_config_output_file()
+
+        # The size and md5 hass of the transformation/mapping file will be calculated based on the properties for
+        # the other ref files already being populated and the self-referential file size and md5 hash properties
+        # for the transformation/mapping being set to 0 and '' respectively. This will allow deterministic
+        # confirmation if needed in the future by calculating these properties for the file when the values are
+        # set back to 0 and ''.
+        self.load_transformation_config_output_file()
+        self.update_reference_file_mappings(self._output_file, MappingUnpivoter.REF_FILE_CATEGORY_XFORM_MAP)
+        self.save_transformation_config_output_file()
+
+    def update_reference_file_mappings(self, ref_file_path: str, ref_file_category: str) -> None:
+        """
+        Update mapping entries for reference file size and md5 sum for specified reference file and category.
+        Return True if update performed successfully, False otherwise
+        """
+        _logger.info('Updating file size and md5sum for "%s" reference file "%s"', ref_file_category, ref_file_path)
+        # get size and md5 hash of output file to set matching reference file properties
+        ref_file_size: int = os.path.getsize(ref_file_path)
+
+        md5: hashlib._Hash = hashlib.md5()
+        with open(ref_file_path, mode='rb') as ref_file_fp:
+            chunk: any
+            for chunk in iter(lambda: ref_file_fp.read(4096), b''):
+                md5.update(chunk)
+        ref_file_md5sum: str = md5.hexdigest()
+
+        ref_file_field_value_map: dict[str, any] = {
+            'reference_file.file_size': ref_file_size,
+            'reference_file.md5sum': ref_file_md5sum
+        }
+
+        ref_file_basename: str = os.path.basename(ref_file_path)
+
+        # update file size and md5 values of matching transformation/mapping ref file entries for each transformation
+        update_successful: bool = True
+        for xform_cfg in self._transformation_config.get('transformations', []):
+            xform_updated: bool = True
+            reference_file_tgis: list[str] = []
+            mapping: dict[str, any]
+            # get type group index values of relevant transformation/mapping files
+            # by matching reference file's file name property to our output file
+            for mapping in [
+                m for m in xform_cfg['mappings']
+                    if m.get('type_group_index') and
+                        m.get('output_field') == 'reference_file.file_name' and
+                        any(r for r in m.get('replacement_values', []) if r.get('new_value') == ref_file_basename)
+            ]:
+                reference_file_tgis.append(mapping.get('type_group_index'))
+
+            if not reference_file_tgis:
+                _logger.warning(
+                    'No reference file mapping for "%s" found in transformation "%s"',
+                    ref_file_basename,
+                    xform_cfg.get('name')
+                )
+
+            # set file size and md5sum values for each reference file set circumscribed by type group index
+            tgi: str
+            for tgi in set(reference_file_tgis):
+                ref_file_size_md5sum_mappings: list[dict[str, any]] = self._get_ref_file_size_and_md5sum_mappings(
+                    ref_file_path,
+                    ref_file_category,
+                    xform_cfg['mappings'],
+                    tgi
+                )
+                if not ref_file_size_md5sum_mappings:
+                    _logger.warning('Ref file size and md5sum mappings not found')
+                output_field: str
+                new_value: any
+                values_updated: int = 0
+                for output_field, new_value in ref_file_field_value_map.items():
+                    ref_file_mapping: dict[str, any] = [
+                        m for m in ref_file_size_md5sum_mappings if m.get('output_field') == output_field
+                    ]
+                    if not ref_file_mapping:
+                        raise RuntimeError(
+                            f'Mapping for "{output_field}" not found for transformation "{xform_cfg.get("name")}" ' +
+                            f'(type group index {tgi})'
+                        )
+                    ref_file_mapping = ref_file_mapping[0]
+                    replacement_value: dict[str, any]
+                    replacement_value_updated: bool = False
+                    for replacement_value in ref_file_mapping.get('replacement_values', []):
+                        if replacement_value['new_value'] not in ('', 0):
+                            raise RuntimeError(
+                                f'Unexpected value for "new_value" in mapping replacement_values: {ref_file_mapping}'
+                            )
+                        _logger.info(
+                            (
+                                '\tSetting "%s" replacement "new_value" properties to "%s" for ' +
+                                    'type_group_index "%s" in transformation "%s"'
+                            ),
+                            output_field,
+                            new_value,
+                            tgi,
+                            xform_cfg.get('name')
+                        )
+                        replacement_value['new_value'] = new_value
+                        replacement_value_updated = True
+                    values_updated += (1 if replacement_value_updated else 0)
+                if values_updated < len(ref_file_field_value_map):
+                    xform_updated = False
+            update_successful = update_successful and xform_updated
+        if not update_successful:
+            _logger.warning('Update of transformation/mapping reference file size and md5sum failed')
 
     def _load_json_schema(self) -> dict[str, any]:
         """ Load JSON schema from location specified in config """
         _logger.info('Loading JSON schema from %s', self._json_schema_url)
-        self._json_schema = MappingUnpivoter.get_url_content(self._json_schema_url)
+        # save local copy of json schema file to calculate size and md5 hash to update ref file mapping if needed
+        self._json_schema = MappingUnpivoter.get_url_content(self._json_schema_url, self._json_schema_file)
         return self._json_schema
 
     def _cache_node_type_properties(self) -> list[str]:
@@ -247,6 +404,8 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
 
     def _get_ref_file_size_and_md5sum_mappings(
         self,
+        ref_file: str,
+        ref_file_category: str,
         mappings: list[dict[str, any]],
         type_group_index: str,
     ) -> list[dict[str, any]]:
@@ -260,14 +419,14 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
             m for m in ref_file_mappings
                 if m.get('output_field') == 'reference_file.file_name' and any(
                     r for r in m.get('replacement_values', [])
-                        if r.get('new_value') == os.path.basename(self._output_file)
+                        if r.get('new_value') == os.path.basename(ref_file)
                 )
         ]
         file_cat_match: list[dict[str, any]] = [
             m for m in ref_file_mappings
                 if m.get('output_field') == 'reference_file.file_category' and any(
                     r for r in m.get('replacement_values', [])
-                        if r.get('new_value') == 'transformation/mapping'
+                        if r.get('new_value') == ref_file_category
                 )
         ]
         file_size_match: list[dict[str, any]] = [
@@ -292,102 +451,38 @@ class MappingUnpivoter: #pylint: disable=too-few-public-methods
         return []
 
 
-    def _update_transformation_mapping_reference_file_mappings(self) -> list[dict[str, any]]:
-        """ Find mapping entries for reference file size and md5 sum in transformation config for output file """
-        _logger.info('Updating transformation/mapping reference file values for file size and md5 sum')
-        # get size and md5 hash of output file to set matching reference file properties
-        mapping_file_size: int = os.path.getsize(self._output_file)
-
-        md5: hashlib._Hash = hashlib.md5()
-        with open(self._output_file, mode='rb') as json_fp:
-            chunk: any
-            for chunk in iter(lambda: json_fp.read(4096), b''):
-                md5.update(chunk)
-        mapping_file_md5sum: str = md5.hexdigest()
-
-        ref_file_field_value_map: dict[str, any] = {
-            'reference_file.file_size': mapping_file_size,
-            'reference_file.md5sum': mapping_file_md5sum
-        }
-
-        output_file_name: str = os.path.basename(self._output_file)
-
-        # update file size and md5 values of matching transformation/mapping ref file entries for each transformation
-        for xform_cfg in self._transformation_config.get('transformations', []):
-            reference_file_tgis: list[str] = []
-            mapping: dict[str, any]
-            # get type group index values of relevant transformation/mapping files
-            # by matching reference file's file name property to our output file
-            for mapping in [
-                m for m in xform_cfg['mappings']
-                    if m.get('type_group_index') and
-                        m.get('output_field') == 'reference_file.file_name' and
-                        any(r for r in m.get('replacement_values', []) if r.get('new_value') == output_file_name)
-            ]:
-                reference_file_tgis.append(mapping.get('type_group_index'))
-
-            if not reference_file_tgis:
-                _logger.warning(
-                    'No reference file mapping for "%s" found in transformation "%s"',
-                    output_file_name,
-                    xform_cfg.get('name')
-                )
-            # set file size and md5sum values for each reference file set circumscribed by type group index
-            tgi: str
-            for tgi in set(reference_file_tgis):
-                ref_file_size_md5sum_mappings: list[dict[str, any]] = self._get_ref_file_size_and_md5sum_mappings(
-                    xform_cfg['mappings'],
-                    tgi
-                )
-                output_field: str
-                new_value: any
-                for output_field, new_value in ref_file_field_value_map.items():
-                    ref_file_mapping: dict[str, any] = [
-                        m for m in ref_file_size_md5sum_mappings if m.get('output_field') == output_field
-                    ]
-                    if not ref_file_mapping:
-                        raise RuntimeError(
-                            f'Mapping for "{output_field}" not found for transformation {xform_cfg.get("name")} ' +
-                            f'(type group index {tgi})'
-                        )
-                    ref_file_mapping = ref_file_mapping[0]
-                    replacement_value: dict[str, any]
-                    for replacement_value in ref_file_mapping.get('replacement_values', []):
-                        if replacement_value['new_value'] not in ('', 0):
-                            raise RuntimeError(
-                                f'Unexpected value for "new_value" in mapping replacement_values: {ref_file_mapping}'
-                            )
-                        _logger.info(
-                            (
-                                'Setting "%s" replacement "new_value" properties to "%s" for ' +
-                                    'type_group_index "%s" in transformation "%s"'
-                            ),
-                            output_field,
-                            new_value,
-                            tgi,
-                            xform_cfg.get('name')
-                        )
-                        replacement_value['new_value'] = new_value
+VALID_METHODS: tuple[str, ...] = (
+    MappingUnpivoter.unpivot_transformation_mappings.__name__,
+    MappingUnpivoter.update_reference_file_mappings.__name__
+)
 
 
 def print_usage() -> None:
     """ Print script usage """
-    _logger.info('usage: python %s [optional config file name/path if not .env_mapping_unpivoter]', sys.argv[0])
+    _logger.info('usage: python %s [%s] [optional config file name/path]', sys.argv[0], '|'.join(VALID_METHODS))
 
 
 def main() -> None:
     """ Script entry point """
-    if len(sys.argv) > 2:
+    if len(sys.argv) not in (2, 3) or sys.argv[1] not in VALID_METHODS:
         print_usage()
         return
 
-    config_file: str = sys.argv[1] if len(sys.argv) == 2 else '.env_mapping_unpivoter'
+    config_file: str = sys.argv[2] if len(sys.argv) == 3 else '.env_mapping_unpivoter'
     if not os.path.exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
     config: dict[str, str] = dotenv.dotenv_values(config_file)
-    mapping_unpivoter: MappingUnpivoter = MappingUnpivoter(config)
-    mapping_unpivoter.unpivot_transformation_mappings()
-
+    mapping_unpivoter: MappingUnpivoter
+    with MappingUnpivoter(config) as mapping_unpivoter:
+        if sys.argv[1] == MappingUnpivoter.unpivot_transformation_mappings.__name__:
+            mapping_unpivoter.unpivot_transformation_mappings()
+            if config.get('AUTO_UPDATE_REFERENCE_FILE_MAPPINGS', 'False').lower() in MappingUnpivoter.TRUE_STRINGS:
+                mapping_unpivoter.update_all_reference_file_mappings()
+                mapping_unpivoter.save_transformation_config_output_file()
+        elif sys.argv[1] == MappingUnpivoter.update_reference_file_mappings.__name__:
+            mapping_unpivoter.load_transformation_config_output_file()
+            mapping_unpivoter.update_all_reference_file_mappings()
+            mapping_unpivoter.save_transformation_config_output_file()
 
 if __name__ == '__main__':
     main()

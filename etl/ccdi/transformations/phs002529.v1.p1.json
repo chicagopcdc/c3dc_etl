@@ -1,5 +1,5 @@
 {
-    "version": "20240216.1",
+    "version": "20240227.1",
     "transformations": [
         {
             "name": "phs002529_CCDI_v1.5.2_JoineRy20240111_Updater_v1.7.2_20240122_qc_CatchERR20240130.xlsx",
@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 208707
+                            "new_value": 59222
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b8068d0870a9ee873efa9f39668eaa"
+                            "new_value": "f370842985c50695c3b5386005d23e6a"
                         }
                     ]
                 },
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 31277
+                            "new_value": 30786
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "a2be3d648376a073cecfa68ab143a922"
+                            "new_value": "2934950a97b0cd7d4df3e29268e6d594"
                         }
                     ]
                 },
@@ -300,7 +300,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/etl/ccdi/transformations/phs002529.v1.p1.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/etl/ccdi/transformations/phs002529.v1.p1.json"
                         }
                     ]
                 },
@@ -348,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 208458
+                            "new_value": 207831
                         }
                     ]
                 },
@@ -360,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "2174d2942fb914a7222f81eda75aca56"
+                            "new_value": "b52c2f9fa6fda85dcdba1b787e9914fb"
                         }
                     ]
                 },
@@ -384,7 +384,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240216.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/schema/schema.json"
                         }
                     ]
                 },
@@ -551,18 +551,6 @@
                 {
                     "output_field": "diagnosis.diagnosis_classification_system",
                     "source_field": "diagnosis.diagnosis_classification_system",
-                    "type_group_index": "*",
-                    "default_value": "Not Reported",
-                    "replacement_values": [
-                        {
-                            "old_value": "",
-                            "new_value": ""
-                        }
-                    ]
-                },
-                {
-                    "output_field": "diagnosis.diagnosis_certainty",
-                    "source_field": "diagnosis.diagnosis_verification_status",
                     "type_group_index": "*",
                     "default_value": "Not Reported",
                     "replacement_values": [
