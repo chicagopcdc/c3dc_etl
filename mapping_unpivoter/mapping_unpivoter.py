@@ -7,13 +7,16 @@ import json
 import logging
 import logging.config
 import os
+import pathlib
 import sys
-
-from contextlib import ContextDecorator
 from urllib.parse import urlparse, ParseResult
 from urllib.request import url2pathname
 
+from contextlib import ContextDecorator
 import dotenv
+import openpyxl
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 import requests
 
 
@@ -94,6 +97,15 @@ class MappingUnpivoter(ContextDecorator):
             os.remove(self._json_schema_file)
 
     @staticmethod
+    def is_number(value: str):
+        """ Determine whether specified string is number (float or int) """
+        try:
+            float(value)
+        except (TypeError, ValueError):
+            return False
+        return True
+
+    @staticmethod
     def url_to_path(url: str) -> str:
         """ Convert specified URL to path specific to local platform """
         url_parts: ParseResult = urlparse(url)
@@ -134,6 +146,42 @@ class MappingUnpivoter(ContextDecorator):
         with open(self._output_file, mode='w', encoding='utf-8') as fp:
             json.dump(self._transformation_config, fp, indent=4)
 
+    def get_transformation_mappings_file_records(
+        self,
+        transformation_mappings_file: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """ Return contents of transformation mappings file as list of dicts """
+        records: list[dict[str, any]] = []
+        if pathlib.Path(transformation_mappings_file['mappings_file']).suffix.lower() == '.csv':
+            with open(transformation_mappings_file['mappings_file'], encoding='utf-8') as csv_fp:
+                reader: csv.DictReader = csv.DictReader(csv_fp)
+                record: dict[str, any]
+                for record in reader:
+                    records.append(record)
+        elif pathlib.Path(transformation_mappings_file['mappings_file']).suffix.lower() == '.xlsx':
+            sheet_name: str = transformation_mappings_file.get('mappings_file_sheet')
+            wb: Workbook = openpyxl.load_workbook(transformation_mappings_file['mappings_file'], data_only=True)
+            ws: Worksheet = wb[sheet_name[:31]] if sheet_name else wb[0]
+            row: str
+            cols: list[str] = []
+            for row in ws.iter_rows():
+                if not cols:
+                    cols = [cell.value for cell in row]
+                    continue
+                record: dict[str, any] = {}
+                col_num: int
+                for col_num, cell in enumerate(row):
+                    value: any = cell.value
+                    if MappingUnpivoter.is_number(value):
+                        value = int(float(value)) if float(value).is_integer() else float(value)
+                    record[cols[col_num]] = str(value) if value is not None else ''
+                records.append(record)
+        else:
+            raise RuntimeError(
+                f'Unsupported transformation mappings file type: "{transformation_mappings_file["mappings_file"]}"'
+            )
+        return records
+
     def unpivot_transformation_mappings(self) -> None:
         """ Unpivot tablular mapping data to JSON """
         _logger.info('Unpivoting transformation mappings')
@@ -144,65 +192,64 @@ class MappingUnpivoter(ContextDecorator):
         transformation_mappings_file: dict[str, any]
         for transformation_mappings_file in self._transformation_mappings_files:
             _logger.info('Loading transformation mappings file %s', transformation_mappings_file['mappings_file'])
-            with open(transformation_mappings_file['mappings_file'], encoding='utf-8') as csv_fp:
-                reader: csv.DictReader = csv.DictReader(csv_fp)
-                record: dict[str, any]
-                unpivoted_mappings: list[dict[str, any]] = []
-                for record in reader:
-                    # unpivot pivoted mapping
-                    unpivoted_mapping: dict[str, any] = self._unpivot_mapping(record)
-                    if not unpivoted_mapping:
+            records: list[dict[str, any]] = self.get_transformation_mappings_file_records(transformation_mappings_file)
+            record: dict[str, any]
+            unpivoted_mappings: list[dict[str, any]] = []
+            for record in records:
+                # unpivot pivoted mapping
+                unpivoted_mapping: dict[str, any] = self._unpivot_mapping(record)
+                if not unpivoted_mapping:
+                    continue
+
+                # check for consistent default values for this output field's mappings
+                if unpivoted_mapping['default_value'] is not None:
+                    existing_default_values: set[any] = set()
+                    default_value: any
+                    for default_value in [
+                        m['default_value'] for m in unpivoted_mappings
+                            if m['output_field'] == unpivoted_mapping['output_field'] and
+                                m['default_value'] is not None
+                    ]:
+                        if not isinstance(default_value, (list, set, tuple)):
+                            default_value = set([default_value])
+                        existing_default_values.update(default_value)
+                    if isinstance(unpivoted_mapping['default_value'], (list, set, tuple)):
+                        existing_default_values.update(unpivoted_mapping['default_value'])
+                    else:
+                        existing_default_values.add(unpivoted_mapping['default_value'])
+                    if len(existing_default_values) > 1:
+                        raise RuntimeError(
+                            f'Invalid mapping for output field "{unpivoted_mapping["output_field"]}", ' +
+                            f'multiple default values specified: {existing_default_values}')
+
+                # check for existing unpivoted mapping for this pivoted mapping's output field and type
+                # group, if found then this field mapping has multiple replacement values so append
+                existing_unpivoted_mappings: list[dict[str, any]] = [
+                    m for m in unpivoted_mappings
+                        if m['output_field'] == unpivoted_mapping['output_field'] and
+                            m['type_group_index'] == unpivoted_mapping['type_group_index']
+                ]
+                if not existing_unpivoted_mappings:
+                    unpivoted_mappings.append(unpivoted_mapping)
+                else:
+                    source_field_count: int = len(set(m.get('source_field') for m in existing_unpivoted_mappings))
+                    if source_field_count != 1:
+                        err_msg = (
+                            f'Invalid mapping: unexpected number of source fields ({source_field_count}) ' +
+                            f'for output field {unpivoted_mapping["output_field"]}'
+                        )
+                        errors.append(err_msg)
                         continue
 
-                    # check for consistent default values for this output field's mappings
-                    if unpivoted_mapping['default_value'] is not None:
-                        existing_default_values: set[any] = set()
-                        default_value: any
-                        for default_value in [
-                            m['default_value'] for m in unpivoted_mappings
-                                if m['output_field'] == unpivoted_mapping['output_field'] and
-                                    m['default_value'] is not None
-                        ]:
-                            if not isinstance(default_value, (list, set, tuple)):
-                                default_value = set([default_value])
-                            existing_default_values.update(default_value)
-                        if isinstance(unpivoted_mapping['default_value'], (list, set, tuple)):
-                            existing_default_values.update(unpivoted_mapping['default_value'])
-                        else:
-                            existing_default_values.add(unpivoted_mapping['default_value'])
-                        if len(existing_default_values) > 1:
-                            raise RuntimeError(
-                                f'Invalid mapping for output field "{unpivoted_mapping["output_field"]}", ' +
-                                f'multiple default values specified: {existing_default_values}')
+                    existing_unpivoted_mappings[0].get('replacement_values').extend(
+                        unpivoted_mapping['replacement_values']
+                    )
 
-                    # check for existing unpivoted mapping for this pivoted mapping's output field and type
-                    # group, if found then this field mapping has multiple replacement values so append
-                    existing_unpivoted_mappings: list[dict[str, any]] = [
-                        m for m in unpivoted_mappings
-                            if m['output_field'] == unpivoted_mapping['output_field'] and
-                                m['type_group_index'] == unpivoted_mapping['type_group_index']
-                    ]
-                    if not existing_unpivoted_mappings:
-                        unpivoted_mappings.append(unpivoted_mapping)
-                    else:
-                        source_field_count: int = len(set(m.get('source_field') for m in existing_unpivoted_mappings))
-                        if source_field_count != 1:
-                            err_msg = (
-                                f'Invalid mapping: unexpected number of source fields ({source_field_count}) ' +
-                                f'for output field {unpivoted_mapping["output_field"]}'
-                            )
-                            errors.append(err_msg)
-                            continue
-
-                        existing_unpivoted_mappings[0].get('replacement_values').extend(
-                            unpivoted_mapping['replacement_values']
-                        )
-
-                transformation: dict[str, any] = {
-                    'name': transformation_mappings_file['transformation_name'],
-                    'mappings': unpivoted_mappings
-                }
-                self._transformation_config['transformations'].append(transformation)
+            transformation: dict[str, any] = {
+                'name': transformation_mappings_file['transformation_name'],
+                'mappings': unpivoted_mappings
+            }
+            self._transformation_config['transformations'].append(transformation)
 
         # save transformation config to output file specified in config
         _logger.info('Saving unpivoted transformation mappings to %s', self._output_file)
@@ -378,13 +425,12 @@ class MappingUnpivoter(ContextDecorator):
             return {}
 
         unpivoted_mapping: dict[str, any] = {}
-        unpivoted_mapping['output_field'] = pivoted_mapping['Target Variable Name']
-        unpivoted_mapping['source_field'] = pivoted_mapping['Source Variable Name']
-        unpivoted_mapping['type_group_index'] = str(pivoted_mapping['Type Group Index'])
-        unpivoted_mapping['default_value'] = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
-        unpivoted_mapping['replacement_values'] = unpivoted_mapping.get('replacement_values', [])
-
         try:
+            unpivoted_mapping['output_field'] = pivoted_mapping['Target Variable Name']
+            unpivoted_mapping['source_field'] = pivoted_mapping['Source Variable Name']
+            unpivoted_mapping['type_group_index'] = str(pivoted_mapping['Type Group Index'])
+            unpivoted_mapping['default_value'] = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
+            unpivoted_mapping['replacement_values'] = unpivoted_mapping.get('replacement_values', [])
             unpivoted_mapping['replacement_values'].append(
                 {
                     'old_value': json.loads(pivoted_mapping['Source Permissible Values Term'] or '""'),
@@ -398,6 +444,10 @@ class MappingUnpivoter(ContextDecorator):
         except json.decoder.JSONDecodeError as err:
             _logger.error('Error loading replacement values while unpivoting mapping:')
             _logger.error(err)
+            _logger.error(pivoted_mapping)
+            raise
+        except TypeError as terr:
+            _logger.error(terr)
             _logger.error(pivoted_mapping)
             raise
         return unpivoted_mapping
