@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-02-27",
+  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-04-04",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -3972,18 +3972,13 @@
           "type": "string",
           "description": "Text term that represents a description of the kind of tissue collected with respect to disease status or proximity to tumor tissue.",
           "cde": [
-            "caDSR:5432687"
+            "caDSR:14688604"
           ],
           "enum": [
-            "Abnormal",
-            "Non-neoplastic",
             "Normal",
-            "Not Reported",
             "Peritumoral",
             "Tumor",
-            "Unavailable",
-            "Unknown",
-            "Unspecified"
+            "Not Reported"
           ]
         },
         "tumor_classification": {

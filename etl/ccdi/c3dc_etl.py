@@ -93,6 +93,8 @@ class C3dcEtl:
 
         self.load_json_schema()
         self.load_transformations()
+
+        # study config verification loads the source data and can be relatively slow
         self._assert_valid_study_configurations()
 
     @property
@@ -135,7 +137,7 @@ class C3dcEtl:
                 response.raise_for_status()
                 url_content = response.content
 
-        return json.loads(url_content)
+        return url_content
 
     @staticmethod
     def guess_file_encoding(file_path: str) -> str:
@@ -209,7 +211,9 @@ class C3dcEtl:
         study_config: list[dict[str, any]]
         for st_index, study_config in enumerate(self._study_configurations):
             # load remote study config containing transformations and mappings
-            remote_transforms: dict[str, any] = C3dcEtl.get_url_content(study_config.get('transformations_url'))
+            remote_transforms: dict[str, any] = json.loads(
+                C3dcEtl.get_url_content(study_config.get('transformations_url'))
+            )
             if save_local_copy:
                 with open(f'./{os.path.basename(urlparse(study_config.get("transformations_url")))}', 'wb') as file:
                     json.dump(remote_transforms, file)
@@ -247,7 +251,7 @@ class C3dcEtl:
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON schema from configured URL """
         # download remote JSON schema file
-        self._json_schema = C3dcEtl.get_url_content(self._json_schema_url)
+        self._json_schema = json.loads(C3dcEtl.get_url_content(self._json_schema_url))
         if save_local_copy:
             with open(f'./{os.path.basename(urlparse(self._json_schema_url).path)}', 'wb') as file:
                 json.dump(self._json_schema, file)
@@ -352,8 +356,11 @@ class C3dcEtl:
             _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
             json.dump(self._json_etl_data_sets[study_id][transformation.get('name')], output_file, indent=2)
 
-    def _load_source_data(self, study_id: str, transformation: dict[str, any]) -> any:
+    def _load_source_data(self, study_id: str, transformation: dict[str, any], force_reload: bool=False) -> any:
         """ Load raw ETL data from source file specified in config """
+        if not force_reload and (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name')):
+            return self._raw_etl_data_tables[study_id][transformation.get('name')]
+
         source_field: str
         output_field: str
         mapping: dict[str, any]
@@ -635,7 +642,11 @@ class C3dcEtl:
             and
             not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation['name'])
         ):
-            if transformation.get('source_file_path') and os.path.isfile(transformation.get('source_file_path')):
+            if (
+                transformation.get('source_file_path') and
+                os.path.isfile(transformation.get('source_file_path')) and
+                not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name'))
+            ):
                 self._load_source_data(study_id, transformation)
             if not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name')):
                 errors.append(f'{transformation.get("name")}: unable to load source data')
@@ -971,6 +982,38 @@ class C3dcEtl:
 
         return output_records
 
+    def _get_latest_follow_up_record(self, follow_ups: list[dict[str, any]]) -> dict[str, any]:
+        """ Find and return follow up record having most recent event age, prioritizing 'Dead' over 'Alive' """
+        # check for any 'Alive' records having event age greater than any 'Dead' records
+        dead_fus: list[dict[str, any]] = [f for f in follow_ups if f['vital_status'] == 'Dead']
+        max_dead_fu_age: int = max((int(float(s['age_at_follow_up'])) for s in dead_fus), default=sys.maxsize)
+        alive_fus: list[dict[str, any]] = [f for f in follow_ups if f['vital_status'] == 'Alive']
+        max_alive_fu_age: int = max((int(float(f['age_at_follow_up'])) for f in alive_fus), default=-999)
+        if max_alive_fu_age > -999 and max_alive_fu_age > max_dead_fu_age:
+            max_dead_fu: dict[str, any] = [f for f in dead_fus if f['age_at_follow_up'] == max_dead_fu_age][0]
+            max_alive_fu: dict[str, any] = [f for f in alive_fus if f['age_at_follow_up'] == max_alive_fu_age][0]
+            raise RuntimeError(
+                f'Follow up record having status "Alive" ({max_alive_fu["follow_up_id"]}) ' +
+                    f'preceded by record with status "Dead" ({max_dead_fu["follow_up_id"]} )'
+            )
+
+        final_follow_up: dict[str, any] = {}
+        follow_up: dict[str, any]
+        for follow_up in follow_ups:
+            if not final_follow_up:
+                final_follow_up = follow_up
+                continue
+
+            if (
+                follow_up['vital_status'] == 'Dead'
+                or
+                int(float(follow_up['age_at_follow_up'])) > int(float(final_follow_up['age_at_follow_up']))
+            ):
+                final_follow_up = follow_up
+                break
+
+        return final_follow_up
+
     def _build_node(
         self,
         transformation: dict[str, any],
@@ -1107,17 +1150,17 @@ class C3dcEtl:
 
             survivals: list[dict[str, any]] = []
             src_recs: list[dict[str, any]] = [s for s in surv_src_recs if s.get(pat_id_field_remote) == participant_id]
-            for src_rec in src_recs:
-                survs: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, src_rec)
-                if not survs:
-                    _logger.warning(
-                        '%s (%s): Unable to build %s node for participant %s',
-                        transformation.get('name'),
-                        study_id,
-                        C3dcEtlModelNode.SURVIVAL,
-                        participant_id
-                    )
-                survivals.extend(survs)
+            survival: dict[str, any] = self._get_latest_follow_up_record(src_recs)
+            survs: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, survival)
+            if not survs:
+                _logger.warning(
+                    '%s (%s): Unable to build %s node for participant %s',
+                    transformation.get('name'),
+                    study_id,
+                    C3dcEtlModelNode.SURVIVAL,
+                    participant_id
+                )
+            survivals.extend(survs)
 
             participant = participant[0]
             participant[dx_id_field_remote] = []

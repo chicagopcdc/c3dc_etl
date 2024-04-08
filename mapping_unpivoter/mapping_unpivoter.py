@@ -63,7 +63,14 @@ logging.config.dictConfig({
 
 
 class MappingUnpivoter(ContextDecorator):
-    """ Unpivot tabular transformation field mappings to JSON format """
+    """
+    Unpivot tabular transformation field mappings to JSON format. Use as context manager e.g.:
+
+    config: dict[str, str] = dotenv.dotenv_values('/path/to/.env')
+    mapping_unpivoter: MappingUnpivoter
+    with MappingUnpivoter(config) as mapping_unpivoter:
+        mapping_unpivoter.unpivot_transformation_mappings()
+    """
     TRUE_STRINGS: tuple[str, ...] = (str(True).lower(), 't', 'yes', 'y', '1')
 
     REF_FILE_CATEGORY_PROG_SOURCE_CODE: str = 'programmatic source code'
@@ -128,7 +135,14 @@ class MappingUnpivoter(ContextDecorator):
             with open(local_save_path, 'wb') as write_fp:
                 write_fp.write(url_content)
 
-        return json.loads(url_content)
+        return url_content
+
+    @property
+    def transformation_config(self) -> dict[str, any]:
+        """
+        Get internal schema object, building if needed
+        """
+        return self._transformation_config
 
     def load_transformation_config_output_file(self) -> None:
         """ Load existing transformation config from (output) file specified in config """
@@ -160,8 +174,11 @@ class MappingUnpivoter(ContextDecorator):
                     records.append(record)
         elif pathlib.Path(transformation_mappings_file['mappings_file']).suffix.lower() == '.xlsx':
             sheet_name: str = transformation_mappings_file.get('mappings_file_sheet')
+            sheet_name = sheet_name[:31]
             wb: Workbook = openpyxl.load_workbook(transformation_mappings_file['mappings_file'], data_only=True)
-            ws: Worksheet = wb[sheet_name[:31]] if sheet_name else wb[0]
+            if sheet_name not in wb.sheetnames:
+                raise RuntimeError(f'Worksheet "{sheet_name}" not found in workbook worksheet list: {wb.sheetnames}')
+            ws: Worksheet = wb[sheet_name] if sheet_name else wb[0]
             row: str
             cols: list[str] = []
             for row in ws.iter_rows():
@@ -255,7 +272,7 @@ class MappingUnpivoter(ContextDecorator):
         _logger.info('Saving unpivoted transformation mappings to %s', self._output_file)
         self.save_transformation_config_output_file()
 
-    def update_all_reference_file_mappings(self) -> None:
+    def update_reference_file_mappings(self) -> None:
         """
         Update reference file size and md5 sum mappings for all reference files specified
         in configuration: ETL script, schema, transformation/mapping, input source data
@@ -272,7 +289,7 @@ class MappingUnpivoter(ContextDecorator):
         ref_file_to_update: str
         ref_file_category: str
         for ref_file_to_update, ref_file_category in ref_files_to_update.items():
-            self.update_reference_file_mappings(ref_file_to_update, ref_file_category)
+            self._update_reference_file_mappings(ref_file_to_update, ref_file_category)
         self.save_transformation_config_output_file()
 
         # The size and md5 hass of the transformation/mapping file will be calculated based on the properties for
@@ -281,10 +298,10 @@ class MappingUnpivoter(ContextDecorator):
         # confirmation if needed in the future by calculating these properties for the file when the values are
         # set back to 0 and ''.
         self.load_transformation_config_output_file()
-        self.update_reference_file_mappings(self._output_file, MappingUnpivoter.REF_FILE_CATEGORY_XFORM_MAP)
+        self._update_reference_file_mappings(self._output_file, MappingUnpivoter.REF_FILE_CATEGORY_XFORM_MAP)
         self.save_transformation_config_output_file()
 
-    def update_reference_file_mappings(self, ref_file_path: str, ref_file_category: str) -> None:
+    def _update_reference_file_mappings(self, ref_file_path: str, ref_file_category: str) -> None:
         """
         Update mapping entries for reference file size and md5 sum for specified reference file and category.
         Return True if update performed successfully, False otherwise
@@ -384,7 +401,7 @@ class MappingUnpivoter(ContextDecorator):
         """ Load JSON schema from location specified in config """
         _logger.info('Loading JSON schema from %s', self._json_schema_url)
         # save local copy of json schema file to calculate size and md5 hash to update ref file mapping if needed
-        self._json_schema = MappingUnpivoter.get_url_content(self._json_schema_url, self._json_schema_file)
+        self._json_schema = json.loads(MappingUnpivoter.get_url_content(self._json_schema_url, self._json_schema_file))
         return self._json_schema
 
     def _cache_node_type_properties(self) -> list[str]:
@@ -527,12 +544,13 @@ def main() -> None:
         if sys.argv[1] == MappingUnpivoter.unpivot_transformation_mappings.__name__:
             mapping_unpivoter.unpivot_transformation_mappings()
             if config.get('AUTO_UPDATE_REFERENCE_FILE_MAPPINGS', 'False').lower() in MappingUnpivoter.TRUE_STRINGS:
-                mapping_unpivoter.update_all_reference_file_mappings()
+                mapping_unpivoter.update_reference_file_mappings()
                 mapping_unpivoter.save_transformation_config_output_file()
         elif sys.argv[1] == MappingUnpivoter.update_reference_file_mappings.__name__:
             mapping_unpivoter.load_transformation_config_output_file()
-            mapping_unpivoter.update_all_reference_file_mappings()
+            mapping_unpivoter.update_reference_file_mappings()
             mapping_unpivoter.save_transformation_config_output_file()
+
 
 if __name__ == '__main__':
     main()

@@ -130,7 +130,7 @@ class C3dcEtl:
                 response.raise_for_status()
                 url_content = response.content
 
-        return json.loads(url_content)
+        return url_content
 
     @staticmethod
     def is_number(value: str):
@@ -161,7 +161,9 @@ class C3dcEtl:
         study_config: list[dict[str, any]]
         for st_index, study_config in enumerate(self._study_configurations):
             # load remote study config containing transformations and mappings
-            remote_transforms: dict[str, any] = C3dcEtl.get_url_content(study_config.get('transformations_url'))
+            remote_transforms: dict[str, any] = json.loads(
+                C3dcEtl.get_url_content(study_config.get('transformations_url'))
+            )
             if save_local_copy:
                 with open(f'./{os.path.basename(urlparse(study_config.get("transformations_url")))}', 'wb') as file:
                     json.dump(remote_transforms, file)
@@ -219,7 +221,7 @@ class C3dcEtl:
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON schema from configured URL """
         # download remote JSON schema file
-        self._json_schema = C3dcEtl.get_url_content(self._json_schema_url)
+        self._json_schema = json.loads(C3dcEtl.get_url_content(self._json_schema_url))
         if save_local_copy:
             with open(f'./{os.path.basename(urlparse(self._json_schema_url).path)}', 'wb') as file:
                 json.dump(self._json_schema, file)

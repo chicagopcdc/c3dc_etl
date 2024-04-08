@@ -1,5 +1,5 @@
 {
-    "version": "20240227.1",
+    "version": "20240404.1",
     "transformations": [
         {
             "name": "TARGET_NBL_ClinicalData_Discovery_20220125.xlsx",
@@ -24,7 +24,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs000467.v22.p8"
+                            "new_value": "phs000467"
                         }
                     ]
                 },
@@ -96,7 +96,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000467.v22.p8"
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000467"
                         }
                     ]
                 },
@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 48377
+                            "new_value": 48425
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "19fbb6f2c24a013df0d7bec73d78094c"
+                            "new_value": "963bb582476ae7986db408508ce7afc9"
                         }
                     ]
                 },
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/etl/target_nbl/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/etl/target_nbl/c3dc_etl.py"
                         }
                     ]
                 },
@@ -228,7 +228,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs000467.v22.p8.json"
+                            "new_value": "phs000467.json"
                         }
                     ]
                 },
@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 111137
+                            "new_value": 111081
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "044fc65724b523946646ec86e00b9c98"
+                            "new_value": "df1fe4cf5b27d6dddb3ed5bd6122cb84"
                         }
                     ]
                 },
@@ -300,7 +300,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/etl/target_nbl/transformations/phs000467.v22.p8.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/etl/target_nbl/transformations/phs000467.json"
                         }
                     ]
                 },
@@ -348,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 207831
+                            "new_value": 207701
                         }
                     ]
                 },
@@ -360,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "b52c2f9fa6fda85dcdba1b787e9914fb"
+                            "new_value": "bc1b4dcefd6096131453f7b17a94532b"
                         }
                     ]
                 },
@@ -384,7 +384,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/schema/schema.json"
                         }
                     ]
                 },
@@ -1369,7 +1369,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs000467.v22.p8"
+                            "new_value": "phs000467"
                         }
                     ]
                 },
@@ -1441,7 +1441,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000467.v22.p8"
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000467"
                         }
                     ]
                 },
@@ -1525,7 +1525,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 48377
+                            "new_value": 48425
                         }
                     ]
                 },
@@ -1537,7 +1537,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "19fbb6f2c24a013df0d7bec73d78094c"
+                            "new_value": "963bb582476ae7986db408508ce7afc9"
                         }
                     ]
                 },
@@ -1561,7 +1561,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/etl/target_nbl/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/etl/target_nbl/c3dc_etl.py"
                         }
                     ]
                 },
@@ -1573,7 +1573,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs000467.v22.p8.json"
+                            "new_value": "phs000467.json"
                         }
                     ]
                 },
@@ -1609,7 +1609,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 111137
+                            "new_value": 111081
                         }
                     ]
                 },
@@ -1621,7 +1621,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "044fc65724b523946646ec86e00b9c98"
+                            "new_value": "df1fe4cf5b27d6dddb3ed5bd6122cb84"
                         }
                     ]
                 },
@@ -1645,7 +1645,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/etl/target_nbl/transformations/phs000467.v22.p8.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/etl/target_nbl/transformations/phs000467.json"
                         }
                     ]
                 },
@@ -1693,7 +1693,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 207831
+                            "new_value": 207701
                         }
                     ]
                 },
@@ -1705,7 +1705,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "b52c2f9fa6fda85dcdba1b787e9914fb"
+                            "new_value": "bc1b4dcefd6096131453f7b17a94532b"
                         }
                     ]
                 },
@@ -1729,7 +1729,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240227.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/schema/schema.json"
                         }
                     ]
                 },
