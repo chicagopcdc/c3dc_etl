@@ -23,7 +23,7 @@
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "",
+                            "old_value": "*",
                             "new_value": "phs003519"
                         }
                     ]
@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 30827
+                            "new_value": 30828
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "f708923df4f9450a61bfefd15bb31437"
+                            "new_value": "17b22587c90c9f948b519f282593e5ad"
                         }
                     ]
                 },
@@ -360,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "bc1b4dcefd6096131453f7b17a94532b"
+                            "new_value": "8e4782078918784252c7e1087d9d84e9"
                         }
                     ]
                 },
