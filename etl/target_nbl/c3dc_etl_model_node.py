@@ -13,6 +13,8 @@ class C3dcEtlModelNode(str, Enum):
     SAMPLE = 'sample'
     STUDY = 'study'
     SURVIVAL = 'survival'
+    TREATMENT = 'treatment'
+    TREATMENT_RESPONSE = 'treatment_response'
 
     def __str__(self):
         return self.value

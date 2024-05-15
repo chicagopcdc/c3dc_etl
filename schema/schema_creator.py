@@ -1,15 +1,30 @@
 """ C3DC Schema Creator """
 from enum import Enum
+import json
 import logging
 import logging.config
 import os
 import pathlib
-from urllib.parse import urlparse, urljoin, ParseResult
-from urllib.request import url2pathname
+import sys
+from urllib.parse import urlparse, urljoin
 
 import dotenv
-import requests
 from yaml_json_converter import YamlJsonConverter
+
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position; # type: ignore
 
 
 _logger = logging.getLogger(__name__)
@@ -42,12 +57,12 @@ logging.config.dictConfig({
     "loggers": {
         "": { # root logger
             "handlers": ["console", "file"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False
         },
         "__main__": {
             "handlers": ["console", "file"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False
         }
     }
@@ -90,28 +105,26 @@ class SchemaCreator:
         self._schema_props: dict[str, any] = {}
         self._node_props_required: dict[str, str] = {}
         self._schema_file_path: str = self._config.get('SCHEMA_FILE_PATH', './schema.json')
+        self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
         self._schema: dict[str, any] = {}
 
     @staticmethod
-    def url_to_path(url: str) -> str:
-        """ Convert specified URL to path specific to local platform """
-        url_parts: ParseResult = urlparse(url)
-        host = f"{os.path.sep}{os.path.sep}{url_parts.netloc}{os.path.sep}"
-        return os.path.normpath(os.path.join(host, url2pathname(url_parts.path)))
+    def pluralize_node_name(name: str) -> str:
+        """ Return pluralized form of specified name """
+        if name[-1] == 'y':
+            # study => studies
+            return f'{name[:-1]}ies'
+        if name[-3:] == 'sis':
+            # diagnosis => diagnoses
+            return f'{name[:-3]}ses'
+        return f'{name}s'
 
-    @staticmethod
-    def get_url_content(url: str) -> any:
-        """ Retrieve and return contents from specified URL """
-        url_content: str | bytes | bytearray
-        if url.startswith('file://'):
-            with open(SchemaCreator.url_to_path(url), 'rb') as local_file:
-                url_content = local_file.read()
-        else:
-            with requests.get(url, timeout=30) as response:
-                response.raise_for_status()
-                url_content = response.content
-
-        return url_content
+    @property
+    def schema(self) -> dict[str, any]:
+        """
+        Get internal schema object, building if needed
+        """
+        return self._schema if self._schema else self.build_schema()
 
     def download_source_files(self) -> None:
         """ Download source files from configured URLs """
@@ -126,19 +139,10 @@ class SchemaCreator:
 
             if not (
                 os.path.exists(download_path) and
-                download_url.startswith('file://') and
-                os.path.samefile(download_path, SchemaCreator.url_to_path(download_url))
+                download_url.lower().startswith('file://') and
+                os.path.samefile(download_path, C3dcFileManager.url_to_path(download_url))
             ):
-                url_content: str | bytes | bytearray = SchemaCreator.get_url_content(download_url)
-                with open(download_path, 'wb') as file:
-                    file.write(url_content)
-
-    @property
-    def schema(self) -> dict[str, any]:
-        """
-        Get internal schema object, building if needed
-        """
-        return self._schema if self._schema else self.build_schema()
+                self._c3dc_file_manager.write_file(C3dcFileManager.get_url_content(download_url), download_path)
 
     def convert_source_files_to_json(self) -> None:
         """ Convert downloaded source files from yaml to json """
@@ -146,7 +150,7 @@ class SchemaCreator:
         source_file_path_json: str
         _logger.debug('Converting source files to json')
         if not os.path.exists(self._nodes_source_file) or not os.path.exists(self._props_source_file):
-            _logger.debug('Source file %s not found, downloading')
+            _logger.debug('Source file(s) not found, downloading')
             self.download_source_files()
 
         for source_file_path_yaml in (self._nodes_source_file, self._props_source_file):
@@ -159,8 +163,17 @@ class SchemaCreator:
         # transform/combine json source files to final schema file
         if not self._schema:
             self.build_schema()
+        if not self._schema_file_path:
+            raise RuntimeError('Schema file path not specified')
         _logger.info('Saving schema to %s', self._schema_file_path)
-        YamlJsonConverter.save_json(self._schema, self._schema_file_path)
+        if self._schema_file_path.lower().startswith('s3://'):
+            buffer: bytes = json.dumps(self._schema, indent=2).encode('utf-8')
+            c3dc_file_manager: C3dcFileManager = C3dcFileManager()
+            c3dc_file_manager.write_file(buffer, self._schema_file_path)
+            local_file_path: str = f'./{os.path.basename(c3dc_file_manager.url_to_path(self._schema_file_path))}'
+            c3dc_file_manager.write_file(buffer, local_file_path)
+        else:
+            YamlJsonConverter.save_json(self._schema, self._schema_file_path)
 
     def build_schema(self) -> dict[str, any]:
         """ Build and return schema from yaml source files, downloading if needed """
@@ -470,17 +483,6 @@ class SchemaCreator:
             raise RuntimeError(log_msg)
 
         return []
-
-    @staticmethod
-    def pluralize_node_name(name: str) -> str:
-        """ Return pluralized form of specified name """
-        if name[-1] == 'y':
-            # study => studies
-            return f'{name[:-1]}ies'
-        if name[-3:] == 'sis':
-            # diagnosis => diagnoses
-            return f'{name[:-3]}ses'
-        return f'{name}s'
 
 
 def main() -> None:

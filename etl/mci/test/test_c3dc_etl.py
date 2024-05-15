@@ -3,11 +3,28 @@ import json
 import logging
 import logging.config
 import os
+import pathlib
+import sys
 
 import dotenv
 import pytest
 
 from c3dc_etl import C3dcEtl
+
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position # type: ignore
 
 
 pytest.skip("test_c3dc_etl.py", allow_module_level=True)
@@ -25,31 +42,6 @@ def setup_module() -> None:
 def test_adhoc() -> None:
     """ test_adhoc """
     assert True
-
-
-@pytest.mark.skip('test_url_to_path')
-def test_url_to_path() -> None:
-    """ test url_to_path """
-    _logger.info(test_url_to_path.__name__)
-    expected_path: str = '/path/to/file.extension'
-    url: str = 'https://example.com/path/to/file.extension'
-    path: str = C3dcEtl.url_to_path(url)
-    #logger.info('Path: %s', path)
-    assert path == expected_path
-
-    url = 's3://bucket-name/path/to/file.extension'
-    path = C3dcEtl.url_to_path(url)
-    #logger.info('Path: %s', path)
-    assert path == expected_path
-
-
-@pytest.mark.skip('test_get_url_content')
-def test_get_url_content() -> None:
-    """ test get_url_content """
-    _logger.info(test_get_url_content.__name__)
-    url: str = 'https://raw.githubusercontent.com/chicagopcdc/c3dc_etl/main/schema/schema.json'
-    content: any = C3dcEtl.get_url_content(url)
-    assert content is not None and content.decode('utf-8').startswith('{')
 
 
 @pytest.mark.skip('test_is_number')
@@ -144,6 +136,7 @@ def test_create_json_etl_files() -> None:
     """ test create_json_etl_files """
     _logger.info(test_create_json_etl_files.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
+    c3dc_file_manager: C3dcFileManager = C3dcFileManager()
 
     _logger.info('Loading study configurations')
     study_configurations: list[dict[str, any]] = c3dc_etl.load_transformations()
@@ -163,7 +156,6 @@ def test_create_json_etl_files() -> None:
         for transformation in study_configuration.get('transformations', []):
             _logger.info('Verifying transformation %s', transformation.get('name'))
             output_file_path: str = transformation.get('output_file_path')
-            assert os.path.exists(output_file_path)
-            with open(output_file_path, mode='r', encoding='utf-8') as fp:
-                harmonized_data: dict[str, any] = json.load(fp)
-                _logger.info(harmonized_data.keys())
+            assert c3dc_file_manager.file_exists(output_file_path)
+            harmonized_data: dict[str, any] = json.loads(c3dc_file_manager.read_file(output_file_path).decode('utf-8'))
+            _logger.info(harmonized_data.keys())

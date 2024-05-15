@@ -3,11 +3,28 @@ import json
 import logging
 import logging.config
 import os
+import pathlib
+import sys
 
 import dotenv
 import pytest
 
 from mapping_unpivoter import MappingUnpivoter
+
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position,wrong-import-order # type: ignore
 
 
 pytest.skip("test_mapping_unpivoter.py", allow_module_level=True)
@@ -50,31 +67,6 @@ def test_is_number() -> None:
         assert is_num == expected_status
 
 
-@pytest.mark.skip('test_url_to_path')
-def test_url_to_path() -> None:
-    """ test url_to_path """
-    _logger.info(test_url_to_path.__name__)
-    expected_path: str = '/path/to/file.extension'
-    url: str = 'https://example.com/path/to/file.extension'
-    path: str = MappingUnpivoter.url_to_path(url)
-    #logger.info('Path: %s', path)
-    assert path == expected_path
-
-    url = 's3://bucket-name/path/to/file.extension'
-    path = MappingUnpivoter.url_to_path(url)
-    #logger.info('Path: %s', path)
-    assert path == expected_path
-
-
-@pytest.mark.skip('test_get_url_content')
-def test_get_url_content() -> None:
-    """ test get_url_content """
-    _logger.info(test_get_url_content.__name__)
-    url: str = 'https://raw.githubusercontent.com/chicagopcdc/c3dc_etl/main/schema/schema.json'
-    content: any = MappingUnpivoter.get_url_content(url)
-    assert content is not None and content.decode('utf-8').startswith('{')
-
-
 @pytest.mark.skip('test_load_transformation_config_output_file')
 def test_load_transformation_config_output_file() -> None:
     """ test_load_transformation_config_output_file """
@@ -94,17 +86,20 @@ def test_save_transformation_config_output_file() -> None:
     with MappingUnpivoter(_config) as mapping_unpivoter:
         output_file_path: str = _config.get('OUTPUT_FILE')
 
-        if os.path.exists(output_file_path):
-            os.remove(output_file_path)
-        assert not os.path.exists(output_file_path)
+        c3dc_file_manager: C3dcFileManager = C3dcFileManager()
+        if c3dc_file_manager.file_exists(output_file_path):
+            c3dc_file_manager.delete_file(output_file_path)
+        assert not c3dc_file_manager.file_exists(output_file_path)
 
         _logger.info('saving transformation config output file')
         mapping_unpivoter.save_transformation_config_output_file()
-        assert os.path.exists(output_file_path)
+        assert c3dc_file_manager.file_exists(output_file_path)
 
-        with open(output_file_path, mode='r', encoding='utf-8') as json_fp:
-            output_file_json: any = json.load(json_fp)
-            assert output_file_json == json.loads('{"version": "20240401.1", "transformations": []}')
+        output_file_json: any = json.loads(c3dc_file_manager.read_file(output_file_path))
+        assert output_file_json == json.loads('{"version": "20240401.1", "transformations": []}')
+
+        # cleanup
+        c3dc_file_manager.delete_file(output_file_path)
 
 
 @pytest.mark.skip('test_get_transformation_mappings_file_records')
@@ -125,6 +120,7 @@ def test_get_transformation_mappings_file_records() -> None:
                 transformation_mappings_file
             )
             assert records
+            _logger.info(records[0])
 
 
 @pytest.mark.skip('test_unpivot_transformation_mappings')
@@ -134,22 +130,25 @@ def test_unpivot_transformation_mappings() -> None:
     with MappingUnpivoter(_config) as mapping_unpivoter:
         output_file_path: str = _config.get('OUTPUT_FILE')
 
-        if os.path.exists(output_file_path):
-            os.remove(output_file_path)
-        assert not os.path.exists(output_file_path)
+        c3dc_file_manager: C3dcFileManager = C3dcFileManager()
+        if c3dc_file_manager.file_exists(output_file_path):
+            c3dc_file_manager.delete_file(output_file_path)
+        assert not c3dc_file_manager.file_exists(output_file_path)
 
         _logger.info('unpivoting transformation mappings')
         mapping_unpivoter.unpivot_transformation_mappings()
-        assert os.path.exists(output_file_path)
+        assert c3dc_file_manager.file_exists(output_file_path)
 
-        with open(output_file_path, mode='r', encoding='utf-8') as json_fp:
-            output_file_json: any = json.load(json_fp)
-            assert output_file_json != json.loads('{"version": "20240401.1", "transformations": []}')
+        output_file_json: any = json.loads(c3dc_file_manager.read_file(output_file_path).decode('utf-8'))
+        assert output_file_json != json.loads('{"version": "20240401.1", "transformations": []}')
 
-            assert (
-                output_file_json.get('transformations') and
-                output_file_json.get('transformations')[0].get('mappings')
-            )
+        assert (
+            output_file_json.get('transformations') and
+            output_file_json.get('transformations')[0].get('mappings')
+        )
+
+        # cleanup
+        c3dc_file_manager.delete_file(output_file_path)
 
 
 @pytest.mark.skip('test_update_reference_file_mappings')
@@ -164,15 +163,19 @@ def test_update_reference_file_mappings() -> None:
 
         _logger.info('loading unpivoted transformation mappings from output file %s (before)', output_file_path)
         xform_json_before: any
-        with open(output_file_path, mode='r', encoding='utf-8') as json_fp:
-            xform_json_before = json.load(json_fp)
+
+        c3dc_file_manager: C3dcFileManager = C3dcFileManager()
+        c3dc_file_manager.file_exists(output_file_path)
+        xform_json_before = json.loads(c3dc_file_manager.read_file(output_file_path))
 
         mapping_unpivoter.update_reference_file_mappings()
         mapping_unpivoter.save_transformation_config_output_file()
 
         _logger.info('loading unpivoted transformation mappings from output file %s (after)', output_file_path)
         xform_json_after: any
-        with open(output_file_path, mode='r', encoding='utf-8') as json_fp:
-            xform_json_after = json.load(json_fp)
+        xform_json_after = json.loads(c3dc_file_manager.read_file(output_file_path))
 
         assert json.dumps(xform_json_before) != json.dumps(xform_json_after)
+
+        # cleanup
+        c3dc_file_manager.delete_file(output_file_path)

@@ -3,21 +3,34 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import io
 import json
 import logging
 import logging.config
 import os
 import pathlib
 import sys
-from urllib.parse import urlparse, ParseResult
-from urllib.request import url2pathname
 
 from contextlib import ContextDecorator
 import dotenv
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
-import requests
+
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position; # type: ignore
 
 
 _logger = logging.getLogger(__name__)
@@ -86,6 +99,7 @@ class MappingUnpivoter(ContextDecorator):
         self._node_type_properties: list[str] = []
         self._output_file: str = config.get('OUTPUT_FILE')
         self._etl_script_file: str = config.get('ETL_SCRIPT_FILE')
+        self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
         self._json_schema_file = './schema.json'
         self._transformation_mappings_files: list[dict[str, any]] = json.loads(
             config.get('TRANSFORMATION_MAPPINGS_FILES', '[]')
@@ -100,42 +114,17 @@ class MappingUnpivoter(ContextDecorator):
 
     def __exit__(self, exc_type, exc, exc_tb) -> None:
         """ delete the local copy of the JSON schema"""
-        if os.path.exists(self._json_schema_file):
-            os.remove(self._json_schema_file)
+        if self._c3dc_file_manager.file_exists(self._json_schema_file):
+            self._c3dc_file_manager.delete_file(self._json_schema_file)
 
     @staticmethod
-    def is_number(value: str):
+    def is_number(value: str) -> bool:
         """ Determine whether specified string is number (float or int) """
         try:
             float(value)
         except (TypeError, ValueError):
             return False
         return True
-
-    @staticmethod
-    def url_to_path(url: str) -> str:
-        """ Convert specified URL to path specific to local platform """
-        url_parts: ParseResult = urlparse(url)
-        host = f"{os.path.sep}{os.path.sep}{url_parts.netloc}{os.path.sep}"
-        return os.path.normpath(os.path.join(host, url2pathname(url_parts.path)))
-
-    @staticmethod
-    def get_url_content(url: str, local_save_path: str = None) -> any:
-        """ Retrieve and return contents from specified URL """
-        url_content: str | bytes | bytearray
-        if url.startswith('file://'):
-            with open(MappingUnpivoter.url_to_path(url), 'rb') as local_file:
-                url_content = local_file.read()
-        else:
-            with requests.get(url, timeout=30) as response:
-                response.raise_for_status()
-                url_content = response.content
-
-        if local_save_path:
-            with open(local_save_path, 'wb') as write_fp:
-                write_fp.write(url_content)
-
-        return url_content
 
     @property
     def transformation_config(self) -> dict[str, any]:
@@ -147,18 +136,17 @@ class MappingUnpivoter(ContextDecorator):
     def load_transformation_config_output_file(self) -> None:
         """ Load existing transformation config from (output) file specified in config """
         _logger.info('Loading transformation config from "%s"', self._output_file)
-
-        if not os.path.isfile(self._output_file):
+        if not self._c3dc_file_manager.file_exists(self._output_file):
             raise RuntimeError(f'Transformation/mapping output file "{self._output_file}" not found')
-
-        with open(self._output_file, 'r', encoding='utf-8') as fp:
-            self._transformation_config = json.load(fp)
+        self._transformation_config = json.loads(self._c3dc_file_manager.read_file(self._output_file).decode('utf-8'))
 
     def save_transformation_config_output_file(self) -> None:
         """ Save transformation config to output file specified in config """
         _logger.info('Saving transformation config to "%s"', self._output_file)
-        with open(self._output_file, mode='w', encoding='utf-8') as fp:
-            json.dump(self._transformation_config, fp, indent=4)
+        self._c3dc_file_manager.write_file(
+            json.dumps(self._transformation_config, indent=4).encode('utf-8'),
+            self._output_file
+        )
 
     def get_transformation_mappings_file_records(
         self,
@@ -166,19 +154,20 @@ class MappingUnpivoter(ContextDecorator):
     ) -> list[dict[str, any]]:
         """ Return contents of transformation mappings file as list of dicts """
         records: list[dict[str, any]] = []
-        if pathlib.Path(transformation_mappings_file['mappings_file']).suffix.lower() == '.csv':
-            with open(transformation_mappings_file['mappings_file'], encoding='utf-8') as csv_fp:
-                reader: csv.DictReader = csv.DictReader(csv_fp)
-                record: dict[str, any]
-                for record in reader:
-                    records.append(record)
-        elif pathlib.Path(transformation_mappings_file['mappings_file']).suffix.lower() == '.xlsx':
+        mappings_file_name: str = C3dcFileManager.get_basename(transformation_mappings_file['mappings_file'])
+        mappings_file_data: bytes = self._c3dc_file_manager.read_file(transformation_mappings_file['mappings_file'])
+        if pathlib.Path(mappings_file_name).suffix.lower() == '.csv':
+            reader: csv.DictReader = csv.DictReader(io.StringIO(mappings_file_data.decode('utf-8')))
+            record: dict[str, any]
+            for record in reader:
+                records.append(record)
+        elif pathlib.Path(mappings_file_name).suffix.lower() == '.xlsx':
             sheet_name: str = transformation_mappings_file.get('mappings_file_sheet')
             sheet_name = sheet_name[:31]
-            wb: Workbook = openpyxl.load_workbook(transformation_mappings_file['mappings_file'], data_only=True)
+            wb: Workbook = openpyxl.load_workbook(io.BytesIO(mappings_file_data), data_only=True)
             if sheet_name not in wb.sheetnames:
                 raise RuntimeError(f'Worksheet "{sheet_name}" not found in workbook worksheet list: {wb.sheetnames}')
-            ws: Worksheet = wb[sheet_name] if sheet_name else wb[0]
+            ws: Worksheet = wb[sheet_name] if sheet_name else wb.worksheets[0]
             row: str
             cols: list[str] = []
             for row in ws.iter_rows():
@@ -308,21 +297,16 @@ class MappingUnpivoter(ContextDecorator):
         """
         _logger.info('Updating file size and md5sum for "%s" reference file "%s"', ref_file_category, ref_file_path)
         # get size and md5 hash of output file to set matching reference file properties
-        ref_file_size: int = os.path.getsize(ref_file_path)
+        ref_file_size: int = self._c3dc_file_manager.get_file_size(ref_file_path)
 
-        md5: hashlib._Hash = hashlib.md5()
-        with open(ref_file_path, mode='rb') as ref_file_fp:
-            chunk: any
-            for chunk in iter(lambda: ref_file_fp.read(4096), b''):
-                md5.update(chunk)
-        ref_file_md5sum: str = md5.hexdigest()
+        ref_file_md5sum: str = hashlib.md5(self._c3dc_file_manager.read_file(ref_file_path)).hexdigest()
 
         ref_file_field_value_map: dict[str, any] = {
             'reference_file.file_size': ref_file_size,
             'reference_file.md5sum': ref_file_md5sum
         }
 
-        ref_file_basename: str = os.path.basename(ref_file_path)
+        ref_file_basename: str = C3dcFileManager.get_basename(ref_file_path)
 
         # update file size and md5 values of matching transformation/mapping ref file entries for each transformation
         update_successful: bool = True
@@ -401,7 +385,9 @@ class MappingUnpivoter(ContextDecorator):
         """ Load JSON schema from location specified in config """
         _logger.info('Loading JSON schema from %s', self._json_schema_url)
         # save local copy of json schema file to calculate size and md5 hash to update ref file mapping if needed
-        self._json_schema = json.loads(MappingUnpivoter.get_url_content(self._json_schema_url, self._json_schema_file))
+        self._json_schema = json.loads(
+            self._c3dc_file_manager.read_file(self._json_schema_url, self._json_schema_file)
+        )
         return self._json_schema
 
     def _cache_node_type_properties(self) -> list[str]:
@@ -486,7 +472,7 @@ class MappingUnpivoter(ContextDecorator):
             m for m in ref_file_mappings
                 if m.get('output_field') == 'reference_file.file_name' and any(
                     r for r in m.get('replacement_values', [])
-                        if r.get('new_value') == os.path.basename(ref_file)
+                        if r.get('new_value') == self._c3dc_file_manager.get_basename(ref_file)
                 )
         ]
         file_cat_match: list[dict[str, any]] = [
@@ -535,10 +521,13 @@ def main() -> None:
         print_usage()
         return
 
+    c3dc_file_manager: C3dcFileManager = C3dcFileManager()
     config_file: str = sys.argv[2] if len(sys.argv) == 3 else '.env_mapping_unpivoter'
-    if not os.path.exists(config_file):
+    if not c3dc_file_manager.file_exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
-    config: dict[str, str] = dotenv.dotenv_values(config_file)
+    config: dict[str, str] = dotenv.dotenv_values(
+        stream=io.StringIO(c3dc_file_manager.read_file(config_file).decode('utf-8'))
+    )
     mapping_unpivoter: MappingUnpivoter
     with MappingUnpivoter(config) as mapping_unpivoter:
         if sys.argv[1] == MappingUnpivoter.unpivot_transformation_mappings.__name__:

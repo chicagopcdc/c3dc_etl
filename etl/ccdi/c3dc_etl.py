@@ -1,5 +1,6 @@
 """ C3DC ETL File Creator """
 import csv
+import io
 import json
 import logging
 import logging.config
@@ -8,9 +9,8 @@ import pathlib
 import random
 import re
 import sys
+import tempfile
 import uuid
-from urllib.parse import urlparse, ParseResult
-from urllib.request import url2pathname
 import warnings
 
 from c3dc_etl_model_node import C3dcEtlModelNode
@@ -18,7 +18,21 @@ import dotenv
 import jsonschema
 from jsonschema import ValidationError
 import petl
-import requests
+
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position; # type: ignore
 
 
 # suppress openpyxl warning about inability to parse header/footer
@@ -84,6 +98,7 @@ class C3dcEtl:
         self._output_type_source_tabs: dict[str, str] = {}
         self._raw_etl_data_tables: dict[str, any] = {}
         self._random: random.Random = random.Random()
+        self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
 
         # Remote study config should contain env-agnostic info like mappings, local study config
         # should contain info specific to the local env like file paths; remote and local will be
@@ -119,71 +134,7 @@ class C3dcEtl:
         return self._raw_etl_data_tables
 
     @staticmethod
-    def url_to_path(url: str) -> str:
-        """ Convert specified URL to path specific to local platform """
-        url_parts: ParseResult = urlparse(url)
-        host = f"{os.path.sep}{os.path.sep}{url_parts.netloc}{os.path.sep}"
-        return os.path.normpath(os.path.join(host, url2pathname(url_parts.path)))
-
-    @staticmethod
-    def get_url_content(url: str) -> any:
-        """ Retrieve and return contents from specified URL """
-        url_content: str | bytes | bytearray
-        if url.startswith('file://'):
-            with open(C3dcEtl.url_to_path(url), 'rb') as local_file:
-                url_content = local_file.read()
-        else:
-            with requests.get(url, timeout=30) as response:
-                response.raise_for_status()
-                url_content = response.content
-
-        return url_content
-
-    @staticmethod
-    def guess_file_encoding(file_path: str) -> str:
-        """ 'guess' and return the encoding for the specified file """
-        # try to open as utf-8-sig first to handle BOM (\ufeff) if present
-        encodings: list[str] = ['utf-8-sig', 'utf-8', 'iso-8859-1', 'windows-1252']
-        encoding: str
-        for encoding in encodings:
-            try:
-                with open(file_path, mode='r', encoding=encoding) as file:
-                    file.readlines()
-                    file.seek(0)
-                if encoding != encodings[0]:
-                    _logger.info('Detected encoding: %s', encoding)
-                return encoding
-            except UnicodeDecodeError:
-                _logger.warning(
-                    'Unable to open %s with encoding %s%s',
-                    file_path, encoding,
-                    ', retrying with different encoding' if encoding != encodings[-1] else ''
-                )
-        return None
-
-    @staticmethod
-    def get_petl_table_from_source_file(source_file_path: str, xl_sheet_name: str = None) -> any:
-        """ Load and return PETL table for data within specified source file """
-        tbl: any = None
-        source_file_extension: str = pathlib.Path(source_file_path).suffix.lower()
-        if source_file_extension in ['.csv', '.tsv']:
-            encoding: str = C3dcEtl.guess_file_encoding(source_file_path)
-            if encoding is None:
-                _logger.warning('Unable to detect encoding for %s', source_file_path)
-            if source_file_extension == '.csv':
-                tbl = petl.fromcsv(source_file_path, encoding=encoding)
-            elif source_file_extension == '.tsv':
-                tbl = petl.fromtsv(source_file_path, encoding=encoding)
-        elif source_file_extension == '.xlsx':
-            tbl = petl.fromxlsx(source_file_path, sheet=xl_sheet_name)
-        else:
-            raise RuntimeError(f'Unsupported source file type/extension: {source_file_path}')
-        # remove columns without headers
-        tbl = petl.cut(tbl, [h for h in petl.header(tbl) if (h or '').strip()])
-        return tbl
-
-    @staticmethod
-    def is_number(value: str):
+    def is_number(value: str) -> bool:
         """ Determine whether specified string is number (float or int) """
         try:
             float(value)
@@ -212,10 +163,13 @@ class C3dcEtl:
         for st_index, study_config in enumerate(self._study_configurations):
             # load remote study config containing transformations and mappings
             remote_transforms: dict[str, any] = json.loads(
-                C3dcEtl.get_url_content(study_config.get('transformations_url'))
+                self._c3dc_file_manager.read_file(study_config.get('transformations_url')).decode('utf-8')
             )
             if save_local_copy:
-                with open(f'./{os.path.basename(urlparse(study_config.get("transformations_url")))}', 'wb') as file:
+                with open(
+                    f'./{self._c3dc_file_manager.get_basename(study_config.get("transformations_url"))}',
+                    'wb'
+                ) as file:
                     json.dump(remote_transforms, file)
 
             # match by 'name' to merge remote with local transformation config sections containing e.g. paths
@@ -251,10 +205,12 @@ class C3dcEtl:
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON schema from configured URL """
         # download remote JSON schema file
-        self._json_schema = json.loads(C3dcEtl.get_url_content(self._json_schema_url))
+        self._json_schema = json.loads(self._c3dc_file_manager.read_file(self._json_schema_url).decode('utf-8'))
         if save_local_copy:
-            with open(f'./{os.path.basename(urlparse(self._json_schema_url).path)}', 'wb') as file:
-                json.dump(self._json_schema, file)
+            self._c3dc_file_manager.write_file(
+                json.dumps(self._json_schema).encode('utf-8'),
+                f'./{self._c3dc_file_manager.get_basename(self._json_schema_url)}'
+            )
 
         if not self._json_schema:
             raise RuntimeError('Unable to get node types, JSON schema not loaded')
@@ -308,6 +264,45 @@ class C3dcEtl:
             for transformation in study_configuration.get('transformations', []):
                 self._create_json_etl_file(study_configuration.get('study'), transformation)
 
+    def _get_petl_table_from_source_file(self, source_file_path: str, xl_sheet_name: str = None) -> any:
+        """ Load and return PETL table for data within specified source file """
+        tbl: any = None
+        source_file_extension: str = pathlib.Path(source_file_path).suffix.lower()
+
+        if source_file_extension in ['.csv', '.tsv']:
+            source_data: bytes = self._c3dc_file_manager.read_file(source_file_path)
+            if source_file_extension == '.csv':
+                tbl = petl.fromcsv(io.StringIO(source_data.decode('utf-8')))
+            elif source_file_extension == '.tsv':
+                tbl = petl.fromtsv(io.StringIO(source_data.decode('utf-8')))
+        elif source_file_extension == '.xlsx':
+            if C3dcFileManager.is_local_path(source_file_path):
+                tbl = petl.fromxlsx(
+                    C3dcFileManager.url_to_path(source_file_path)
+                        if source_file_path.startswith('file://')
+                        else source_file_path
+                )
+            else:
+                tmp_file: any
+                tbl = petl.empty()
+                with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+                    tmp_file.write(self._c3dc_file_manager.read_file(source_file_path))
+                    tmp_file.flush()
+                    tmp_file.close()
+                    tbl = petl.fromxlsx(tmp_file.name, xl_sheet_name)
+
+                    # reload from in-memory data because petl maintains association with table source file
+                    # after delete, even if eager access methods (lookall, convertall, etc) are called
+                    dicts: list[dict[str, any]] = list(petl.dicts(tbl))
+                    tbl = petl.fromdicts(dicts, petl.header(tbl))
+                    if self._c3dc_file_manager.file_exists(tmp_file.name):
+                        self._c3dc_file_manager.delete_file(tmp_file.name)
+        else:
+            raise RuntimeError(f'Unsupported source file type/extension: {source_file_path}')
+        # remove columns without headers
+        tbl = petl.cut(tbl, [h for h in petl.header(tbl) if (h or '').strip()])
+        return tbl
+
     def _generate_uuid(self) -> uuid.UUID:
         """ Generate and return UUID(v4) using internal RNG that may be seeded for idempotent values """
         return uuid.UUID(int=self._random.getrandbits(128), version=4)
@@ -352,9 +347,11 @@ class C3dcEtl:
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Save JSON ETL data for specified transformation to designated output file """
-        with open(transformation.get('output_file_path'), 'w', encoding='utf-8') as output_file:
-            _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
-            json.dump(self._json_etl_data_sets[study_id][transformation.get('name')], output_file, indent=2)
+        _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
+        self._c3dc_file_manager.write_file(
+            json.dumps(self._json_etl_data_sets[study_id][transformation.get('name')], indent=2).encode('utf-8'),
+            transformation.get('output_file_path')
+        )
 
     def _load_source_data(self, study_id: str, transformation: dict[str, any], force_reload: bool=False) -> any:
         """ Load raw ETL data from source file specified in config """
@@ -398,7 +395,7 @@ class C3dcEtl:
         source_tab: str
         for output_type, source_tab in dict(sorted(self._output_type_source_tabs.items())).items():
             _logger.info('Loading output type "%s" from spreadsheet tab "%s"', output_type, source_tab)
-            raw_etl_data_tbl: any = C3dcEtl.get_petl_table_from_source_file(
+            raw_etl_data_tbl: any = self._get_petl_table_from_source_file(
                 transformation.get('source_file_path'), source_tab
             )
 
@@ -631,7 +628,11 @@ class C3dcEtl:
                 f'Study {study_id}, transformation {index + 1}: one or more of "{required_properties}" missing/invalid'
             )
 
-        if transformation.get('source_file_path') and not os.path.isfile(transformation.get('source_file_path')):
+        if (
+            transformation.get('source_file_path')
+            and
+            not self._c3dc_file_manager.file_exists(transformation.get('source_file_path'))
+        ):
             errors.append(
                 f'{transformation.get("name")} ({study_id}): invalid source file ' +
                 f'"{transformation.get("source_file_path")}"'
@@ -643,9 +644,9 @@ class C3dcEtl:
             not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation['name'])
         ):
             if (
-                transformation.get('source_file_path') and
-                os.path.isfile(transformation.get('source_file_path')) and
-                not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name'))
+                transformation.get('source_file_path')
+                and
+                self._c3dc_file_manager.file_exists(transformation.get('source_file_path'))
             ):
                 self._load_source_data(study_id, transformation)
             if not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name')):
@@ -1219,10 +1220,13 @@ def main() -> None:
         print_usage()
         return
 
+    c3dc_file_manager: C3dcFileManager = C3dcFileManager()
     config_file: str = sys.argv[1] if len(sys.argv) == 2 else '.env'
-    if not os.path.exists(config_file):
+    if not c3dc_file_manager.file_exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
-    config: dict[str, str] = dotenv.dotenv_values(config_file)
+    config: dict[str, str] = dotenv.dotenv_values(
+        stream=io.StringIO(c3dc_file_manager.read_file(config_file).decode('utf-8'))
+    )
     etl: C3dcEtl = C3dcEtl(config)
     etl.create_json_etl_files()
     etl.validate_json_etl_data()
