@@ -1,6 +1,7 @@
 """ C3DC ETL File Creator """
 import csv
 import hashlib
+import io
 import json
 import logging
 import logging.config
@@ -10,8 +11,6 @@ import random
 import re
 import sys
 import uuid
-from urllib.parse import urlparse, ParseResult
-from urllib.request import url2pathname
 import warnings
 
 from c3dc_etl_model_node import C3dcEtlModelNode
@@ -19,7 +18,21 @@ import dotenv
 import jsonschema
 from jsonschema import ValidationError
 import petl
-import requests
+
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position; # type: ignore
 
 
 # suppress openpyxl warning about inability to parse header/footer
@@ -78,6 +91,7 @@ class C3dcEtl:
         self._json_etl_data_sets: dict[str, any] = {}
         self._raw_etl_data_objects: dict[str, dict[str, list[dict[str, any]]]] = {}
         self._random: random.Random = random.Random()
+        self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
 
         # Remote study config should contain env-agnostic info like mappings, local study config
         # should contain info specific to the local env like file paths; remote and local will be
@@ -112,28 +126,7 @@ class C3dcEtl:
         return self._raw_etl_data_objects
 
     @staticmethod
-    def url_to_path(url: str) -> str:
-        """ Convert specified URL to path specific to local platform """
-        url_parts: ParseResult = urlparse(url)
-        host = f"{os.path.sep}{os.path.sep}{url_parts.netloc}{os.path.sep}"
-        return os.path.normpath(os.path.join(host, url2pathname(url_parts.path)))
-
-    @staticmethod
-    def get_url_content(url: str) -> any:
-        """ Retrieve and return contents from specified URL """
-        url_content: str | bytes | bytearray
-        if url.startswith('file://'):
-            with open(C3dcEtl.url_to_path(url), 'rb') as local_file:
-                url_content = local_file.read()
-        else:
-            with requests.get(url, timeout=30) as response:
-                response.raise_for_status()
-                url_content = response.content
-
-        return url_content
-
-    @staticmethod
-    def is_number(value: str):
+    def is_number(value: str) -> bool:
         """ Determine whether specified string is number (float or int) """
         try:
             float(value)
@@ -162,10 +155,13 @@ class C3dcEtl:
         for st_index, study_config in enumerate(self._study_configurations):
             # load remote study config containing transformations and mappings
             remote_transforms: dict[str, any] = json.loads(
-                C3dcEtl.get_url_content(study_config.get('transformations_url'))
+                self._c3dc_file_manager.read_file(study_config.get('transformations_url')).decode('utf-8')
             )
             if save_local_copy:
-                with open(f'./{os.path.basename(urlparse(study_config.get("transformations_url")))}', 'wb') as file:
+                with open(
+                    f'./{self._c3dc_file_manager.get_basename(study_config.get("transformations_url"))}',
+                    'wb'
+                ) as file:
                     json.dump(remote_transforms, file)
 
             # match by 'name' to merge remote with local transformation config sections containing e.g. paths
@@ -180,6 +176,9 @@ class C3dcEtl:
                     ),
                     {}
                 )
+                if not transform_config:
+                    raise RuntimeError(f'No local match for remote transformation "{remote_transform.get("name")}"')
+
                 _logger.info('updating transformation at index %d for study configuration %d', rt_index, st_index)
                 transform_config.update(remote_transform)
 
@@ -221,10 +220,12 @@ class C3dcEtl:
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
         """ Download JSON schema from configured URL """
         # download remote JSON schema file
-        self._json_schema = json.loads(C3dcEtl.get_url_content(self._json_schema_url))
+        self._json_schema = json.loads(self._c3dc_file_manager.read_file(self._json_schema_url).decode('utf-8'))
         if save_local_copy:
-            with open(f'./{os.path.basename(urlparse(self._json_schema_url).path)}', 'wb') as file:
-                json.dump(self._json_schema, file)
+            self._c3dc_file_manager.write_file(
+                json.dumps(self._json_schema).encode('utf-8'),
+                f'./{self._c3dc_file_manager.get_basename(self._json_schema_url)}'
+            )
 
         if not self._json_schema:
             raise RuntimeError('Unable to get node types, JSON schema not loaded')
@@ -322,80 +323,101 @@ class C3dcEtl:
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Save JSON ETL data for specified transformation to designated output file """
-        with open(transformation.get('output_file_path'), 'w', encoding='utf-8') as output_file:
-            _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
-            json.dump(self._json_etl_data_sets[study_id][transformation.get('name')], output_file, indent=2)
+        _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
+        self._c3dc_file_manager.write_file(
+            json.dumps(self._json_etl_data_sets[study_id][transformation.get('name')], indent=2).encode('utf-8'),
+            transformation.get('output_file_path')
+        )
 
-    def _load_source_data(self, study_id: str, transformation: dict[str, any]) -> list[dict[str, any]]:
+    def _load_source_data(
+        self,
+        study_id: str,
+        transformation: dict[str, any],
+        force_reload: bool = False
+    ) -> list[dict[str, any]]:
         """ Load raw ETL data from source path specified in config """
         msg: str
         recs: list[dict[str, any]] = []
         rec: dict[str, any]
 
+        if not force_reload and self._raw_etl_data_objects.get(study_id, {}).get(transformation.get('name')):
+            _logger.info('Source data already loaded, skipping load')
+            return self._raw_etl_data_objects[study_id][transformation.get('name')]
+
+        _logger.info('Loading source data')
+
         # load source file metadata from manifest file
         manifests: dict[str, dict[str, any]] = {}
-        if transformation.get('source_file_path') and os.path.exists(transformation.get('source_file_path')):
-            with open(transformation.get('source_file_manifest_path'), encoding='utf-8') as fp:
-                reader: csv.DictReader = csv.DictReader(fp, delimiter='\t')
-                for rec in reader:
-                    manifests[rec['file_name']] = dict(rec)
+        if (
+            transformation.get('source_file_path')
+            and
+            self._c3dc_file_manager.file_exists(transformation.get('source_file_path'))
+        ):
+            manifest_data: bytes = self._c3dc_file_manager.read_file(transformation.get('source_file_manifest_path'))
+            reader: csv.DictReader = csv.DictReader(io.StringIO(manifest_data.decode('utf-8')), delimiter='\t')
+            record: dict[str, any]
+            for record in reader:
+                manifests[record['file_name']] = dict(record)
 
         # load source data from individual json files
-        source_file_parent_path: str = transformation.get('source_file_path')
-        source_file_names: list[str] = sorted(
-            f for f in os.listdir(source_file_parent_path) if os.path.isfile(os.path.join(source_file_parent_path, f))
+        source_file_parent_location: str = transformation.get('source_file_path')
+        source_file_locations: list[str] = sorted(
+            f for f in self._c3dc_file_manager.list_files(source_file_parent_location) if f.endswith('.json')
         )
-        source_file_name: str
-        for source_file_name in source_file_names:
-            with open(os.path.join(source_file_parent_path, source_file_name), 'r', encoding='utf-8') as fp:
-                # construct limited object from raw source data limited to source fields specified in mappings
-                obj: any = json.load(fp)
-                rec = {'source_file_name': source_file_name, 'manifest': manifests.get(source_file_name, {})}
+        source_file_location: str
+        processed: int = 0
+        for source_file_location in source_file_locations:
+            source_file_name: str = C3dcFileManager.get_basename(source_file_location)
+            processed += 1
+            if processed % 100 == 0:
+                _logger.info('%d of %d source file(s) processed', processed, len(source_file_locations))
+            # construct skinny object from raw source data limited to source fields specified in mappings
+            obj: any = json.loads(self._c3dc_file_manager.read_file(source_file_location).decode('utf-8'))
+            rec = {'source_file_name': source_file_name, 'manifest': manifests.get(source_file_name, {})}
 
-                source_field_name: str
-                source_field_output_type: str
-                # retrieve root-level properties such as 'upi'
-                for source_field_name, source_field_output_type in {
-                    k:v for k,v in self._source_field_output_types.items() if k in obj
-                }.items():
-                    if source_field_name in rec and source_field_output_type != 'array':
-                        msg = f'Duplicate source field "{source_field_name}" found in file "{source_file_name}"'
+            source_field_name: str
+            source_field_output_type: str
+            # retrieve root-level properties such as 'upi'
+            for source_field_name, source_field_output_type in {
+                k:v for k,v in self._source_field_output_types.items() if k in obj
+            }.items():
+                if source_field_name in rec and source_field_output_type != 'array':
+                    msg = f'Duplicate source field "{source_field_name}" found in file "{source_file_name}"'
+                    _logger.fatal(msg)
+                    raise RuntimeError(msg)
+                rec[source_field_name] = obj.get(source_field_name)
+
+            # get properties such as DEMOGRAPHY=>DM_BRTHDAT that are defined within forms
+            form_id: str
+            data_fields: list[dict[str, any]]
+            for form_id, data_fields in {f.get('form_id'):f.get('data', {}) for f in obj.get('forms', [])}.items():
+                data_field: dict[str, any]
+                for data_field in [
+                    d for d in data_fields
+                        if d.get('form_field_id') in self._source_field_output_types or
+                            f'{form_id}.{d.get("form_field_id")}' in self._source_field_output_types
+                ]:
+                    source_field_name = data_field.get('form_field_id')
+                    form_id_field_id = f'{form_id}.{source_field_name}'
+                    # use the full form-qualified name if specified in mapping (e.g. to avoid dupes)
+                    if form_id_field_id in self._source_field_output_types:
+                        source_field_name = form_id_field_id
+                    source_field_output_type = self._source_field_output_types[source_field_name]
+
+                    if source_field_output_type == 'array':
+                        rec[source_field_name] = rec.get(source_field_name, [])
+                        rec[source_field_name].append(data_field.get('value'))
+                    elif source_field_name in rec:
+                        msg = (
+                            f'Duplicate source field "{source_field_name}" ({form_id_field_id}) ' +
+                            f'found in file "{source_file_name}"'
+                        )
                         _logger.fatal(msg)
                         raise RuntimeError(msg)
-                    rec[source_field_name] = obj.get(source_field_name)
+                    else:
+                        rec[source_field_name] = data_field.get('value')
+            recs.append(rec)
 
-                # get properties such as DEMOGRAPHY=>DM_BRTHDAT that are defined within forms
-                form_id: str
-                data_fields: list[dict[str, any]]
-                for form_id, data_fields in {f.get('form_id'):f.get('data', {}) for f in obj.get('forms', [])}.items():
-                    data_field: dict[str, any]
-                    for data_field in [
-                        d for d in data_fields
-                            if d.get('form_field_id') in self._source_field_output_types or
-                                f'{form_id}.{d.get("form_field_id")}' in self._source_field_output_types
-                    ]:
-                        source_field_name = data_field.get('form_field_id')
-                        form_id_field_id = f'{form_id}.{source_field_name}'
-                        # use the full form-qualified name if specified in mapping (e.g. to avoid dupes)
-                        if form_id_field_id in self._source_field_output_types:
-                            source_field_name = form_id_field_id
-                        source_field_output_type = self._source_field_output_types[source_field_name]
-
-                        if source_field_output_type == 'array':
-                            rec[source_field_name] = rec.get(source_field_name, [])
-                            rec[source_field_name].append(data_field.get('value'))
-                        elif source_field_name in rec:
-                            msg = (
-                                f'Duplicate source field "{source_field_name}" ({form_id_field_id}) ' +
-                                f'found in file "{source_file_name}"'
-                            )
-                            _logger.fatal(msg)
-                            raise RuntimeError(msg)
-                        else:
-                            rec[source_field_name] = data_field.get('value')
-                recs.append(rec)
-
-        # add row numbers for logging/auditing
         self._raw_etl_data_objects[study_id] = self._raw_etl_data_objects.get(study_id, {})
         self._raw_etl_data_objects[study_id][transformation.get('name')] = recs
         return self._raw_etl_data_objects[study_id][transformation.get('name')]
@@ -547,7 +569,11 @@ class C3dcEtl:
                 f'Study {study_id}, transformation {index + 1}: one or more of "{required_properties}" missing/invalid'
             )
 
-        if transformation.get('source_file_path') and not os.path.isdir(transformation.get('source_file_path')):
+        if (
+            transformation.get('source_file_path')
+            and
+            not self._c3dc_file_manager.file_exists(transformation.get('source_file_path'))
+        ):
             errors.append(
                 f'{transformation.get("name")} ({study_id}): invalid source file parent dir ' +
                 f'"{transformation.get("source_file_path")}"'
@@ -558,7 +584,11 @@ class C3dcEtl:
             and
             not (self._raw_etl_data_objects or {}).get(study_id, {}).get(transformation.get('name'))
         ):
-            if transformation.get('source_file_path') and os.path.isdir(transformation.get('source_file_path')):
+            if (
+                transformation.get('source_file_path')
+                and
+                self._c3dc_file_manager.file_exists(transformation.get('source_file_path'))
+            ):
                 self._load_source_data(study_id, transformation)
             if not (self._raw_etl_data_objects or {}).get(study_id, {}).get(transformation.get('name')):
                 errors.append(f'{transformation.get("name")}: unable to load source data')
@@ -628,17 +658,23 @@ class C3dcEtl:
 
         source_file_name: str = f'{usi}.json'
         source_file_parent_path: str = transformation.get('source_file_path')
-        source_file_path: str = os.path.join(source_file_parent_path, source_file_name)
-        if not os.path.exists(source_file_path):
+        source_file_path: str = C3dcFileManager.join_location_paths(source_file_parent_path, source_file_name)
+        if not self._c3dc_file_manager.file_exists(source_file_path):
             msg = 'Source file "{source_file_name}" not found'
             _logger.critical(msg)
             raise RuntimeError(msg)
 
+        manifest_key: str
+        for manifest_key in ('md5', 'size', 'url'):
+            if source_file_manifest.get(manifest_key) in (None, ''):
+                _logger.warning('No "%s" value specified in manifest for participant "%s"', manifest_key, usi)
         md5sum: str = source_file_manifest.get('md5')
         if not md5sum:
-            with open(source_file_path, 'rb') as fp:
-                md5sum = hashlib.md5(fp.read()).hexdigest()
-        file_size: int = int(source_file_manifest.get('size', os.path.getsize(source_file_path)))
+            # md5sum not specified in source file manifest, calculate manually
+            md5sum = hashlib.md5(self._c3dc_file_manager.read_file(source_file_path)).hexdigest()
+        file_size: int = int(source_file_manifest.get('size', -1))
+        if file_size < 0:
+            file_size = self._c3dc_file_manager.get_file_size(source_file_path)
         url: str = source_file_manifest.get('url', '')
 
         output_field_new_values: dict[str, any] = {
@@ -699,7 +735,15 @@ class C3dcEtl:
 
         reference_file_fieldset_mappings: list[dict[str, any]] = []
         participant: dict[str, any]
+        processed: int = 0
         for participant in participants:
+            processed += 1
+            if processed % 100 == 0:
+                _logger.info(
+                    '%d of %d participant reference file fieldset mappings built',
+                    processed,
+                    len(participants)
+                )
             source_file_manifest: dict[str, any] = [
                 m for m in source_file_manifests if m.get('file_name') == f'{participant.get("participant_id")}.json'
             ]
@@ -1148,18 +1192,25 @@ class C3dcEtl:
             )
             study_config: dict[str, any] = [c for c in self._study_configurations if c.get('study') == study_id]
             study_config = study_config[0] if study_config else {}
-            remote_config: dict[str, any] = C3dcEtl.get_url_content(study_config.get('transformations_url'))
+            remote_config: dict[str, any] = json.loads(
+                self._c3dc_file_manager.read_file(study_config.get('transformations_url')).decode('utf-8')
+            )
             remote_transform: dict[str, any] = [
                 t for t in remote_config.get('transformations') if t.get('name') == transformation.get('name')
             ]
             remote_transform = remote_transform[0] if remote_transform else {}
             remote_transform.get('mappings').extend(reference_file_fieldset_mappings)
-            orig_save_path: pathlib.Path = pathlib.Path(
-                os.path.basename(urlparse(study_config.get("transformations_url")).path)
+
+            # save updated transformation
+            save_path_components: list[str] = list(
+                C3dcFileManager.split_location_paths(study_config.get("transformations_url"))
             )
-            save_path = f'./{orig_save_path.stem}.ref_files{orig_save_path.suffix}'
-            with open(save_path, 'w', encoding='utf-8') as fp:
-                json.dump(remote_config, fp, indent=4)
+            orig_save_path: pathlib.Path = pathlib.Path(
+                C3dcFileManager.get_basename(study_config.get("transformations_url"))
+            )
+            save_path_components[-1] = f'{orig_save_path.stem}.ref_files{orig_save_path.suffix}'
+            save_path: str = C3dcFileManager.join_location_paths(*save_path_components)
+            self._c3dc_file_manager.write_file(json.dumps(remote_config, indent=4).encode('utf-8'), save_path)
             _logger.info('Saved updated remote transformation mapping to %s', save_path)
         else:
             # transformation mapping already has 'input source data' reference file entries, skip
@@ -1179,8 +1230,6 @@ class C3dcEtl:
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
         self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
-
-        # save updated transformation
 
         _logger.info(
             '1 study, %d diagnosis, %d survival, %d participant, %d reference file records built for transformation %s',
@@ -1214,10 +1263,13 @@ def main() -> None:
         print_usage()
         return
 
+    c3dc_file_manager: C3dcFileManager = C3dcFileManager()
     config_file: str = sys.argv[1] if len(sys.argv) == 2 else '.env'
-    if not os.path.exists(config_file):
+    if not c3dc_file_manager.file_exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
-    config: dict[str, str] = dotenv.dotenv_values(config_file)
+    config: dict[str, str] = dotenv.dotenv_values(
+        stream=io.StringIO(c3dc_file_manager.read_file(config_file).decode('utf-8'))
+    )
     etl: C3dcEtl = C3dcEtl(config)
     etl.create_json_etl_files()
     etl.validate_json_etl_data()

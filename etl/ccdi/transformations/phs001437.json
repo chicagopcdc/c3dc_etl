@@ -1,5 +1,5 @@
 {
-    "version": "20240404.1",
+    "version": "20240507.1",
     "transformations": [
         {
             "name": "phs001437_PPTC_Updater_v1.7.2_2024-01-29_qc20240201_study_id_CatchERR20240206.xlsx",
@@ -17,7 +17,7 @@
                     ]
                 },
                 {
-                    "output_field": "study.phs_accession",
+                    "output_field": "study.dbgap_accession",
                     "source_field": "study.phs_accession",
                     "type_group_index": "*",
                     "default_value": null,
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "output_field": "study.study_short_title",
+                    "output_field": "study.study_name",
                     "source_field": "study.study_short_title",
                     "type_group_index": "*",
                     "default_value": null,
@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 61515
+                            "new_value": 61788
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "bcfd978ac3dc84ab4330c4dc707a822f"
+                            "new_value": "283d5a8c391ebcf5d4765fa58d55dbf3"
                         }
                     ]
                 },
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -264,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 31048
+                            "new_value": 31043
                         }
                     ]
                 },
@@ -276,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "ae2ae0809987e44def984cf0b74ef230"
+                            "new_value": "2e8a133928567f76d76a299dfdf7d030"
                         }
                     ]
                 },
@@ -300,7 +300,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/etl/ccdi/transformations/phs001437.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/etl/ccdi/transformations/phs001437.json"
                         }
                     ]
                 },
@@ -348,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 207701
+                            "new_value": 141418
                         }
                     ]
                 },
@@ -360,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "8e4782078918784252c7e1087d9d84e9"
+                            "new_value": "8fb12db00d0743da9e016d2355ea62f4"
                         }
                     ]
                 },
@@ -384,7 +384,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240404.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/schema/schema.json"
                         }
                     ]
                 },

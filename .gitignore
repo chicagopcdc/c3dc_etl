@@ -27,6 +27,7 @@
 *.yml
 !conda_environment.yml
 !etl/**/transformations/*.json
+!mapping_unpivoter/C3DC Mappings.xlsx
 !schema/schema.json
 !schema/sample_data.json
 

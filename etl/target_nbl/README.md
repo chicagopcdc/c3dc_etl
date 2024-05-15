@@ -69,19 +69,19 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
 #### Remote configuration (single `STUDY_CONFIGURATION` object that will be merged with matching local config object)
 * `version`: The label identifying the version of this study configuration object.
 * `transformations`: A list of objects, one per source file, containing configuration details needed to harmonize
-    each source file.
-    * `name`: The unique name or identifier for this transformation. Any 'local' transformation coniguration object
-      with matching name will be merged with this one to form the final configuration object used by the ETL script.
-    * `mappings`: The list of mapping objects that specify how source data fields will be harmonized for output.
+  each source file.
+  * `name`: The unique name or identifier for this transformation. Any 'local' transformation coniguration object
+    with matching name will be merged with this one to form the final configuration object used by the ETL script.
+  * `mappings`: The list of mapping objects that specify how source data fields will be harmonized for output.
     * `output_field`: The field, in `node_type.property_name` format, to which the harmonized data for this mapping
       will be saved. The node type and property name must correspond to node types and child properties specified in
       the [C3DC model](https://github.com/CBIIT/c3dc-model/blob/main/model-desc/c3dc-model.yml).
     * `source_field`: The source file field whose data value will be harmonized and saved to the `output_field`, e.g.
-       `TARGET USI`, `Age at Diagnosis in Days`, `INSS Stage`, etc. The special value `[string_literal]` can be
-       specified to indicate that the harmonized output value is derived from a static text value rather than a
-       specific source file field. Multiple fields can be specified as a comma-separated
-       ([CSV rules](https://docs.python.org/3/library/csv.html)) list for use by 'macro-like' functions such as
-       `{sum}` as described below.
+        `TARGET USI`, `Age at Diagnosis in Days`, `INSS Stage`, etc. The special value `[string_literal]` can be
+        specified to indicate that the harmonized output value is derived from a static text value rather than a
+        specific source file field. Multiple fields can be specified as a comma-separated
+        ([CSV rules](https://docs.python.org/3/library/csv.html)) list for use by 'macro-like' functions such as
+        `{sum}` as described below.
     * `type_group_index`: An identifier that indicates if this field is for a multi-record mapping and, if so, how
       those mappings will be grouped together. This var can be omitted for single record mappings, which are for
       fields associated with a single output record per source record such as `participant`. Every record in the

@@ -1,13 +1,29 @@
 """ C3DC Harmonized Data Reporter """
 import csv
+import io
 import json
 import logging
 import logging.config
 import os
+import pathlib
 import sys
 
 import dotenv
 
+def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
+    """ Append specified dir_name to sys path for import """
+    dir_to_find: str
+    for dir_to_find in args:
+        parent: pathlib.Path
+        for parent in pathlib.Path(os.getcwd()).parents:
+            peer_dirs: list[os.DirEntry] = [d for d in os.scandir(parent) if d.is_dir()]
+            path_to_append: str = next((p.path for p in peer_dirs if p.name == dir_to_find), None)
+            if path_to_append:
+                if path_to_append not in sys.path:
+                    sys.path.append(path_to_append)
+                break
+look_up_and_append_sys_path('file_manager')
+from c3dc_file_manager import C3dcFileManager # pylint: disable=wrong-import-position; # type: ignore
 
 _logger = logging.getLogger(__name__)
 if _logger.hasHandlers():
@@ -32,7 +48,7 @@ logging.config.dictConfig({
             "level": "DEBUG",
             "formatter": "standard",
             "class": "logging.FileHandler",
-            "filename": "data_reporter.log",
+            "filename": "harmonized_data_reporter.log",
             "mode": "w"
         }
     },
@@ -55,6 +71,7 @@ class HarmonizedDataReporter:
     """ Build report for harmonized data to be delivered to NCI """
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
+        self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
         self._harmonized_data_files: dict[str, str] = json.loads(
             config.get('HARMONIZED_DATA_FILES', '{}')
         )
@@ -81,11 +98,11 @@ class HarmonizedDataReporter:
         file_identifier: str
         file_path: str
         for file_identifier, file_path in self.harmonized_data_files.items():
-            with open(file_path, mode='r', encoding='utf-8') as fp:
-                file_data: dict[str, any] = json.load(fp)
-                report_data: dict[str, any] = {'study': file_identifier}
-                report_data.update({node_name:len(node_items) for node_name,node_items in file_data.items()})
-                self.harmonized_data_report[file_identifier] = report_data
+            _logger.info('Processing harmonized data file: %s', file_path)
+            file_data: dict[str, any] = json.loads(self._c3dc_file_manager.read_file(file_path).decode('utf-8'))
+            report_data: dict[str, any] = {'study': file_identifier}
+            report_data.update({node_name:len(node_items) for node_name,node_items in file_data.items()})
+            self.harmonized_data_report[file_identifier] = report_data
 
     def save_report(self) -> None:
         """ Save report to output (csv) file """
@@ -94,13 +111,14 @@ class HarmonizedDataReporter:
             _logger.error('No output path specified to save report')
             return
 
-        with open(self._report_output_path, mode='w', encoding='utf-8') as fp:
-            writer: csv.DictWriter = csv.DictWriter(
-                fp,
-                fieldnames=list(self._harmonized_data_report.values())[0].keys()
-            )
-            writer.writeheader()
-            writer.writerows(self._harmonized_data_report.values())
+        output_io: io.StringIO = io.StringIO()
+        writer: csv.DictWriter = csv.DictWriter(
+            output_io,
+            fieldnames=list(self.harmonized_data_report.values())[0].keys()
+        )
+        writer.writeheader()
+        writer.writerows(self.harmonized_data_report.values())
+        self._c3dc_file_manager.write_file(output_io.getvalue().encode('utf-8'), self._report_output_path)
 
 
 def print_usage() -> None:
