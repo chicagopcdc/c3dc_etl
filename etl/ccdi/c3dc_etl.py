@@ -151,11 +151,11 @@ class C3dcEtl:
             (
                 (not isinstance(value, (list, set, tuple)) and value in allowed_values)
                 or
-                (isinstance(value, (list, set, tuple)) and set(value or {}).issubset(allowed_values))
+                (isinstance(value, (list, set, tuple)) and value and set(value or {}).issubset(allowed_values))
             )
         )
 
-    def load_transformations(self, save_local_copy: bool = False) -> dict[str, any]:
+    def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
         # enumerate each per-study transformation config object in local config
         st_index: int
@@ -184,7 +184,7 @@ class C3dcEtl:
                     ),
                     {}
                 )
-                _logger.info('updating transformation at index %d for study configuration %d', rt_index, st_index)
+                _logger.info('Updating transformation at index %d for study configuration %d', rt_index, st_index)
                 transform_config.update(remote_transform)
 
             # log warnings for any unmatched transformations
@@ -225,7 +225,7 @@ class C3dcEtl:
         # cache schema objects matching C3DC model nodes
         self._json_schema_nodes = {k:v for k,v in self._json_schema['$defs'].items() if C3dcEtlModelNode.get(k)}
 
-        # cache allowed values for enum properties
+        # cache allowed values for enum properties; map node.property => [permissible values]
         self._json_schema_property_enum_values.clear()
         node_type: str
         for node_type in self._json_schema_nodes:
@@ -280,7 +280,8 @@ class C3dcEtl:
                 tbl = petl.fromxlsx(
                     C3dcFileManager.url_to_path(source_file_path)
                         if source_file_path.startswith('file://')
-                        else source_file_path
+                        else source_file_path,
+                    read_only=True
                 )
             else:
                 tmp_file: any
@@ -289,7 +290,7 @@ class C3dcEtl:
                     tmp_file.write(self._c3dc_file_manager.read_file(source_file_path))
                     tmp_file.flush()
                     tmp_file.close()
-                    tbl = petl.fromxlsx(tmp_file.name, xl_sheet_name)
+                    tbl = petl.fromxlsx(tmp_file.name, xl_sheet_name, read_only=True)
 
                     # reload from in-memory data because petl maintains association with table source file
                     # after delete, even if eager access methods (lookall, convertall, etc) are called
@@ -418,6 +419,14 @@ class C3dcEtl:
             self._load_source_data(study_configuration.get('study'), transformation)
         return self._raw_etl_data_tables[study_configuration.get('study')]
 
+    def _get_json_schema_node_property_type(self, node_type_dot_property_name: str) -> str:
+        """ Get JSON schema type name for specified node_type.property_name """
+        if '.' not in node_type_dot_property_name:
+            raise RuntimeError(f'Invalid node.property specified: {node_type_dot_property_name}')
+        node_type: str = node_type_dot_property_name.split('.')[0]
+        property_name: str = node_type_dot_property_name.split('.')[-1]
+        return self._json_schema_nodes.get(node_type, {}).get('properties', {}).get(property_name, {}).get('type')
+
     def _get_json_schema_node_properties(self, node_type: C3dcEtlModelNode) -> dict[str, any]:
         """ Get properties for specified node in JSON schema  """
         if not self._json_schema_nodes:
@@ -434,12 +443,6 @@ class C3dcEtl:
         return {
             k:v for k,v in node_properties.items() if self._is_json_schema_node_property_required(f'{node_type}.{k}')
         }
-
-    def _get_json_schema_node_property_type(self, node_type_dot_property_name: str) -> str:
-        """ Get JSON schema type name for specified node_type.property_name """
-        node_type: str = node_type_dot_property_name.split('.')[0]
-        property_name: str = node_type_dot_property_name.split('.')[-1]
-        return self._json_schema_nodes.get(node_type, {}).get('properties', {}).get(property_name, {}).get('type')
 
     def _get_json_schema_node_property_converted_value(
         self,
@@ -472,13 +475,14 @@ class C3dcEtl:
             val: str
             for val in vals:
                 case_matched_val: str = self._case_match_json_schema_enum_value(node_type_dot_property_name, val)
-                if case_matched_val is None:
+                if case_matched_val is not None:
+                    vals[val] = case_matched_val
+                else:
                     _logger.warning(
                         'Unable to case match source sub-value "%s" for enum property "%s", omitting',
                         val,
                         node_type_dot_property_name
                     )
-                vals[val] = case_matched_val
             return [v for v in vals.values() if v is not None]
         if python_type == int:
             return int(float(value))
@@ -541,12 +545,11 @@ class C3dcEtl:
         macro: str
         for macro in re.findall(r'\{.*?\}', replacement_new_value):
             macro_text: str = macro.strip(' {}').strip()
-            # source field to be replaced will be specified as '[field: FIELD_NAME]
+            # source field to be replaced will be specified as '{field: FIELD_NAME}'
             if not (
                 (macro_text.startswith('"') and macro_text.endswith('"')) or
                 (macro_text.startswith("'") and macro_text.endswith("'")) or
-                macro_text.lower() == 'uuid' or
-                macro_text.lower() == 'sum' or
+                macro_text.lower() in ('sum', 'uuid') or
                 (
                     macro_text.lower().startswith('field:')
                     and
@@ -588,7 +591,7 @@ class C3dcEtl:
         output_property: str = '.'.join(output_field_parts)
         if (
             output_node not in self._json_schema_nodes or
-            output_property not in self._json_schema_nodes.get(output_node, '{}').get('properties', {})
+            output_property not in self._json_schema_nodes.get(output_node, {}).get('properties', {})
         ):
             errors.append(f'{transformation_name}: mapping output field invalid: {mapping}')
 
@@ -641,7 +644,7 @@ class C3dcEtl:
         if (
             transformation.get('name')
             and
-            not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation['name'])
+            not (self._raw_etl_data_tables or {}).get(study_id, {}).get(transformation.get('name'))
         ):
             if (
                 transformation.get('source_file_path')
@@ -668,7 +671,7 @@ class C3dcEtl:
             mapping: dict[str, any]
             for mapping in transformation['mappings']:
                 mapping_errors: list[str] = self._get_transformation_mapping_errors(
-                    source_header, study_id, transformation['name'], mapping
+                    source_header, study_id, transformation.get('name'), mapping
                 )
                 errors.extend(mapping_errors)
         return errors
@@ -735,6 +738,8 @@ class C3dcEtl:
         source_field: str = self._get_source_field(mapping, node_type, source_tab)
         source_value: str = source_record.get(source_field, None)
 
+        default_value: any = mapping.get('default_value', None)
+
         replacement_entry: dict[str, str]
         for replacement_entry in mapping.get('replacement_values', []):
             old_value: str = replacement_entry.get('old_value', '*')
@@ -782,14 +787,15 @@ class C3dcEtl:
 
                         if not C3dcEtl.is_number(addend):
                             msg = (
-                                f'Invalid source field value "{addend}" for "sum" macro in row ' +
-                                f'{source_record["source_file_row_num"]}, must be a number"'
+                                f'Invalid "{source_field_name}" value "{addend}" for "{macro_text}" macro in row ' +
+                                f'{source_record["source_file_row_num"]}, must be a number'
                             )
-                            _logger.critical(msg)
-                            raise RuntimeError(msg)
-                        addend = float(addend)
-                        addends.append(addend if not addend.is_integer() else int(addend))
-                    new_val = sum(addends)
+                            _logger.warning(msg)
+                            addends.append(None)
+                        else:
+                            addend = float(addend)
+                            addends.append(addend if not addend.is_integer() else int(addend))
+                    new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 new_vals[i] = new_val
             new_value = new_vals if isinstance(new_value, (list, set, tuple)) else new_vals[0]
             if (
@@ -808,13 +814,13 @@ class C3dcEtl:
         transformation: dict[str, any],
         node_type: C3dcEtlModelNode,
         clear_cache: bool = False
-    ) -> dict[int, list[dict[str, any]]]:
+    ) -> dict[str, list[dict[str, any]]]:
         """
         Collate and return mappings of specified tranformation by type group index if defined, for example if
         multiple mappings of the same type are needed for a single transformation operation as may be the case
         for reference files, initial diagnosis + relapse diagnoses, etc
         """
-        type_group_index_mappings: dict[int, list[dict[str, any]]] = transformation.get(
+        type_group_index_mappings: dict[str, list[dict[str, any]]] = transformation.get(
             '_type_group_index_mappings',
             {}
         ).get(node_type, {})
@@ -822,35 +828,43 @@ class C3dcEtl:
             return type_group_index_mappings
 
         # get mappings for specified node type
-        type_group_index_mappings: dict[int, list[dict[str, any]]] = {}
+        type_group_index: str
+        type_group_index_mappings: dict[str, list[dict[str, any]]] = {}
         mappings: list[dict[str, any]] = [
             m for m in transformation.get('mappings', []) if m.get('output_field', '').startswith(f'{node_type}.')
         ]
         mapping: dict[str, any]
         for mapping in mappings:
             type_group_indexes: list[str] = [i.strip() for i in str(mapping.get('type_group_index', '*')).split(',')]
-            type_group_index: str
             for type_group_index in type_group_indexes:
                 type_group_index_mappings[type_group_index] = type_group_index_mappings.get(type_group_index) or []
                 type_group_index_mappings[type_group_index].append(mapping)
 
-        # replicate base/default mapping collection to remaining mapping groups
-        type_group_index_mappings = dict(sorted(type_group_index_mappings.items()))
+        # replicate base/default mapping collection to remaining mapping groups, using
+        # custom sort order to maintain order by type group index with exception for '*'
+        type_group_index_mappings = dict(
+            sorted(
+                type_group_index_mappings.items(),
+                key=lambda item: 0 if item[0] in ('', '*') else int(item[0])
+            )
+        )
         if not type_group_index_mappings:
             return type_group_index_mappings
 
-        base_mappings: list[dict[str, any]] = next(iter(type_group_index_mappings.values()))
-        for type_group_index in list(type_group_index_mappings)[1:]:
-            for mapping in reversed(base_mappings):
-                if not any(
-                    m for m in type_group_index_mappings[type_group_index]
-                        if m.get('output_field') == mapping.get('output_field')
-                ):
-                    type_group_index_mappings[type_group_index].insert(0, mapping)
+        base_mappings: list[dict[str, any]] = type_group_index_mappings.get('*', [])
+        non_base_mappings: dict[str, list[dict[str, any]]] = {
+            k:v for k,v in type_group_index_mappings.items() if k != '*'
+        }
+
+        if base_mappings and non_base_mappings:
+            for type_group_index, mappings in non_base_mappings.items():
+                for mapping in reversed(base_mappings):
+                    if not any(m for m in mappings if m.get('output_field') == mapping.get('output_field')):
+                        mappings.insert(0, mapping)
 
         # the base/default mapping group is only needed if it's the only group so remove if there are multiple groups
-        if len(type_group_index_mappings) > 1:
-            type_group_index_mappings = {k:type_group_index_mappings[k] for k in list(type_group_index_mappings)[1:]}
+        if non_base_mappings:
+            type_group_index_mappings = non_base_mappings
 
         # cache the type group index mapping in the tranformation object for future re-use
         transformation['_type_group_index_mappings'] = transformation.get('_type_group_index_mappings', {})
@@ -900,7 +914,6 @@ class C3dcEtl:
             output_record.update(base_record)
             mapping: dict[str, any]
             for mapping in mappings:
-                using_default_source_value: bool = False
                 output_field: str = mapping.get('output_field')
                 output_field_property: str = output_field[len(f'{node_type}.'):]
 
@@ -910,7 +923,6 @@ class C3dcEtl:
                 source_value: str = source_record.get(source_field, None)
 
                 if source_value in ('', None) and default_value is not None:
-                    using_default_source_value = True
                     source_value = default_value
 
                 if output_field not in output_source_field_map:
@@ -923,7 +935,7 @@ class C3dcEtl:
                 if output_value is not None:
                     # mapped (aka replacement) value found in mapping transformation
                     if allowed_values and not C3dcEtl.is_allowed_value(output_value, allowed_values):
-                        _logger.info(
+                        _logger.warning(
                             'Mapped value "%s" not allowed for output field "%s" (source field "%s")',
                             output_value,
                             output_field,
@@ -932,13 +944,7 @@ class C3dcEtl:
                         continue
                     output_record[output_field_property] = output_value
                 else:
-                    # 1:1 (aka non-mapped) values need to be converted to destination field's schema type
-                    if using_default_source_value:
-                        _logger.info(
-                            'Setting output field "%s" to default source value "%s"',
-                            output_field,
-                            source_value
-                        )
+                    # passthrough (not explicitly mapped) values need to be converted to destination field schema type
                     converted_source_value: any = self._get_json_schema_node_property_converted_value(
                         output_field,
                         source_value
@@ -948,7 +954,7 @@ class C3dcEtl:
                         # only set destination field if value is not None or field is required
                         # because validation will fail for (non-required) enum field set to None
                         if allowed_values and not C3dcEtl.is_allowed_value(converted_source_value, allowed_values):
-                            _logger.info(
+                            _logger.warning(
                                 'Passthrough source value "%s" not allowed for output field "%s" (source field "%s")',
                                 converted_source_value,
                                 output_field,
@@ -968,7 +974,7 @@ class C3dcEtl:
                     _logger.warning(
                         'Required output field "%s" (source field "%s") has null value for source record file "%s"',
                         schema_field,
-                        output_source_field_map.get(schema_field),
+                        output_source_field_map.get(schema_field, '*not mapped*'),
                         source_record.get("source_file_row_num")
                     )
 
@@ -987,16 +993,18 @@ class C3dcEtl:
         """ Find and return follow up record having most recent event age, prioritizing 'Dead' over 'Alive' """
         # check for any 'Alive' records having event age greater than any 'Dead' records
         dead_fus: list[dict[str, any]] = [f for f in follow_ups if f['vital_status'] == 'Dead']
-        max_dead_fu_age: int = max((int(float(s['age_at_follow_up'])) for s in dead_fus), default=sys.maxsize)
+        max_dead_fu_age: int = max((int(float(f['age_at_follow_up'])) for f in dead_fus), default=sys.maxsize)
         alive_fus: list[dict[str, any]] = [f for f in follow_ups if f['vital_status'] == 'Alive']
         max_alive_fu_age: int = max((int(float(f['age_at_follow_up'])) for f in alive_fus), default=-999)
         if max_alive_fu_age > -999 and max_alive_fu_age > max_dead_fu_age:
-            max_dead_fu: dict[str, any] = [f for f in dead_fus if f['age_at_follow_up'] == max_dead_fu_age][0]
-            max_alive_fu: dict[str, any] = [f for f in alive_fus if f['age_at_follow_up'] == max_alive_fu_age][0]
-            raise RuntimeError(
-                f'Follow up record having status "Alive" ({max_alive_fu["follow_up_id"]}) ' +
-                    f'preceded by record with status "Dead" ({max_dead_fu["follow_up_id"]} )'
+            _logger.warning(
+                (
+                    'Follow up record having status "Alive" preceded by record with status "Dead", ' +
+                    'unable to determine latest follow up record: %s'
+                ),
+                follow_ups
             )
+            return {}
 
         final_follow_up: dict[str, any] = {}
         follow_up: dict[str, any]
@@ -1034,7 +1042,7 @@ class C3dcEtl:
         ):
             return self._transform_record_default(transformation, node_type, source_record)
 
-        return transform_method(transformation, source_record)
+        return transform_method(transformation, node_type, source_record)
 
     def _transform_source_data(self, study_id: str, transformation: dict[str, any]) -> dict[str, any]:
         """ Transform and return ETL data transformed using rules specified in config """
@@ -1097,9 +1105,13 @@ class C3dcEtl:
         dx_src_recs: list[dict[str, any]] = list(
             petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.DIAGNOSIS, petl.empty()))
         )
+        if not dx_src_recs:
+            _logger.warning('No diagnosis data available for harmonization')
         surv_src_recs: list[dict[str, any]] = list(
             petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.SURVIVAL, petl.empty()))
         )
+        if not surv_src_recs:
+            _logger.warning('No survival data available for harmonization')
         pat_src_rec: dict[str, any]
         pat_ids: list[str] = dict.fromkeys(p.get(pat_id_field) for p in pat_src_recs)
         if len(pat_ids) != len(pat_src_recs):
@@ -1109,15 +1121,20 @@ class C3dcEtl:
             )
         for pat_src_rec in pat_src_recs:
             participant_id: str = pat_src_rec.get(pat_id_field)
-            if not (participant_id or '').strip():
-                _logger.warning(
-                    '%s (%s): Participant id missing or invalid for %s source row %s, excluding',
-                    transformation.get('name'),
-                    study_id,
-                    C3dcEtlModelNode.PARTICIPANT,
-                    pat_src_rec['source_file_row_num']
-                )
-                continue
+            participant_id = str(participant_id).strip() if participant_id is not None else participant_id
+            try:
+                if not (participant_id or '').strip():
+                    _logger.warning(
+                        '%s (%s): Participant id missing or invalid for "%s" source row %s, excluding',
+                        transformation.get('name'),
+                        study_id,
+                        C3dcEtlModelNode.PARTICIPANT,
+                        pat_src_rec['source_file_row_num']
+                    )
+                    continue
+            except AttributeError:
+                _logger.warning('Error checking participant id: %s', pat_src_rec)
+                raise
 
             participant: list[dict[str, any]] = self._build_node(
                 transformation,
@@ -1126,7 +1143,7 @@ class C3dcEtl:
             )
             if len(participant) != 1:
                 _logger.warning(
-                    '%s (%s): Unexpected number of participant nodes (%d) built for participant %s, excluding',
+                    '%s (%s): Unexpected number of participant nodes (%d) built for participant "%s", excluding',
                     transformation.get('name'),
                     study_id,
                     len(participant),
@@ -1136,32 +1153,73 @@ class C3dcEtl:
                 continue
 
             diagnoses: list[dict[str, any]] = []
-            src_recs: list[dict[str, any]] = [d for d in dx_src_recs if d.get(pat_id_field_remote) == participant_id]
-            for src_rec in src_recs:
-                dxes: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, src_rec)
-                if not dxes:
-                    _logger.warning(
-                        '%s (%s): Unable to build %s node for participant %s',
-                        transformation.get('name'),
-                        study_id,
-                        C3dcEtlModelNode.DIAGNOSIS,
-                        participant_id
-                    )
-                diagnoses.extend(dxes)
+            if dx_src_recs:
+                src_recs: list[dict[str, any]] = [
+                    d for d in dx_src_recs if d.get(pat_id_field_remote) == participant_id
+                ]
+                for src_rec in src_recs:
+                    # if anatomic_site has multiple values separated by semi-colons (;) then process as multiple
+                    # diagnosis records for each distinct anatomic site with all other properties kept the same
+                    dxes: list[dict[str, any]]
+                    anatomic_sites: list[str]
+                    src_rec_base: dict[str, any]
+                    if ';' in src_rec.get('anatomic_site', ''):
+                        anatomic_sites = list(set(s.strip() for s in src_rec['anatomic_site'].split(';') if s.strip()))
+                        src_rec_base: dict[str, any] = json.loads(json.dumps(src_rec))
+                        _logger.info(
+                            (
+                                '%s (%s): Diagnosis "%s" contains %d distinct delimited anatomic site(s), ' +
+                                'processing as separate diagnosis records per site'
+                            ),
+                            transformation.get('name'),
+                            study_id,
+                            src_rec['diagnosis_id'],
+                            len(anatomic_sites)
+                        )
+                    else:
+                        anatomic_sites = [src_rec.get('anatomic_site')]
+                        src_rec_base = src_rec
+
+                    anatomic_site: str
+                    for anatomic_site in anatomic_sites:
+                        src_rec_base['anatomic_site'] = anatomic_site
+                        dxes = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, src_rec_base)
+                        if not dxes:
+                            _logger.warning(
+                                '%s (%s): Unable to build "%s" node for participant "%s"%s',
+                                transformation.get('name'),
+                                study_id,
+                                C3dcEtlModelNode.DIAGNOSIS,
+                                participant_id,
+                                '' if len(anatomic_sites) <= 1 else f' (anatomic_site "{anatomic_site}")'
+                            )
+                        diagnoses.extend(dxes)
 
             survivals: list[dict[str, any]] = []
-            src_recs: list[dict[str, any]] = [s for s in surv_src_recs if s.get(pat_id_field_remote) == participant_id]
-            survival: dict[str, any] = self._get_latest_follow_up_record(src_recs)
-            survs: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, survival)
-            if not survs:
-                _logger.warning(
-                    '%s (%s): Unable to build %s node for participant %s',
-                    transformation.get('name'),
-                    study_id,
-                    C3dcEtlModelNode.SURVIVAL,
-                    participant_id
-                )
-            survivals.extend(survs)
+            if surv_src_recs:
+                src_recs: list[dict[str, any]] = [
+                    s for s in surv_src_recs if s.get(pat_id_field_remote) == participant_id
+                ]
+                if src_recs:
+                    survival: dict[str, any] = self._get_latest_follow_up_record(src_recs)
+                    survs: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, survival)
+                    if not survs:
+                        _logger.warning(
+                            '%s (%s): Unable to build "%s" node for participant "%s", invalid source record(s)',
+                            transformation.get('name'),
+                            study_id,
+                            C3dcEtlModelNode.SURVIVAL,
+                            participant_id
+                        )
+                    survivals.extend(survs)
+                else:
+                    _logger.warning(
+                        '%s (%s): Unable to build "%s" node for participant "%s", no matching source record(s)',
+                        transformation.get('name'),
+                        study_id,
+                        C3dcEtlModelNode.SURVIVAL,
+                        participant_id
+                    )
 
             participant = participant[0]
             participant[dx_id_field_remote] = []
@@ -1189,7 +1247,10 @@ class C3dcEtl:
         self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
 
         _logger.info(
-            '1 study, %d diagnosis, %d survival, %d participant, %d reference file records built for transformation %s',
+            (
+                '1 study, %d diagnosis, %d survival, %d participant, %d reference file ' +
+                'records built for transformation "%s"'
+            ),
             len(nodes['diagnoses']),
             len(nodes['survivals']),
             len(nodes['participants']),
@@ -1201,7 +1262,7 @@ class C3dcEtl:
 
     def _create_json_etl_file(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Create JSON ETL data file for specified raw source data set """
-        _logger.info('Creating JSON ETL data file for transformation %s (%s)', transformation.get('name'), study_id)
+        _logger.info('Creating JSON ETL data file for transformation "%s" (%s)', transformation.get('name'), study_id)
         self._random = random.Random()
         self._random.seed(transformation.get('uuid_seed', None))
         self._load_source_data(study_id, transformation)

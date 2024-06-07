@@ -82,12 +82,19 @@ logging.config.dictConfig({
 
 class C3dcEtl:
     """ Build C3DC json ETL file from (XLSX) source file """
+    TYPE_NAME_CLASS_MAP: dict[str, type | list[type]] = {
+        'array': list,
+        'integer': int,
+        'string': str
+    }
+
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
         self._json_schema_url: str = config.get('JSON_SCHEMA_URL')
         self._json_schema: dict[str, any] = {}
         self._json_schema_nodes: dict[str, any] = {}
         self._json_schema_property_enum_values: dict[str, list[str]] = {}
+        self._json_schema_property_enum_code_values: dict[str, dict[str, str]] = {}
         self._json_etl_data_sets: dict[str, any] = {}
         self._raw_etl_data_objects: dict[str, dict[str, list[dict[str, any]]]] = {}
         self._random: random.Random = random.Random()
@@ -143,7 +150,7 @@ class C3dcEtl:
             (
                 (not isinstance(value, (list, set, tuple)) and value in allowed_values)
                 or
-                (isinstance(value, (list, set, tuple)) and set(value or {}).issubset(allowed_values))
+                (isinstance(value, (list, set, tuple)) and value and set(value or {}).issubset(allowed_values))
             )
         )
 
@@ -179,7 +186,7 @@ class C3dcEtl:
                 if not transform_config:
                     raise RuntimeError(f'No local match for remote transformation "{remote_transform.get("name")}"')
 
-                _logger.info('updating transformation at index %d for study configuration %d', rt_index, st_index)
+                _logger.info('Updating transformation at index %d for study configuration %d', rt_index, st_index)
                 transform_config.update(remote_transform)
 
                 # populate internal cache of source field=>output type pairs (non-compound mappings only)
@@ -240,7 +247,7 @@ class C3dcEtl:
         # cache schema objects matching C3DC model nodes
         self._json_schema_nodes = {k:v for k,v in self._json_schema['$defs'].items() if C3dcEtlModelNode.get(k)}
 
-        # cache allowed values for enum properties
+        # cache allowed values for enum properties; map node.property => [permissible values]
         self._json_schema_property_enum_values.clear()
         node_type: str
         for node_type in self._json_schema_nodes:
@@ -254,6 +261,14 @@ class C3dcEtl:
                 enum_values: list[str] = prop_props.get('enum', None)
                 enum_values = prop_props.get('items', {}).get('enum', []) if enum_values is None else enum_values
                 self._json_schema_property_enum_values[f'{node_type}.{prop_name}'] = enum_values
+
+        # cache allowed values for enum codes; map node.property => {enum code => enum value}
+        self._json_schema_property_enum_code_values.clear()
+        node_type_dot_property_name: str
+        for node_type_dot_property_name, enum_values in self._json_schema_property_enum_values.items():
+            self._json_schema_property_enum_code_values[node_type_dot_property_name] = {
+                (v.partition(' : '))[0]:v for v in enum_values
+            }
 
         return self._json_schema
 
@@ -454,6 +469,78 @@ class C3dcEtl:
             k:v for k,v in node_properties.items() if self._is_json_schema_node_property_required(f'{node_type}.{k}')
         }
 
+    def _get_json_schema_node_property_converted_value(
+        self,
+        node_type_dot_property_name: str,
+        value: any
+    ) -> list | int | str:
+        """ Get output value converted to JSON schema type for specified property array, integer, string """
+        if value is None:
+            return None
+
+        if isinstance(value, (list, set, tuple)):
+            _logger.critical('Unsupported value type (list|set|tuple) for conversion:')
+            _logger.critical(value)
+            raise RuntimeError('Unsupported value type (list|set|tuple) for conversion')
+
+        if '.' not in node_type_dot_property_name:
+            raise RuntimeError(f'Unexpected schema property name ("." not present): "{node_type_dot_property_name}"')
+
+        json_type: str = self._get_json_schema_node_property_type(node_type_dot_property_name)
+        if json_type not in C3dcEtl.TYPE_NAME_CLASS_MAP:
+            raise RuntimeError(f'Schema type "{json_type}" not in type name class map')
+
+        python_type = C3dcEtl.TYPE_NAME_CLASS_MAP.get(json_type)
+        if python_type == list:
+            if node_type_dot_property_name not in self._json_schema_property_enum_values:
+                return [value]
+
+            # multi-valued properties may specify multiple values using semi-colon delimiter
+            vals: dict[str, str] = {v:v for v in value.split(';')}
+            val: str
+            for val in vals:
+                case_matched_val: str = self._case_match_json_schema_enum_value(node_type_dot_property_name, val)
+                if case_matched_val is not None:
+                    vals[val] = case_matched_val
+                else:
+                    _logger.warning(
+                        'Unable to case match source sub-value "%s" for enum property "%s", omitting',
+                        val,
+                        node_type_dot_property_name
+                    )
+            return [v for v in vals.values() if v is not None]
+        if python_type == int:
+            return int(float(value))
+        if python_type == str:
+            if node_type_dot_property_name not in self._json_schema_property_enum_values:
+                return str(value)
+            new_value: str = self._case_match_json_schema_enum_value(node_type_dot_property_name, str(value))
+            if new_value is None:
+                _logger.warning(
+                    'Unable to case match source value "%s" for enum property "%s", omitting',
+                    value,
+                    node_type_dot_property_name
+                )
+            return new_value
+
+        raise RuntimeError(f'Unsupported output value conversion type: "{python_type}" (schema type "{json_type}")')
+
+    def _case_match_json_schema_enum_value(self, node_type_dot_property_name: str, value: any) -> any:
+        """ Align case of specified enum value with JSON schema permissible values, e.g. 'unknown' => 'Unknown' """
+        if value is None or not isinstance(value, str):
+            return value
+
+        enum_values: list[str] = self._json_schema_property_enum_values.get(node_type_dot_property_name)
+        if not enum_values:
+            return value
+
+        enum_value_matches: list[str] = [e for e in enum_values if e.casefold() == str(value).casefold()]
+        if len(enum_value_matches) > 1:
+            raise RuntimeError(
+                f'Multiple enum value matches for "{value}" found in schema property "{node_type_dot_property_name}"'
+            )
+        return enum_value_matches[0] if len(enum_value_matches) == 1 else None
+
     def _is_json_schema_node_property_required(self, node_type_dot_property_name: str) -> bool:
         """ Determine if JSON schema property for specified output field ('node_name.field_name') is required """
         if '.' not in node_type_dot_property_name:
@@ -483,13 +570,11 @@ class C3dcEtl:
         macro: str
         for macro in re.findall(r'\{.*?\}', replacement_new_value):
             macro_text: str = macro.strip(' {}').strip()
-            # source field to be replaced will be specified as '[field: FIELD_NAME]
+            # source field to be replaced will be specified as '{field: FIELD_NAME}'
             if not (
                 (macro_text.startswith('"') and macro_text.endswith('"')) or
                 (macro_text.startswith("'") and macro_text.endswith("'")) or
-                macro_text.lower() == 'uuid' or
-                macro_text.lower() == 'sum' or
-                macro_text.lower() == 'sum_abs_first' or
+                macro_text.lower() in ('find_enum_value', 'sum', 'sum_abs_first', 'uuid') or
                 (
                     macro_text.lower().startswith('field:')
                     and
@@ -780,6 +865,8 @@ class C3dcEtl:
         source_field: str = mapping.get('source_field').strip(' \'"')
         source_value: str = source_record.get(source_field, None)
 
+        default_value: any = mapping.get('default_value', None)
+
         replacement_entry: dict[str, str]
         for replacement_entry in mapping.get('replacement_values', []):
             old_value: str = replacement_entry.get('old_value', '*')
@@ -806,6 +893,16 @@ class C3dcEtl:
                         _logger.critical(msg)
                         raise RuntimeError(msg)
                     new_val = new_val.replace(macro, source_record[macro_field])
+                elif macro_text.lower() == 'find_enum_value':
+                    # source field will be code such as '8000/0' or 'C71.9' that can be found in output value enum
+                    output_field: str = mapping.get('output_field')
+                    enum_value: any = self._get_json_schema_node_property_converted_value(
+                        output_field,
+                        self._json_schema_property_enum_code_values.get(output_field, {}).get(source_value)
+                    )
+                    if source_value and not enum_value:
+                        _logger.warning('No enum value found for "%s" value code "%s"', source_field, source_value)
+                    new_val = enum_value
                 elif macro_text.lower() in ('sum', 'sum_abs_first'):
                     # source field should contain list of source fields to be added together
                     if not (source_field.startswith('[') and source_field.endswith(']')):
@@ -828,18 +925,25 @@ class C3dcEtl:
 
                         if not C3dcEtl.is_number(addend):
                             msg = (
-                                f'Invalid source field value "{addend}" for "sum" macro in source file ' +
-                                f'{source_record["source_file_name"]}, must be a number"'
+                                f'Invalid "{source_field_name}" value "{addend}" for "{macro_text}" macro in row ' +
+                                f'{source_record["source_file_row_num"]}, must be a number'
                             )
-                            _logger.critical(msg)
-                            raise RuntimeError(msg)
-                        addend = float(addend)
-                        if macro_text.lower() == 'sum_abs_first' and not addends:
+                            _logger.warning(msg)
+                            addends.append(None)
+                        else:
+                            addend = float(addend)
                             # use absolute value of first addend for 'sum_abs_first' macro
-                            addend = abs(addend)
-                        addends.append(addend if not addend.is_integer() else int(addend))
-                    new_val = sum(addends)
+                            addend = abs(addend) if macro_text.lower() == 'sum_abs_first' and not addends else addend
+                            addends.append(addend if not addend.is_integer() else int(addend))
+                    new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 new_vals[i] = new_val
+
+            if new_value == '{find_enum_value}' and new_val is None:
+                # enum lookup didn't find match, continue on to next replacement entry if available
+                # ex: 0001/0 not in diagnosis.diagnosis enum value list but has replacement 8000/0
+                # manual replacement ('Replacement Values' col in mapping) will follow the enum lookup
+                # in the mapping's replacment_entries section
+                continue
 
             new_value = new_vals if isinstance(new_value, (list, set, tuple)) else new_vals[0]
             source_old_value_match: bool = False
@@ -855,7 +959,9 @@ class C3dcEtl:
                 source_old_value_match
             ):
                 if not isinstance(source_value, (list, set, tuple)):
-                    # if output target isn't multi-valued then we don't need to check for further replacements
+                    # if we have a match and the output target isn't multi-valued then we don't need to check
+                    # for further replacements; will need to revisit if source and output are different types
+                    # e.g. string => array or vice-versa, etc
                     output_value = new_value
                     break
 
@@ -897,7 +1003,7 @@ class C3dcEtl:
 
         # get mappings for specified node type
         type_group_index: str
-        type_group_index_mappings = {}
+        type_group_index_mappings: dict[str, list[dict[str, any]]] = {}
         mappings: list[dict[str, any]] = [
             m for m in transformation.get('mappings', []) if m.get('output_field', '').startswith(f'{node_type}.')
         ]
@@ -913,7 +1019,7 @@ class C3dcEtl:
         type_group_index_mappings = dict(
             sorted(
                 type_group_index_mappings.items(),
-                key=lambda item: 0 if item[0] == '*' else int(item[0])
+                key=lambda item: 0 if item[0] in ('', '*') else int(item[0])
             )
         )
         if not type_group_index_mappings:
@@ -942,19 +1048,33 @@ class C3dcEtl:
     def _get_allowed_values(self, mapping: dict[str, any]) -> set[str]:
         """ Get allowed values for specified mapping """
         replacement_entries: list[dict[str, str]] = mapping.get('replacement_values', [])
-        allowed_values = set(
+        allowed_values: set[str] = set(
             r.get('old_value') for r in replacement_entries
                 if r.get('old_value') not in ('+', '*', None) and r.get('new_value')
         )
+
         # don't include default value in allowed values unless output property is enum
         default_value: any = mapping.get('default_value')
         if default_value is not None and mapping.get('output_field') in self._json_schema_property_enum_values:
             if not isinstance(default_value, (list, set, tuple)):
                 default_value = set([default_value])
             allowed_values.update(default_value)
+
+        # check if all values are allowed if output property is enum
+        if any(
+            r.get('old_value') in ('+', '*') and r.get('new_value') == '{find_enum_value}' for r in replacement_entries
+        ):
+            # all enum values for mapped output field are allowed
+            enum_code_values: dict[str, str] = self._json_schema_property_enum_code_values.get(
+                mapping.get('output_field'),
+                {}
+            )
+            allowed_values.update(set(enum_code_values.keys()))
+
         # empty string ("") and None are treated equally for matching/comparison purposes
         if '' in allowed_values:
             allowed_values.add(None)
+
         return allowed_values
 
     def _transform_record_default(
@@ -987,6 +1107,9 @@ class C3dcEtl:
         for type_group_index, mappings in type_group_index_mappings.items():
             for mapping in mappings:
                 source_field: str = mapping.get('source_field')
+                if source_field.startswith('[') and source_field.endswith(']'):
+                    # don't constrain string substitution mappings like '[string_literal]'
+                    continue
                 source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
                 source_field_allowed_values[source_field].extend(self._get_allowed_values(mapping))
 
@@ -1085,7 +1208,7 @@ class C3dcEtl:
         ):
             return self._transform_record_default(transformation, node_type, source_record)
 
-        return transform_method(source_record)
+        return transform_method(transformation, node_type, source_record)
 
     def _transform_source_data(self, study_id: str, transformation: dict[str, any]) -> dict[str, any]:
         """ Transform and return ETL data transformed using rules specified in config """

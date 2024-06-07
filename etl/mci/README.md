@@ -25,7 +25,7 @@ python data_pivoter.py /path/to/cog_mci_ingested_json_files/ cog_mci_ingested_pi
 
 ## Data harmonization process and input dependencies
 The c3dc_etl.py script ingests the source data JSON files, collating and transforming them into a single harmonized
-(JSON) data file by applying the mapping rules in the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations)
+(JSON) data file by applying the mapping rules in the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations)
 and then performs validation against the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
 of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc).
 
@@ -54,7 +54,7 @@ for more information.
 ### Mapping unpivoter utility script
 The mapping unpivoter script can be used to transform the development team's internal shared document containing
 harmonized data mapping definitions to the [publicly available JSON transformation/mapping
-deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations), aka the 'remote'
+deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations), aka the 'remote'
 configuration file described below referenced in the `transformations_url` property. The script can be used for
 convenience in lieu of editing and maintaining the JSON transformation/mapping config file manually. See the
 [readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for details.
@@ -134,10 +134,18 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
           Partial wildcards such as `prefix*`, `*suffix`, and `*contains*` are not supported.
         * `new_value`: The value with which the source data should be replaced in the harmonized data output. In
           addition to explicit values, the following special values are also allowed:  
-          `[uuid]`: substitute with a UUID (v4); see the description for `uuid_seed` config var for information on how
-            UUIDs are generated.  
-          `[field:{source field name}]`: substitute with the specified source field value for the current source
-            record, for example `[field:TARGET USI]`.
+          * `{field:source field name}`: substitute with the specified source field value for the current source
+            record, for example `{field:TARGET USI}`.
+          * `{find_enum_value}`: substitute with the enum (aka permissible list) value found using the source field
+            value as the key. For permissible list values containing the separator ` : ` the search will attempt to
+            match on the code/prefix first and then the entire enum value. For example, for `diagnosis.anatomic_site`,
+            the source value `C22.0` would match `C22.0 : Liver`. If there are multiple permissible list values with
+            the same code/prefix then the **last** matching entry would be substituted.
+          * `{sum}`: substitute with the sum of the values for the source fields specified in `source_field`
+          * `{sum_abs_first}`: substitute with the sum of the values (abs value of first addend) for the source
+            fields specified in `source_field`
+          * `{uuid}`: substitute with a UUID (v4); see the description for `uuid_seed` config var for information
+            on how UUIDs are generated.
 
 ## Sample ETL execution shell script
 The commands below can be adapted and executed in a shell script such as `c3dc_etl.sh` for convenience.
@@ -145,7 +153,7 @@ The commands below can be adapted and executed in a shell script such as `c3dc_e
 # Creation of MCI harmonized data file and transformation/mapping file involves the following steps:
 # 1) If updating schema: update schema version var in ../../schema/.env and then either execute
 #    ../../schema/schema_creator.py manually or uncomment schema script commands below
-# 2) Update transformation/mapping version in ../../mapping_unpivoter/.env_mapping_unpivoter_mci_phs002790
+# 2) Update transformation/mapping version in ../../mapping_unpivoter/.env_mapping_unpivoter_phs002790
 # 3) Create base transformation/mapping file without reference file entries for input source data files
 # 4) Run ETL to add reference file entries for input source data files e.g. in ./COG_MCI_json_ingest2.
 #    Harmonized data file created in this step should be ignored/discarded.
@@ -162,24 +170,24 @@ set -e
 # cd ../../schema
 # python schema_creator.py
 
-# update version var in ../../mapping_unpivoter/.env_mapping_unpivoter_mci_phs002790 and then create base
+# update version var in ../../mapping_unpivoter/.env_mapping_unpivoter_phs002790 and then create base
 # transformation/mapping file; assuming starting dir is './etl/mci' where '.' is project root dir
 cd ../../mapping_unpivoter
-python mapping_unpivoter.py unpivot_transformation_mappings .env_mapping_unpivoter_mci_phs002790
-cp mapping_unpivoter.log mapping_unpivoter_mci_1.log
+python mapping_unpivoter.py unpivot_transformation_mappings .envs/.env_mapping_unpivoter_phs002790
+cp mapping_unpivoter.log logs/mapping_unpivoter_phs002790_1.log
 
 # run ETL script to create transformation/mapping file containing ref file entries for input source data files
 cd ../etl/mci
 python c3dc_etl.py
 
-# save copy of current transformation/mapping file and overwrite with updated version created in last step
-cp transformations/phs002790.v4.p1.json transformations/phs002790.v4.p1.json.bak
-mv phs002790.v4.p1.ref_files.json transformations/phs002790.v4.p1.json
+# save copy of current transformation/mapping file and overwrite with updated version created by ETL script
+cp transformations/phs002790.json transformations/phs002790.json.bak
+mv transformations/phs002790.ref_files.json transformations/phs002790.json
 
 # update transformation/mapping file's reference file size and md5sum mappings
 cd ../../mapping_unpivoter
-python mapping_unpivoter.py update_reference_file_mappings .env_mapping_unpivoter_mci_phs002790
-cp mapping_unpivoter.log mapping_unpivoter_mci_2.log
+python mapping_unpivoter.py update_reference_file_mappings .envs/.env_mapping_unpivoter_phs002790
+cp mapping_unpivoter.log logs/mapping_unpivoter_phs002790_2.log
 
 # run ETL script again to create final harmonized data file
 cd ../etl/mci

@@ -8,7 +8,7 @@ based on the [Conda environment file](https://github.com/chicagopcdc/c3dc_etl/bl
 
 ## Data harmonization process and input dependencies
 The c3dc_etl.py script ingests the source data in tabular (XLSX) format, transforms it into a harmonized (JSON)
-data file by applying the mapping rules in the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations)
+data file by applying the mapping rules in the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations)
 and then performs validation against the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
 of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc). CCDI input source files are Excel
 (XLSX) workbooks based on the [CCDI submission template available in GitHub](https://github.com/CBIIT/ccdi-model/tree/main/metadata-manifest).
@@ -26,7 +26,7 @@ for more information.
 ### Mapping unpivoter utility script
 The mapping unpivoter script can be used to transform the development team's internal shared document containing
 harmonized data mapping definitions to the [publicly available JSON transformation/mapping
-deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations), aka the 'remote'
+deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations), aka the 'remote'
 configuration file described below referenced in the `transformations_url` property. The script can be used for
 convenience in lieu of editing and maintaining the JSON transformation/mapping config file manually. See the
 [readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for details.
@@ -34,10 +34,10 @@ convenience in lieu of editing and maintaining the JSON transformation/mapping c
 ## ETL execution
 1. Create/update the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
 of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc) if needed.
-1. Create/update the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target_nbl/transformations)
+1. Create/update the [JSON transformation/mapping file](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations)
    if needed.
 1. Create a local file named `.env` (see below for configuration details) as per the
-   [example](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target_nbl/.env_example) and execute the script
+   [example](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/target/.env_example) and execute the script
    without any arguments:
    ```
    python c3dc_etl.py
@@ -109,11 +109,11 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
           Partial wildcards such as `prefix*`, `*suffix`, and `*contains*` are NOT supported.
         * `new_value`: The value with which the source data should be replaced in the harmonized data output. In
           addition to explicit values, the following special values are also allowed:  
-          * `{uuid}`: substitute with a UUID (v4); see the description for `uuid_seed` config var for information
-            on how UUIDs are generated.  
           * `{field:source field name}`: substitute with the specified source field value for the current source
             record, for example `{field:TARGET USI}`.
           * `{sum}`: substitute with the sum of the values for the source fields specified in `source_field`
+          * `{uuid}`: substitute with a UUID (v4); see the description for `uuid_seed` config var for information
+            on how UUIDs are generated.  
 
 ## Sample ETL execution shell script
 The commands below can be adapted and executed in a shell script such as `c3dc_etl.sh` for convenience.

@@ -1,8 +1,8 @@
 {
-    "version": "20240507.1",
+    "version": "20240604.1",
     "transformations": [
         {
-            "name": "um_phs002431_ccdi_metadata_v28_v1.7.1_qc20240214_Updater_v1.7.2_2024-02-14_CatchERR20240214.xlsx",
+            "name": "phs002431",
             "mappings": [
                 {
                     "output_field": "study.study_id",
@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 61788
+                            "new_value": 64805
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "283d5a8c391ebcf5d4765fa58d55dbf3"
+                            "new_value": "d089226cf83a5abb4f94e70479394cf8"
                         }
                     ]
                 },
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -224,90 +224,6 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "phs002431.json"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_type",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "json"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_category",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "transformation/mapping"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_size",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": 31081
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.md5sum",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "b533cfedda75b1d3d5ecc564545df3c3"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_description",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.reference_file_url",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/etl/ccdi/transformations/phs002431.json"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_name",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "3",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -319,7 +235,7 @@
                 {
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -331,7 +247,7 @@
                 {
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -343,31 +259,31 @@
                 {
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 141418
+                            "new_value": 162407
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "8fb12db00d0743da9e016d2355ea62f4"
+                            "new_value": "78b68f9ec11693d1076bd70f017f929f"
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.file_description",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -379,31 +295,31 @@
                 {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/schema/schema.json"
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
-                    "type_group_index": "4",
+                    "type_group_index": "3",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "um_phs002431_ccdi_metadata_v28_v1.7.1_qc20240214_Updater_v1.7.2_2024-02-14_CatchERR20240214.xlsx"
+                            "new_value": "C3DC Mappings.xlsx"
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
-                    "type_group_index": "4",
+                    "type_group_index": "3",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -415,12 +331,96 @@
                 {
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 231866
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "7ad50f8c4b51b71c90987920e6695f94"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing tabular source-to-destination mappings and transformations. Transformed by mapping unpivoter script into JSON format for input into ETL script."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
                     "type_group_index": "4",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "input source data"
+                            "new_value": "phs002431.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
                         }
                     ]
                 },
@@ -432,7 +432,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 12232318
+                            "new_value": 46565
                         }
                     ]
                 },
@@ -444,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "deb762a176e1359857f5844d04bebf7f"
+                            "new_value": "0d22c384b4d066e00f88e1725010c222"
                         }
                     ]
                 },
@@ -456,7 +456,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
                         }
                     ]
                 },
@@ -468,7 +468,91 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/CCDI-Datasets%20Source%20Files/phs002431/um_phs002431_ccdi_metadata_v28_v1.7.1_qc20240214_Updater_v1.7.2_2024-02-14_CatchERR20240214.xlsx?d=wfd997995bae44c5a94d9c99a52e939a8&csf=1&web=1&e=fmKEFW"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/etl/ccdi/transformations/phs002431.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "um_phs002431_ccdi_metadata_v28_v1.7.1_qc20240214_Updater_v1.7.2_2024-02-14_CatchERR20240214.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 12232487
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "bb61e53cb75c584d87393c6e8a6d928e"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/CCDI-Datasets%20Source%20Files/Release%203/phs002431/um_phs002431_ccdi_metadata_v28_v1.7.1_qc20240214_Updater_v1.7.2_2024-02-14_CatchERR20240214.xlsx?d=w86963d3d89e349638678e70a84c8f023&csf=1&web=1&e=ktuUl1"
                         }
                     ]
                 },
@@ -564,9 +648,7 @@
                     "output_field": "diagnosis.diagnosis_basis",
                     "source_field": "diagnosis.diagnosis_basis",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -607,6 +689,10 @@
                         {
                             "old_value": "",
                             "new_value": ""
+                        },
+                        {
+                            "old_value": "8680/3 : Paraganglioma, NOS",
+                            "new_value": "8680/1 : Paraganglioma, NOS"
                         }
                     ]
                 },
@@ -614,9 +700,7 @@
                     "output_field": "diagnosis.anatomic_site",
                     "source_field": "diagnosis.anatomic_site",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -624,9 +708,227 @@
                         },
                         {
                             "old_value": "C80 : UNKNOWN PRIMARY SITE",
-                            "new_value": [
-                                "C80.9 : Unknown primary site"
-                            ]
+                            "new_value": "C80.9 : Unknown primary site"
+                        },
+                        {
+                            "old_value": "C24.0 : Common bile duct",
+                            "new_value": "C24.0 : Extrahepatic bile duct"
+                        },
+                        {
+                            "old_value": "C30.0 : Nasal septum, NOS",
+                            "new_value": "C30.0 : Nasal cavity"
+                        },
+                        {
+                            "old_value": "C40.0 : Bone of arm",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "C40.0 : Humerus",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "C40.0 : Scapula",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "C40.2 : Bone of leg",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "C40.2 : Femur",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "C40.2 : Fibula",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "C41.0 : Occipital bone",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "C41.0 : Skull, NOS",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "C41.0 : Temporal bone",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "C41.4 : Ilium",
+                            "new_value": "C41.4 : Pelvic bones, sacrum, coccyx and associated joints"
+                        },
+                        {
+                            "old_value": "C41.4 : Sacrum",
+                            "new_value": "C41.4 : Pelvic bones, sacrum, coccyx and associated joints"
+                        },
+                        {
+                            "old_value": "C44.1 : Lower lid",
+                            "new_value": "C44.1 : Eyelid"
+                        },
+                        {
+                            "old_value": "C44.5 : Skin of back",
+                            "new_value": "C44.5 : Skin of trunk"
+                        },
+                        {
+                            "old_value": "C44.7 : Skin of foot",
+                            "new_value": "C44.7 : Skin of lower limb and hip"
+                        },
+                        {
+                            "old_value": "C47.2 : Peripheral nerves and autonomic nervous system of leg",
+                            "new_value": "C47.2 : Peripheral nerves and autonomic nervous system of lower limb and hip"
+                        },
+                        {
+                            "old_value": "C47.9 : Peripheral nerve, NOS",
+                            "new_value": "C47.9 : Autonomic nervous system, NOS"
+                        },
+                        {
+                            "old_value": "C47.9 : Spinal nerve, NOS",
+                            "new_value": "C47.9 : Autonomic nervous system, NOS"
+                        },
+                        {
+                            "old_value": "C48.0 : Perirenal tissue",
+                            "new_value": "C48.0 : Retroperitoneum"
+                        },
+                        {
+                            "old_value": "C48.1 : Mesentery",
+                            "new_value": "C48.1 : Specified parts of peritoneum"
+                        },
+                        {
+                            "old_value": "C49.0 : Connective, subcutaneous and other soft tissues of face",
+                            "new_value": "C49.0 : Connective, subcutaneous and other soft tissues of head, face, and neck"
+                        },
+                        {
+                            "old_value": "C49.0 : Connective, subcutaneous and other soft tissues of head",
+                            "new_value": "C49.0 : Connective, subcutaneous and other soft tissues of head, face, and neck"
+                        },
+                        {
+                            "old_value": "C49.0 : Connective, subcutaneous and other soft tissues of neck",
+                            "new_value": "C49.0 : Connective, subcutaneous and other soft tissues of head, face, and neck"
+                        },
+                        {
+                            "old_value": "C49.1 : Connective, subcutaneous and other soft tissues of arm",
+                            "new_value": "C49.1 : Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+                        },
+                        {
+                            "old_value": "C49.1 : Connective, subcutaneous and other soft tissues of hand",
+                            "new_value": "C49.1 : Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+                        },
+                        {
+                            "old_value": "C49.1 : Connective, subcutaneous and other soft tissues of shoulder",
+                            "new_value": "C49.1 : Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+                        },
+                        {
+                            "old_value": "C49.2 : Connective, subcutaneous and other soft tissues of foot",
+                            "new_value": "C49.2 : Connective, subcutaneous and other soft tissues of lower limb and hip"
+                        },
+                        {
+                            "old_value": "C49.2 : Connective, subcutaneous and other soft tissues of leg",
+                            "new_value": "C49.2 : Connective, subcutaneous and other soft tissues of lower limb and hip"
+                        },
+                        {
+                            "old_value": "C49.3 : Connective, subcutaneous and other soft tissues of chest",
+                            "new_value": "C49.3 : Connective, subcutaneous and other soft tissues of thorax"
+                        },
+                        {
+                            "old_value": "C49.4 : Psoas muscle",
+                            "new_value": "C49.4 : Connective, subcutaneous and other soft tissues of abdomen"
+                        },
+                        {
+                            "old_value": "C49.5 : Connective, subcutaneous and other soft tissues of groin",
+                            "new_value": "C49.5 : Connective, subcutaneous and other soft tissues of pelvis"
+                        },
+                        {
+                            "old_value": "C49.5 : Connective, subcutaneous and other soft tissues of perineum",
+                            "new_value": "C49.5 : Connective, subcutaneous and other soft tissues of pelvis"
+                        },
+                        {
+                            "old_value": "C49.6 : Connective, subcutaneous and other soft tissues of back",
+                            "new_value": "C49.6 : Connective, subcutaneous and other soft tissues of trunk, NOS"
+                        },
+                        {
+                            "old_value": "C51.9 : Labia, NOS",
+                            "new_value": "C51.9 : Vulva, NOS"
+                        },
+                        {
+                            "old_value": "C63.9 : Male genitourinary tract, NOS",
+                            "new_value": "C63.9 : Male genital organs, NOS"
+                        },
+                        {
+                            "old_value": "C70.0 : Intracranial meninges",
+                            "new_value": "C70.0 : Cerebral meninges"
+                        },
+                        {
+                            "old_value": "C71.0 : Basal ganglia",
+                            "new_value": "C71.0 : Cerebrum"
+                        },
+                        {
+                            "old_value": "C71.0 : Cerebral hemisphere",
+                            "new_value": "C71.0 : Cerebrum"
+                        },
+                        {
+                            "old_value": "C71.0 : Thalamus",
+                            "new_value": "C71.0 : Cerebrum"
+                        },
+                        {
+                            "old_value": "C71.5 : Choroid plexus of lateral ventricle",
+                            "new_value": "C71.5 : Ventricle, NOS"
+                        },
+                        {
+                            "old_value": "C71.5 : Choroid plexus, NOS",
+                            "new_value": "C71.5 : Ventricle, NOS"
+                        },
+                        {
+                            "old_value": "C71.6 : Cerebellopontine angle",
+                            "new_value": "C71.6 : Cerebellum, NOS"
+                        },
+                        {
+                            "old_value": "C71.6 : Vermis of cerebellum",
+                            "new_value": "C71.6 : Cerebellum, NOS"
+                        },
+                        {
+                            "old_value": "C71.7 : Fourth ventricle, NOS",
+                            "new_value": "C71.7 : Brain stem"
+                        },
+                        {
+                            "old_value": "C71.7 : Pons",
+                            "new_value": "C71.7 : Brain stem"
+                        },
+                        {
+                            "old_value": "C71.9 : Suprasellar",
+                            "new_value": "C71.9 : Brain, NOS"
+                        },
+                        {
+                            "old_value": "C72.0 : Lumbar cord",
+                            "new_value": "C72.0 : Spinal cord"
+                        },
+                        {
+                            "old_value": "C72.9 : Epidural",
+                            "new_value": "C72.9 : Nervous system, NOS"
+                        },
+                        {
+                            "old_value": "C74.9 : Adrenal, NOS",
+                            "new_value": "C74.9 : Adrenal gland, NOS"
+                        },
+                        {
+                            "old_value": "C74.9 : Suprarenal gland",
+                            "new_value": "C74.9 : Adrenal gland, NOS"
+                        },
+                        {
+                            "old_value": "C75.1 : Sella turcica",
+                            "new_value": "C75.1 : Pituitary gland"
+                        },
+                        {
+                            "old_value": "C77.0 : Cervical lymph node",
+                            "new_value": "C77.0 : Lymph nodes of head, face and neck"
+                        },
+                        {
+                            "old_value": "C77.1 : Mediastinal lymph node",
+                            "new_value": "C77.1 : Intrathoracic lymph nodes"
+                        },
+                        {
+                            "old_value": "C77.2 : Portal lymph node",
+                            "new_value": "C77.2 : Intra-abdominal lymph nodes"
                         }
                     ]
                 },
