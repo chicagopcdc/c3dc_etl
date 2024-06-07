@@ -1,8 +1,8 @@
 {
-    "version": "20240507.1",
+    "version": "20240604.1",
     "transformations": [
         {
-            "name": "phs002517_CHOP_CCDI_Submission_v1.7.0_20231109_v1.7.2_2024-01-23_withD.v2_CatchERR20240201.xlsx",
+            "name": "phs002517",
             "mappings": [
                 {
                     "output_field": "study.study_id",
@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 61788
+                            "new_value": 64805
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "283d5a8c391ebcf5d4765fa58d55dbf3"
+                            "new_value": "d089226cf83a5abb4f94e70479394cf8"
                         }
                     ]
                 },
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -224,90 +224,6 @@
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "phs002517.json"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_type",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "json"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_category",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "transformation/mapping"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_size",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": 30823
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.md5sum",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "d7d1d38f1b262d1e233e5282e0d2846f"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_description",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.reference_file_url",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "2",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/etl/ccdi/transformations/phs002517.json"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "reference_file.file_name",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "3",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -319,7 +235,7 @@
                 {
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -331,7 +247,7 @@
                 {
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -343,31 +259,31 @@
                 {
                     "output_field": "reference_file.file_size",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 141418
+                            "new_value": 162407
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.md5sum",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "8fb12db00d0743da9e016d2355ea62f4"
+                            "new_value": "78b68f9ec11693d1076bd70f017f929f"
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.file_description",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -379,31 +295,31 @@
                 {
                     "output_field": "reference_file.reference_file_url",
                     "source_field": "[string_literal]",
-                    "type_group_index": "3",
+                    "type_group_index": "2",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240507.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/schema/schema.json"
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.file_name",
                     "source_field": "[string_literal]",
-                    "type_group_index": "4",
+                    "type_group_index": "3",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs002517_CHOP_CCDI_Submission_v1.7.0_20231109_v1.7.2_2024-01-23_withD.v2_CatchERR20240201.xlsx"
+                            "new_value": "C3DC Mappings.xlsx"
                         }
                     ]
                 },
                 {
                     "output_field": "reference_file.file_type",
                     "source_field": "[string_literal]",
-                    "type_group_index": "4",
+                    "type_group_index": "3",
                     "default_value": null,
                     "replacement_values": [
                         {
@@ -415,12 +331,96 @@
                 {
                     "output_field": "reference_file.file_category",
                     "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 231866
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "7ad50f8c4b51b71c90987920e6695f94"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing tabular source-to-destination mappings and transformations. Transformed by mapping unpivoter script into JSON format for input into ETL script."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
                     "type_group_index": "4",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "input source data"
+                            "new_value": "phs002517.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
                         }
                     ]
                 },
@@ -432,7 +432,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 18573702
+                            "new_value": 34310
                         }
                     ]
                 },
@@ -444,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "6d2b87a4f489fc6dfab7ded35559be57"
+                            "new_value": "a5f4e70c1ec2ad62430dc5380eccf32c"
                         }
                     ]
                 },
@@ -456,7 +456,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
                         }
                     ]
                 },
@@ -468,7 +468,91 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/CCDI-Datasets%20Source%20Files/phs002517-CHOP/phs002517_CHOP_CCDI_Submission_v1.7.0_20231109_v1.7.2_2024-01-23_withD.v2_CatchERR20240201.xlsx?d=w962ca7b1f8604a81bc9a28ec4ca01a4b&csf=1&web=1&e=9OLPJu"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/etl/ccdi/transformations/phs002517.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs002517_CHOP_CCDI_v1.7.2_X01_20240509_v4_curated.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 79272510
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "6297ae4d4c4948227de326d13492b8c0"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://nih.sharepoint.com/:x:/r/sites/NCI-CBIIT-FNLCCDI/Shared%20Documents/C3DC/2-Executing/CCDI-Datasets%20Source%20Files/Release%203/phs002517/phs002517_CHOP_CCDI_v1.7.2_X01_20240509_v4_curated.xlsx?d=w59f78c825e4a4561b447d50dd5787c66&csf=1&web=1&e=i150UK"
                         }
                     ]
                 },
@@ -564,9 +648,7 @@
                     "output_field": "diagnosis.diagnosis_basis",
                     "source_field": "diagnosis.diagnosis_basis",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -614,13 +696,15 @@
                     "output_field": "diagnosis.anatomic_site",
                     "source_field": "diagnosis.anatomic_site",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "",
                             "new_value": ""
+                        },
+                        {
+                            "old_value": "C80 : UNKNOWN PRIMARY SITE",
+                            "new_value": "C80.9 : Unknown primary site"
                         }
                     ]
                 },

@@ -274,6 +274,8 @@ class MappingUnpivoter(ContextDecorator):
             if transformation_mappings_file.get('source_data_file'):
                 ref_files_to_update[transformation_mappings_file['source_data_file']] = \
                     MappingUnpivoter.REF_FILE_CATEGORY_INPUT_SOURCE_DATA
+            ref_files_to_update[transformation_mappings_file['mappings_file']] = \
+                MappingUnpivoter.REF_FILE_CATEGORY_XFORM_MAP
 
         ref_file_to_update: str
         ref_file_category: str

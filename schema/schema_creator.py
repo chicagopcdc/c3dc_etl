@@ -472,10 +472,19 @@ class SchemaCreator:
         if 'Enum' in obj:
             return list(obj['Enum'])
 
+        log_msg: str
         if 'Type' in obj and isinstance(obj['Type'], dict):
             if 'Enum' in obj['Type']:
-                return obj['Type']['Enum']
-            log_msg: str = (
+                # skip section/category header entries that start with '[---- ' and end with ' ----]'
+                allowed_values: list[str] = [
+                    pv for pv in obj['Type']['Enum'] if not (pv.startswith('[---- ') and pv.endswith(' ----]'))
+                ]
+                if len(allowed_values) == len(set(allowed_values)):
+                    return allowed_values
+
+                log_msg = f'YAML property {name} is Enum but contains duplicate permissible values'
+                raise RuntimeError(log_msg)
+            log_msg = (
                 f'YAML property {name} is dict but does not have "value_type" set ' +
                 'to "list" and "Enum" property containing allowed values'
             )
