@@ -1160,12 +1160,21 @@ class C3dcEtl:
                 for src_rec in src_recs:
                     # if anatomic_site has multiple values separated by semi-colons (;) then process as multiple
                     # diagnosis records for each distinct anatomic site with all other properties kept the same
+                    # except diagnosis id, which must be unique
                     dxes: list[dict[str, any]]
-                    anatomic_sites: list[str]
-                    src_rec_base: dict[str, any]
+                    anatomic_sites: dict[str, str]
+                    src_rec_clone: dict[str, any]
                     if ';' in src_rec.get('anatomic_site', ''):
-                        anatomic_sites = list(set(s.strip() for s in src_rec['anatomic_site'].split(';') if s.strip()))
-                        src_rec_base: dict[str, any] = json.loads(json.dumps(src_rec))
+                        # pair each unique anatomic site with diagnosis id derived from 'parent' diagnosis id
+                        anatomic_sites = {
+                            f'{src_rec["diagnosis_id"]}_{k}':v for k,v in dict(
+                                enumerate(
+                                    set(s.strip() for s in src_rec['anatomic_site'].split(';') if s.strip()),
+                                    1
+                                )
+                            ).items()
+                        }
+                        src_rec_clone: dict[str, any] = json.loads(json.dumps(src_rec))
                         _logger.info(
                             (
                                 '%s (%s): Diagnosis "%s" contains %d distinct delimited anatomic site(s), ' +
@@ -1177,13 +1186,15 @@ class C3dcEtl:
                             len(anatomic_sites)
                         )
                     else:
-                        anatomic_sites = [src_rec.get('anatomic_site')]
-                        src_rec_base = src_rec
+                        anatomic_sites = {src_rec['diagnosis_id']:src_rec.get('anatomic_site')}
+                        src_rec_clone = src_rec
 
+                    diagnosis_id: str
                     anatomic_site: str
-                    for anatomic_site in anatomic_sites:
-                        src_rec_base['anatomic_site'] = anatomic_site
-                        dxes = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, src_rec_base)
+                    for diagnosis_id,anatomic_site in anatomic_sites.items():
+                        src_rec_clone['diagnosis_id'] = diagnosis_id
+                        src_rec_clone['anatomic_site'] = anatomic_site
+                        dxes = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, src_rec_clone)
                         if not dxes:
                             _logger.warning(
                                 '%s (%s): Unable to build "%s" node for participant "%s"%s',
@@ -1222,17 +1233,32 @@ class C3dcEtl:
                     )
 
             participant = participant[0]
+
             participant[dx_id_field_remote] = []
+            diagnosis_id_cache: set[str] = set()
+            dupe_diagnosis_ids: set[str] = set()
             diagnosis: dict[str, any]
             for diagnosis in diagnoses:
+                if diagnosis['diagnosis_id'] in diagnosis_id_cache:
+                    dupe_diagnosis_ids.add(diagnosis['diagnosis_id'])
+                diagnosis_id_cache.add(diagnosis['diagnosis_id'])
                 diagnosis[pat_id_field_remote] = participant[pat_id_field]
                 participant[dx_id_field_remote].append(diagnosis[dx_id_field])
+            if dupe_diagnosis_ids:
+                raise RuntimeError(f'Duplicate diagnosis id(s) found: {dupe_diagnosis_ids}')
 
             participant[surv_id_field_remote] = []
+            survival_id_cache: set[str] = set()
+            dupe_survival_ids: set[str] = set()
             survival: dict[str, any]
             for survival in survivals:
+                if survival['survival_id'] in survival_id_cache:
+                    dupe_survival_ids.add(survival['survival_id'])
+                survival_id_cache.add(survival['survival_id'])
                 survival[pat_id_field_remote] = participant[pat_id_field]
                 participant[surv_id_field_remote].append(survival[surv_id_field])
+            if dupe_survival_ids:
+                raise RuntimeError(f'Duplicate survival id(s) found: {dupe_survival_ids}')
 
             participant[study_id_field_remote] = study[study_id_field]
             study[pat_id_field_remote].append(participant[pat_id_field])
