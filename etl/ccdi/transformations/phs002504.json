@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 64805
+                            "new_value": 66280
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "d089226cf83a5abb4f94e70479394cf8"
+                            "new_value": "02d97955c4a467970ced4c9238a792ac"
                         }
                     ]
                 },
@@ -444,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "ee9ddeca22fedd61fe641a08f6c42d85"
+                            "new_value": "1f10c9df6a86e4243c718de84bd0fc92"
                         }
                     ]
                 },
