@@ -17,7 +17,7 @@ script that performs the conversion, which can be conducted by following the ste
    specified as a command line argument as shown below.
 1. Execute the command `python mapping_unpivoter.py unpivot_transformation_mappings "/path/to/config/file"`. The
    resulting output file can be passed to the relevant ETL script as the 'remote configuration' file specified in
-   the `transformation_url` environment variable in the script's `.env` config file.
+   the `transformations_url` environment variable in the script's `.env` config file.
 
 __NOTE__: `reference_file` records must be included in the final harmonized data output file for input files such
 as the ETL script, transformation mapping file, and input source files. The reference file information that must
@@ -45,7 +45,9 @@ the file.
 ## Environment variables:
 * `VERSION`: The version identifier, mapped to the `version` root-level property
 * `JSON_SCHEMA_URL`: The URL of the JSON-formatted C3DC model schema
-* `OUTPUT_FILE`: JSON transformation mapping file output path
+* `OUTPUT_FILE`: JSON transformation mapping file output path. Corresponds to the 'remote configuration' file used
+  by the ETL script and specified in the `transformations_url` environment variable of the ETL script's `.env` config
+  file.
 * `ETL_SCRIPT_FILE`: Path to ETL script associated with transformation mapping file; used if updating reference
   file size and md5 hash e.g. when the `AUTO_UPDATE_REFERENCE_FILE_MAPPINGS` config var is set to `True` or the
   script is invoked with the `update_reference_file_mappings` argument.
