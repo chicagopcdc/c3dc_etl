@@ -15,7 +15,9 @@ script that performs the conversion, which can be conducted by following the ste
    the sample [.env_example](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/.env_example)
    file can be used as a starting point and customized as needed. A file with a name other than `.env` can be
    specified as a command line argument as shown below.
-1. Execute the command `python mapping_unpivoter.py unpivot_transformation_mappings "/path/to/config/file"`
+1. Execute the command `python mapping_unpivoter.py unpivot_transformation_mappings "/path/to/config/file"`. The
+   resulting output file can be passed to the relevant ETL script as the 'remote configuration' file specified in
+   the `transformation_url` environment variable in the script's `.env` config file.
 
 __NOTE__: `reference_file` records must be included in the final harmonized data output file for input files such
 as the ETL script, transformation mapping file, and input source files. The reference file information that must
