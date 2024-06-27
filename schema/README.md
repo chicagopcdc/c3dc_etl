@@ -3,8 +3,11 @@
 The C3DC data harmonization scripts use the
 [C3DC model schema](https://github.com/CBIIT/c3dc-model/tree/main/model-desc) for reference and validation.
 The `schema_creator.py` script converts the source YAML files into the required JSON schema format. Create/update
-the .env file in the same directory and then execute `python schema_creator.py` to create the `schema.json` file.
-The environment variables are described below; the sample .env_example can be used as a starting point.
+the `.env` file in the same directory and then execute `python schema_creator.py` to create the `schema.json` file.
+The environment variables are described below; the sample
+[.env_example](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/.env_example) can be used as a starting
+point and customized as needed. A file with a name other than `.env` can be specified as a command line argument:
+`python schema_creator.py "path/to/config/file"`
 
 ## Environment variables:
 * `PROPS_SOURCE_URL`: URL of C3DC model properties file, `c3dc-model-props.yml`

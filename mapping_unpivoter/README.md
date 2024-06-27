@@ -14,7 +14,7 @@ script that performs the conversion, which can be conducted by following the ste
 1. Create/update the `.env` environment file in the same directory; environment variables are described below and
    the sample [.env_example](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/.env_example)
    file can be used as a starting point and customized as needed. A file with a name other than `.env` can be
-   specified as a command line argument:
+   specified as a command line argument as shown below.
 1. Execute the command `python mapping_unpivoter.py unpivot_transformation_mappings "/path/to/config/file"`
 
 __NOTE__: `reference_file` records must be included in the final harmonized data output file for input files such
