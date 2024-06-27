@@ -19,12 +19,12 @@ source YAML files. See the [C3DC JSON schema readme file](https://github.com/chi
 for more information.
 
 ### Mapping unpivoter utility script
-The mapping unpivoter script can be used to transform the development team's internal shared document containing
-harmonized data mapping definitions to the [publicly available JSON transformation/mapping
-deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations), aka the 'remote'
-configuration file described below referenced in the `transformations_url` property. The script can be used for
-convenience in lieu of editing and maintaining the JSON transformation/mapping config file manually. See the
-[readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for details.
+The [mapping unpivoter script](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter) can be used to
+transform the development team's internal shared document containing harmonized data mapping definitions to the
+[publicly available JSON transformation/mapping deliverable](https://github.com/chicagopcdc/c3dc_etl/tree/main/etl/target/transformations),
+aka the 'remote' configuration file described below referenced in the `transformations_url` property. The script can
+be used for convenience in lieu of editing and maintaining the JSON transformation/mapping config file manually. See
+the [readme file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for details.
 
 ## ETL execution
 1. Create/update the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/schema.json)
@@ -37,14 +37,20 @@ of the [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc) if
    ```
    python c3dc_etl.py
    ```
+   A file with a name other than `.env` can be specified as a command line argument:
+   ```
+   python c3dc_etl.py "/path/to/config/file"
+   ```
 
 ### Configuration
 Configuration has been divided into local and remote file instances. The local configuration file contains settings
-specific to the local runtime environment such as local paths for input/output files. The remote configuration file
-defines a `STUDY_CONFIGURATION` object that contains the harmonized data mappings for the corresponding source data
-file and can be maintained in a version controlled repository so that changes can be tracked and audited as needed.
-The remote configuration file will be loaded and then the resulting `STUDY_CONFIGURATION` object will be merged with
-the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
+specific to the local runtime environment such as local paths for input/output files. The remote configuration file,
+whose location is specified in the `transformations_url` environment variable below, defines a `STUDY_CONFIGURATION`
+object that contains the harmonized data mappings for the corresponding source data file and can be maintained in a
+version controlled repository so that changes can be tracked and audited as needed. The remote configuration file
+will be loaded and then the resulting `STUDY_CONFIGURATION` object will be merged with the matching local
+`STUDY_CONFIGURATION` object to configure the ETL script.
+
 #### Local configuration
 * `JSON_SCHEMA_URL`: The location of the JSON schema file that will validate the harmonized data file created by
     the script.
@@ -56,7 +62,11 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
     the 'local' transformation specified in the `transformations` var.
   * `transformations`: A list of objects, one per source file, containing configuration details needed to harmonize
     each source file
-    * `name`: The unique name or identifier for this transformation.
+    * `name`: The unique name or identifier for this transformation. This must match the name of the transformation
+      specified in the transformation/mapping file located at `transformations_url`. For a file created using the
+      [mapping_unpivoter script](https://github.com/chicagopcdc/c3dc_etl/tree/main/mapping_unpivoter), the name
+      value would correspond to the `transformation_name` environment variable of the
+      [mapping_unpivoter script](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md#environment-variables).
     * `source_file_path`: The local path to the file containing the source data.
     * `output_file_path`: The local path to the file where the harmonized data will be saved.
     * `uuid_seed`: The optional seed to be passed to the random number generator used by the internal UUID creation
@@ -66,12 +76,13 @@ the matching local `STUDY_CONFIGURATION` object to configure the ETL script.
     * `active`: Whether this configuration object and the transformations specified within will be processed (true)
         or ignored (false).
 
-#### Remote configuration (single `STUDY_CONFIGURATION` object that will be merged with matching local config object)
+#### Remote configuration (single `STUDY_CONFIGURATION` object that will be merged with local config object by matching transformation name)
 * `version`: The label identifying the version of this study configuration object.
 * `transformations`: A list of objects, one per source file, containing configuration details needed to harmonize
   each source file.
-  * `name`: The unique name or identifier for this transformation. Any 'local' transformation coniguration object
-    with matching name will be merged with this one to form the final configuration object used by the ETL script.
+  * `name`: The unique name or identifier for this transformation. There must be a 'local' transformation
+    configuration object as detailed above with matching name that will be merged with this one to form the final
+    configuration object used by the ETL script.
   * `mappings`: The list of mapping objects that specify how source data fields will be harmonized for output.
     * `output_field`: The field, in `node_type.property_name` format, to which the harmonized data for this mapping
       will be saved. The node type and property name must correspond to node types and child properties specified in
@@ -133,6 +144,10 @@ set -e
 # if updating schema, uncomment the following after updating the version var in the ../../schema.env file:
 # cd ../../schema
 # python schema_creator.py
+
+# create log dirs if needed
+mkdir -p logs
+mkdir -p ../../mapping_unpivoter/logs
 
 # declare an array of study identifiers that will match the names of the respective .env config files
 # e.g. ".env_mapping_unpivoter_STUDY_IDENTIFIER" for the mapping unpivoter script and

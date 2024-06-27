@@ -496,8 +496,9 @@ class SchemaCreator:
 
 def main() -> None:
     """ Script entry point """
-    config_file: str = '.env'
-    if not os.path.exists(config_file):
+    c3dc_file_manager: C3dcFileManager = C3dcFileManager()
+    config_file: str = sys.argv[1] if len(sys.argv) == 2 else '.env'
+    if not c3dc_file_manager.file_exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
     config: dict[str, str] = dotenv.dotenv_values(config_file)
     schema_creator: SchemaCreator = SchemaCreator(config)

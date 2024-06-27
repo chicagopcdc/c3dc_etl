@@ -578,11 +578,18 @@ class C3dcEtl:
             source_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
             if not {s for s in source_fields if s != 'string_literal'}.issubset(set(source_header)):
                 errors.append(
-                    f'{transformation_name} ({study_id}): compound source field not present in source data: {mapping}'
+                    f'{transformation_name} ({study_id}): compound source field in mapping ("{source_field}") ' +
+                    f'not present in source data header: {source_header}'
                 )
-                _logger.warning({s for s in source_fields if s != 'string_literal'})
+                errors.append('Verify all mapped source fields in remote transformations file are in source data')
         elif source_field not in source_header:
-            errors.append(f'{transformation_name} ({study_id}): source field not present in source data: {mapping}')
+            errors.append(
+                (
+                    f'{transformation_name} ({study_id}): source field in mapping ("{source_field}") ' +
+                    f'not present in source data header ("{source_header}")'
+                )
+            )
+            errors.append('Verify all mapped source fields in remote transformations file are in source data')
         output_field: str = mapping.get('output_field')
         if not output_field:
             errors.append(f'{transformation_name} ({study_id}): mapping output field not specified: {mapping}')
