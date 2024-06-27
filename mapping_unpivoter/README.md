@@ -9,9 +9,13 @@ worksheets for each study, and then converted to JSON for use by the ETL scripts
 script that performs the conversion, which can be conducted by following the steps below:
 1. Create/update the [JSON schema version](https://github.com/chicagopcdc/c3dc_etl/blob/main/schema/README.md) of the
 [C3DC model](https://github.com/CBIIT/c3dc-model/tree/main/model-desc).
-1. Create/update the environment file in the same directory; environment variables are described below and the
-   sample .env_example file can be used as a starting point and customized as needed.
-1. Execute the command `python mapping_unpivoter.py unpivot_transformation_mappings [.env file path]`
+1. Download and, if needed, customize the [C3DC Mappings.xlsx](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/C3DC%20Mappings.xlsx)
+   file.
+1. Create/update the `.env` environment file in the same directory; environment variables are described below and
+   the sample [.env_example](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/.env_example)
+   file can be used as a starting point and customized as needed. A file with a name other than `.env` can be
+   specified as a command line argument:
+1. Execute the command `python mapping_unpivoter.py unpivot_transformation_mappings "/path/to/config/file"`
 
 __NOTE__: `reference_file` records must be included in the final harmonized data output file for input files such
 as the ETL script, transformation mapping file, and input source files. The reference file information that must
@@ -30,7 +34,7 @@ properties of the resulting transformation mapping file it creates by setting th
 `AUTO_UPDATE_REFERENCE_FILE_MAPPINGS` configuration property to `True`. The script can also
 be be directed to only calculate and set these values for the transformation mapping file by calling it with
 the appropriate argument:
-`python mapping_unpivoter.py update_reference_file_mappings [.env file path]`.
+`python mapping_unpivoter.py update_reference_file_mappings "/path/to/config/file"`.
 When the `update_reference_file_mappings` argument is passed, the script will not (re-)create
 the output transformation mapping file, it will only calculate the file size and md5 has for the existing file
 specified in the `OUTPUT_FILE` configuration variable and set the appropriate `reference_file` properties matching

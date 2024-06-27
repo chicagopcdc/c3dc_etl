@@ -524,7 +524,7 @@ def main() -> None:
         return
 
     c3dc_file_manager: C3dcFileManager = C3dcFileManager()
-    config_file: str = sys.argv[2] if len(sys.argv) == 3 else '.env_mapping_unpivoter'
+    config_file: str = sys.argv[2] if len(sys.argv) == 3 else '.env'
     if not c3dc_file_manager.file_exists(config_file):
         raise FileNotFoundError(f'Config file "{config_file}" not found')
     config: dict[str, str] = dotenv.dotenv_values(
