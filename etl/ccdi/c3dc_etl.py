@@ -100,6 +100,11 @@ class C3dcEtl:
         self._random: random.Random = random.Random()
         self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
 
+        # These are the schema properties for which 'sub' source records may be needed as they're enum/string
+        # properties for which source values may be delimited (';'). Enum/string properties in the schema where
+        # the allowed values may contain ';' (diagnosis.diagnosis) will be excluded
+        self._sub_source_record_enum_properties: set[str] = set()
+
         # Remote study config should contain env-agnostic info like mappings, local study config
         # should contain info specific to the local env like file paths; remote and local will be
         # merged together to form the final study configuration object
@@ -154,6 +159,20 @@ class C3dcEtl:
                 (isinstance(value, (list, set, tuple)) and value and set(value or {}).issubset(allowed_values))
             )
         )
+
+    @staticmethod
+    def get_pluralized_node_name(node: str) -> str:
+        """ Get pluralized form of node name e.g. for output record set name """
+        if node in ['diagnosis']:
+            # pluralized subject collection property name is same as singular form
+            return 'diagnoses'
+
+        if node[-1] == 'y':
+            # study => studies
+            return node[:-1] + 'ies'
+
+        # participant => participants, etc
+        return f'{node}s'
 
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
@@ -226,6 +245,7 @@ class C3dcEtl:
         self._json_schema_nodes = {k:v for k,v in self._json_schema['$defs'].items() if C3dcEtlModelNode.get(k)}
 
         # cache allowed values for enum properties; map node.property => [permissible values]
+        self._sub_source_record_enum_properties.clear()
         self._json_schema_property_enum_values.clear()
         node_type: str
         for node_type in self._json_schema_nodes:
@@ -239,6 +259,10 @@ class C3dcEtl:
                 enum_values: list[str] = prop_props.get('enum', None)
                 enum_values = prop_props.get('items', {}).get('enum', []) if enum_values is None else enum_values
                 self._json_schema_property_enum_values[f'{node_type}.{prop_name}'] = enum_values
+                # properties that contain ';' in any of the permissible values don't support
+                # multiple delimited values since ';' is the delimiting character
+                if not any(';' in v for v in enum_values):
+                    self._sub_source_record_enum_properties.add(f'{node_type}.{prop_name}')
 
         return self._json_schema
 
@@ -887,6 +911,25 @@ class C3dcEtl:
             source_field = source_field[len(f'{source_tab}.'):]
         return source_field
 
+    def _get_source_id_field(self, transformation: dict[str, any], node_type: C3dcEtlModelNode) -> str:
+        """
+        Get source id field for specified transformation and (harmonized) node type, for example
+        survival => follow_up.follow_up_id, treatment => therapeutic_procedure.therapeutic_procedure_id, etc
+        """
+        source_id_mappings: list[dict[str, any]] = [
+            m['source_field'].strip() for m in transformation.get('mappings', [])
+                if m['output_field'] == f'{node_type}.{node_type}_id'
+        ]
+        if len(source_id_mappings) == 0:
+            _logger.warning('No id field mappings for "%s"', node_type)
+        elif len(source_id_mappings) > 1:
+            _logger.warning('Unexpected number of id field mappings for "%s": %d', node_type, len(source_id_mappings))
+
+        source_id_field: str = source_id_mappings[0] if len(source_id_mappings) == 1 else f'{node_type}_id'
+        return (
+            f'{node_type}_id' if source_id_field.startswith('[') or source_id_field.endswith(']') else source_id_field
+        )
+
     def _transform_record_default(
         self,
         transformation: dict[str, any],
@@ -1030,6 +1073,55 @@ class C3dcEtl:
 
         return final_follow_up
 
+    def _build_sub_source_records(
+        self,
+        source_record: dict[str, any],
+        node_props: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """
+        # If source record contains enum fields having multiple values separated by semi-colons (;) then process
+        # as multiple source records for each distinct value with all other properties kept the same except record
+        # id, which must be unique for each newly created record
+        """
+        # check each property in the source record that is an enum/string (as opposed to enum/array)
+        # where ';' isn't present in the list of permissible values. if the source value contains ';'
+        # then create a sub source records for each distinct value otherwise return a single element
+        # list containing the original source record
+        sub_source_records: list[dict[str, any]] = []
+        schema_property: str
+        sub_src_rec_enum_props: set[str] = {
+            p.partition('.')[2] for p in self._sub_source_record_enum_properties
+                if p.startswith(f'{node_props["type"]}.')
+        }
+        for schema_property in sub_src_rec_enum_props:
+            sub_src_ids_vals: dict[str, str]
+            if ';' in str(source_record.get(schema_property, '') or ''):
+                sub_src_ids_vals = {
+                    f'{source_record[node_props["source_id_field"]]}_{k}':v for k,v in dict(
+                        enumerate(
+                            sorted(set(s.strip() for s in source_record[schema_property].split(';') if s.strip())),
+                            1
+                        )
+                    ).items()
+                }
+                _logger.info(
+                    (
+                        '"%s" "%s" has %d distinct delimited value(s) for "%s", creating separate record per value'
+                    ),
+                    node_props['type'],
+                    source_record[node_props["source_id_field"]],
+                    len(sub_src_ids_vals),
+                    schema_property
+                )
+                sub_src_id: str
+                sub_src_val: str
+                for sub_src_id, sub_src_val in sub_src_ids_vals.items():
+                    src_rec_clone: dict[str, any] = json.loads(json.dumps(source_record))
+                    src_rec_clone[node_props['source_id_field']] = sub_src_id
+                    src_rec_clone[schema_property] = sub_src_val
+                    sub_source_records.append(src_rec_clone)
+        return sub_source_records
+
     def _build_node(
         self,
         transformation: dict[str, any],
@@ -1062,28 +1154,30 @@ class C3dcEtl:
             if not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')]):
                 raise RuntimeError(f'No data loaded to transform for study {study_id}')
 
-        study_id_field: str = f'{C3dcEtlModelNode.STUDY}_id'
-        study_id_field_remote: str = f'{C3dcEtlModelNode.STUDY}.{C3dcEtlModelNode.STUDY}_id'
-        pat_id_field: str = f'{C3dcEtlModelNode.PARTICIPANT}_id'
-        pat_id_field_remote: str = f'{C3dcEtlModelNode.PARTICIPANT}.{pat_id_field}'
-        dx_id_field: str = f'{C3dcEtlModelNode.DIAGNOSIS}_id'
-        dx_id_field_remote: str = f'{C3dcEtlModelNode.DIAGNOSIS}.{dx_id_field}'
-        surv_id_field: str = f'{C3dcEtlModelNode.SURVIVAL}_id'
-        surv_id_field_remote: str = f'{C3dcEtlModelNode.SURVIVAL}.{surv_id_field}'
-        ref_id_field: str = f'{C3dcEtlModelNode.REFERENCE_FILE}_id'
-        ref_id_field_remote: str = f'{C3dcEtlModelNode.REFERENCE_FILE}.{ref_id_field}'
-
-        nodes: dict[str, any] = {
-            'diagnoses': [],
-            'participants': [],
-            'reference_files': [],
-            'studies': [],
-            'survivals': []
-        }
-
         raw_etl_data_tbls: dict[str, any] = self._raw_etl_data_tables.get(study_id, {}).get(transformation.get('name'))
         if not raw_etl_data_tbls:
             raise RuntimeError('No raw ETL data found')
+
+        nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
+            C3dcEtlModelNode.DIAGNOSIS: {},
+            C3dcEtlModelNode.PARTICIPANT: {},
+            C3dcEtlModelNode.REFERENCE_FILE: {},
+            C3dcEtlModelNode.STUDY: {},
+            C3dcEtlModelNode.SURVIVAL: {},
+            C3dcEtlModelNode.TREATMENT: {},
+            C3dcEtlModelNode.TREATMENT_RESPONSE: {}
+        }
+        node: C3dcEtlModelNode
+        node_props: dict[str, any]
+        for node, node_props in nodes.items():
+            node_props['harmonized_records'] = []
+            node_props['type'] = node
+            node_props['id_field'] = f'{node}_id'
+            node_props['id_field_full'] = f'{node}.{node_props["id_field"]}'
+            node_props['source_id_field'] = self._get_source_id_field(transformation, node).partition('.')[2]
+            node_props['source_records'] = list(petl.dicts(raw_etl_data_tbls.get(node, petl.empty())))
+            if not node_props['source_records'] and node_props['type'] != C3dcEtlModelNode.REFERENCE_FILE:
+                _logger.warning('No "%s" data available for harmonization', node)
 
         # build study node and add to node collection
         src_recs: list[dict[str, any]] = list(petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.STUDY, petl.empty())))
@@ -1094,40 +1188,32 @@ class C3dcEtl:
         if len(study) != 1:
             raise RuntimeError(f'Unexpected number of study nodes built ({len(study)}), check mapping')
         study = study[0]
-        study[pat_id_field_remote] = []
-        study[ref_id_field_remote] = []
+        study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']] = []
 
         # build reference file nodes and add to node collection
         reference_files: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.REFERENCE_FILE)
         reference_file: dict[str, any]
         for reference_file in reference_files:
-            reference_file[study_id_field_remote] = study[study_id_field]
-            study[ref_id_field_remote].append(reference_file[ref_id_field])
-        nodes['reference_files'].extend(reference_files)
+            reference_file[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
+                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            ]
+            study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']].append(
+                reference_file[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field']]
+            )
+        nodes[C3dcEtlModelNode.REFERENCE_FILE]['harmonized_records'].extend(reference_files)
 
-        # add participant, diagnosis, and survival records to match source data records
-        pat_src_recs: list[dict[str, any]] = list(
-            petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.PARTICIPANT, petl.empty()))
-        )
-        dx_src_recs: list[dict[str, any]] = list(
-            petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.DIAGNOSIS, petl.empty()))
-        )
-        if not dx_src_recs:
-            _logger.warning('No diagnosis data available for harmonization')
-        surv_src_recs: list[dict[str, any]] = list(
-            petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.SURVIVAL, petl.empty()))
-        )
-        if not surv_src_recs:
-            _logger.warning('No survival data available for harmonization')
+        # add participant, diagnosis, survival, treatment, and treatment_response records to match source data records
+        pat_src_recs: list[dict[str, any]] = nodes[C3dcEtlModelNode.PARTICIPANT]['source_records']
         pat_src_rec: dict[str, any]
-        pat_ids: list[str] = dict.fromkeys(p.get(pat_id_field) for p in pat_src_recs)
+        pat_ids: list[str] = dict.fromkeys(p.get(nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']) for p in pat_src_recs)
         if len(pat_ids) != len(pat_src_recs):
             raise RuntimeError(
                 f'Unique participant id count ({len(pat_ids)}) not equal to ' +
                 f'participant record count ({len(pat_src_recs)})'
             )
         for pat_src_rec in pat_src_recs:
-            participant_id: str = pat_src_rec.get(pat_id_field)
+            participant_id: str = pat_src_rec.get(nodes[C3dcEtlModelNode.PARTICIPANT]['id_field'])
             participant_id = str(participant_id).strip() if participant_id is not None else participant_id
             try:
                 if not (participant_id or '').strip():
@@ -1143,152 +1229,104 @@ class C3dcEtl:
                 _logger.warning('Error checking participant id: %s', pat_src_rec)
                 raise
 
-            participant: list[dict[str, any]] = self._build_node(
+            participants: list[dict[str, any]] = self._build_node(
                 transformation,
                 C3dcEtlModelNode.PARTICIPANT,
                 pat_src_rec
             )
-            if len(participant) != 1:
+            participant: dict[str, any] = None
+            if len(participants) == 1:
+                participant = participants[0]
+            else:
                 _logger.warning(
                     '%s (%s): Unexpected number of participant nodes (%d) built for participant "%s", excluding',
                     transformation.get('name'),
                     study_id,
-                    len(participant),
+                    len(participants),
                     participant_id
                 )
-                participant = None
+                participants = None
                 continue
 
-            diagnoses: list[dict[str, any]] = []
-            if dx_src_recs:
-                src_recs: list[dict[str, any]] = [
-                    d for d in dx_src_recs if d.get(pat_id_field_remote) == participant_id
-                ]
-                for src_rec in src_recs:
-                    # if anatomic_site has multiple values separated by semi-colons (;) then process as multiple
-                    # diagnosis records for each distinct anatomic site with all other properties kept the same
-                    # except diagnosis id, which must be unique
-                    dxes: list[dict[str, any]]
-                    anatomic_sites: dict[str, str]
-                    src_rec_clone: dict[str, any]
-                    if ';' in src_rec.get('anatomic_site', ''):
-                        # pair each unique anatomic site with diagnosis id derived from 'parent' diagnosis id
-                        anatomic_sites = {
-                            f'{src_rec["diagnosis_id"]}_{k}':v for k,v in dict(
-                                enumerate(
-                                    set(s.strip() for s in src_rec['anatomic_site'].split(';') if s.strip()),
-                                    1
-                                )
-                            ).items()
-                        }
-                        src_rec_clone: dict[str, any] = json.loads(json.dumps(src_rec))
-                        _logger.info(
-                            (
-                                '%s (%s): Diagnosis "%s" contains %d distinct delimited anatomic site(s), ' +
-                                'processing as separate diagnosis records per site'
-                            ),
-                            transformation.get('name'),
-                            study_id,
-                            src_rec['diagnosis_id'],
-                            len(anatomic_sites)
-                        )
-                    else:
-                        anatomic_sites = {src_rec['diagnosis_id']:src_rec.get('anatomic_site')}
-                        src_rec_clone = src_rec
+            node_observations: dict[str, list[dict[str, any]]] = {
+                C3dcEtlModelNode.DIAGNOSIS: [],
+                C3dcEtlModelNode.SURVIVAL: [],
+                C3dcEtlModelNode.TREATMENT: [],
+                C3dcEtlModelNode.TREATMENT_RESPONSE: []
+            }
+            node_recs: list[dict[str, any]]
+            for node, node_recs in node_observations.items():
+                # make sure relationship collection is defined, even if no records are added
+                participant[nodes[node]['id_field_full']] = []
 
-                    diagnosis_id: str
-                    anatomic_site: str
-                    for diagnosis_id,anatomic_site in anatomic_sites.items():
-                        src_rec_clone['diagnosis_id'] = diagnosis_id
-                        src_rec_clone['anatomic_site'] = anatomic_site
-                        dxes = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, src_rec_clone)
-                        if not dxes:
+                src_recs: list[dict[str, any]] = [
+                    r for r in nodes[node]['source_records']
+                        if r.get(nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']) == participant_id
+                ]
+                if not src_recs:
+                    continue
+
+                if node == C3dcEtlModelNode.SURVIVAL:
+                    # harmonize output using latest survival record per participant
+                    src_recs = [self._get_latest_follow_up_record(src_recs)]
+                for src_rec in src_recs:
+                    # if source record has eligible enum properties with multiple delimited values (;) then
+                    # process as multiple source records for each distinct value with all other properties
+                    # kept same except record id, which must be unique
+                    for sub_src_rec in self._build_sub_source_records(src_rec, nodes[node]) or [src_rec]:
+                        harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
+                        if not harmonized_recs:
                             _logger.warning(
-                                '%s (%s): Unable to build "%s" node for participant "%s"%s',
+                                '%s (%s): Unable to build "%s" node for participant "%s" (source record id "%s")',
                                 transformation.get('name'),
                                 study_id,
-                                C3dcEtlModelNode.DIAGNOSIS,
+                                node,
                                 participant_id,
-                                '' if len(anatomic_sites) <= 1 else f' (anatomic_site "{anatomic_site}")'
+                                sub_src_rec[nodes[node]['source_id_field']] if sub_src_rec else 'None'
                             )
-                        diagnoses.extend(dxes)
+                        node_recs.extend(harmonized_recs)
 
-            survivals: list[dict[str, any]] = []
-            if surv_src_recs:
-                src_recs: list[dict[str, any]] = [
-                    s for s in surv_src_recs if s.get(pat_id_field_remote) == participant_id
-                ]
-                if src_recs:
-                    survival: dict[str, any] = self._get_latest_follow_up_record(src_recs)
-                    survs: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, survival)
-                    if not survs:
-                        _logger.warning(
-                            '%s (%s): Unable to build "%s" node for participant "%s", invalid source record(s)',
-                            transformation.get('name'),
-                            study_id,
-                            C3dcEtlModelNode.SURVIVAL,
-                            participant_id
-                        )
-                    survivals.extend(survs)
-                else:
-                    _logger.warning(
-                        '%s (%s): Unable to build "%s" node for participant "%s", no matching source record(s)',
-                        transformation.get('name'),
-                        study_id,
-                        C3dcEtlModelNode.SURVIVAL,
-                        participant_id
-                    )
+                node_rec: dict[str, any]
+                for node_rec in node_recs:
+                    # set referential ids for this observation node and parent participant
+                    node_rec[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = participant[
+                        nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']
+                    ]
+                    participant[nodes[node]['id_field_full']].append(node_rec[nodes[node]['id_field']])
+                # populate final transformed record collection for this observation node
+                nodes[node]['harmonized_records'].extend(node_recs)
 
-            participant = participant[0]
+            participant[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
+                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            ]
+            study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
+                participant[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']]
+            )
+            nodes[C3dcEtlModelNode.PARTICIPANT]['harmonized_records'].append(participant)
 
-            participant[dx_id_field_remote] = []
-            diagnosis_id_cache: set[str] = set()
-            dupe_diagnosis_ids: set[str] = set()
-            diagnosis: dict[str, any]
-            for diagnosis in diagnoses:
-                if diagnosis['diagnosis_id'] in diagnosis_id_cache:
-                    dupe_diagnosis_ids.add(diagnosis['diagnosis_id'])
-                diagnosis_id_cache.add(diagnosis['diagnosis_id'])
-                diagnosis[pat_id_field_remote] = participant[pat_id_field]
-                participant[dx_id_field_remote].append(diagnosis[dx_id_field])
-            if dupe_diagnosis_ids:
-                raise RuntimeError(f'Duplicate diagnosis id(s) found: {dupe_diagnosis_ids}')
+        # check for dupe ids
+        for node, node_props in nodes.items():
+            node_rec: dict[str, any]
+            id_cache: set[str] = set()
+            dupe_ids: set[str] = set()
+            for node_rec in node_props['harmonized_records']:
+                if node_rec[node_props['id_field']] in id_cache:
+                    dupe_ids.add(node_rec[node_props['id_field']])
+                id_cache.add(node_rec[node_props['id_field']])
+            if dupe_ids:
+                raise RuntimeError(f'Duplicate {node} id(s) found: {dupe_ids}')
 
-            participant[surv_id_field_remote] = []
-            survival_id_cache: set[str] = set()
-            dupe_survival_ids: set[str] = set()
-            survival: dict[str, any]
-            for survival in survivals:
-                if survival['survival_id'] in survival_id_cache:
-                    dupe_survival_ids.add(survival['survival_id'])
-                survival_id_cache.add(survival['survival_id'])
-                survival[pat_id_field_remote] = participant[pat_id_field]
-                participant[surv_id_field_remote].append(survival[surv_id_field])
-            if dupe_survival_ids:
-                raise RuntimeError(f'Duplicate survival id(s) found: {dupe_survival_ids}')
-
-            participant[study_id_field_remote] = study[study_id_field]
-            study[pat_id_field_remote].append(participant[pat_id_field])
-
-            nodes['diagnoses'].extend(diagnoses)
-            nodes['survivals'].extend(survivals)
-            nodes['participants'].append(participant)
-
-        nodes['studies'].append(study)
+        nodes[C3dcEtlModelNode.STUDY]['harmonized_records'].append(study)
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
-        self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
+        self._json_etl_data_sets[study_id][transformation.get('name')] = {
+            C3dcEtl.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
+        }
 
         _logger.info(
-            (
-                '1 study, %d diagnosis, %d survival, %d participant, %d reference file ' +
-                'records built for transformation "%s"'
-            ),
-            len(nodes['diagnoses']),
-            len(nodes['survivals']),
-            len(nodes['participants']),
-            len(nodes['reference_files']),
-            transformation.get('name')
+            '%s records built for transformation "%s"',
+            ', '.join(f'{len(v["harmonized_records"])} {k}' for k,v in nodes.items()),
+            transformation.get("name")
         )
 
         return self._json_etl_data_sets[study_id][transformation.get('name')]

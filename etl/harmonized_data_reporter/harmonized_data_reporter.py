@@ -111,11 +111,13 @@ class HarmonizedDataReporter:
             _logger.error('No output path specified to save report')
             return
 
+        fieldnames: list[str] = []
+        file_report: dict[str, any]
+        for file_report in self._harmonized_data_report.values():
+            fieldnames.extend(k for k in file_report.keys() if k not in fieldnames)
+
         output_io: io.StringIO = io.StringIO()
-        writer: csv.DictWriter = csv.DictWriter(
-            output_io,
-            fieldnames=list(self.harmonized_data_report.values())[0].keys()
-        )
+        writer: csv.DictWriter = csv.DictWriter(output_io, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(self.harmonized_data_report.values())
         self._c3dc_file_manager.write_file(output_io.getvalue().encode('utf-8'), self._report_output_path)

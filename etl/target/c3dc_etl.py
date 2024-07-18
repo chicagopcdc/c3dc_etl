@@ -153,6 +153,20 @@ class C3dcEtl:
             )
         )
 
+    @staticmethod
+    def get_pluralized_node_name(node: str) -> str:
+        """ Get pluralized form of node name e.g. for output record set name """
+        if node in ['diagnosis']:
+            # pluralized subject collection property name is same as singular form
+            return 'diagnoses'
+
+        if node[-1] == 'y':
+            # study => studies
+            return node[:-1] + 'ies'
+
+        # participant => participants, etc
+        return f'{node}s'
+
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
         # enumerate each per-study transformation config object in local config
@@ -884,7 +898,9 @@ class C3dcEtl:
             node_type
         )
         if not type_group_index_mappings:
-            _logger.warning('No mappings found for type %s, unable to transform record', node_type)
+            if node_type not in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE):
+                # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
+                _logger.warning('No mappings found for type %s, unable to transform record', node_type)
             return []
 
         # a single source field can be mapped to multiple target fields, for example
@@ -1014,31 +1030,44 @@ class C3dcEtl:
             if not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')]):
                 raise RuntimeError(f'No data loaded to transform for study {study_id}')
 
-        nodes: dict[str, any] = {
-            'diagnoses': [],
-            'participants': [],
-            'reference_files': [],
-            'studies': [],
-            'survivals': []
+        nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
+            C3dcEtlModelNode.DIAGNOSIS: {},
+            C3dcEtlModelNode.PARTICIPANT: {},
+            C3dcEtlModelNode.REFERENCE_FILE: {},
+            C3dcEtlModelNode.STUDY: {},
+            C3dcEtlModelNode.SURVIVAL: {},
+            C3dcEtlModelNode.TREATMENT: {},
+            C3dcEtlModelNode.TREATMENT_RESPONSE: {}
         }
+        node: C3dcEtlModelNode
+        node_props: dict[str, any]
+        for node, node_props in nodes.items():
+            node_props['harmonized_records'] = []
+            node_props['type'] = node
+            node_props['id_field'] = f'{node}_id'
+            node_props['id_field_full'] = f'{node}.{node_props["id_field"]}'
 
         # build study node and add to node collection
         study: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.STUDY)
         if len(study) != 1:
             raise RuntimeError(f'Unexpected number of study nodes built ({len(study)}), check mapping')
         study = study[0]
-        study['participant.participant_id'] = []
-        study['reference_file.reference_file_id'] = []
+        study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']] = []
 
         # build reference file nodes and add to node collection
         reference_files: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.REFERENCE_FILE)
         reference_file: dict[str, any]
         for reference_file in reference_files:
-            reference_file['study.study_id'] = study['study_id']
-            study['reference_file.reference_file_id'].append(reference_file['reference_file_id'])
-        nodes['reference_files'].extend(reference_files)
+            reference_file[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
+                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            ]
+            study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']].append(
+                reference_file[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field']]
+            )
+        nodes[C3dcEtlModelNode.REFERENCE_FILE]['harmonized_records'].extend(reference_files)       
 
-        # add diagnosis, survival, and participant records to match source data records
+        # add observation and participant records to match source data records
         rec: dict[str, any]
         for rec in petl.dicts(self._raw_etl_data_tables[study_id][transformation.get('name')]):
             # check for and skip empty rows loaded by petl
@@ -1046,68 +1075,84 @@ class C3dcEtl:
                 _logger.warning('Skipping empty source record %d', rec['source_file_row_num'])
                 continue
 
-            diagnoses: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.DIAGNOSIS, rec)
-            if not diagnoses:
+            participant: dict[str, any]
+            participants: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
+            if len(participants) != 1:
                 _logger.warning(
-                    '%s (%s): Unable to build diagnosis node for source record %d',
+                    '%s (%s): Unexpected number of participant nodes (%d) built for sourced record %d, excluding',
                     transformation.get('name'),
                     study_id,
-                    rec['source_file_row_num']
-                )
-
-            survivals: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.SURVIVAL, rec)
-            if not survivals:
-                _logger.warning(
-                    '%s (%s): Unable to build survival node for source record %d',
-                    transformation.get('name'),
-                    study_id,
-                    rec['source_file_row_num']
-                )
-
-            participant: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
-            if len(participant) != 1:
-                _logger.warning(
-                    '%s (%s): Unexpected number of participant nodes (%d) built for source record %d, excluding',
-                    transformation.get('name'),
-                    study_id,
-                    len(participant),
+                    len(participants),
                     rec['source_file_row_num']
                 )
                 participant = None
                 continue
+            participant = participants[0]
 
-            participant = participant[0]
-            participant['diagnosis.diagnosis_id'] = []
-            diagnosis: dict[str, any]
-            for diagnosis in diagnoses:
-                diagnosis['participant.participant_id'] = participant['participant_id']
-                participant['diagnosis.diagnosis_id'].append(diagnosis['diagnosis_id'])
+            node_observations: list[C3dcEtlModelNode] = [
+                C3dcEtlModelNode.DIAGNOSIS,
+                C3dcEtlModelNode.SURVIVAL,
+                C3dcEtlModelNode.TREATMENT,
+                C3dcEtlModelNode.TREATMENT_RESPONSE
+            ]
+            for node in node_observations:
+                # make sure relationship collection is defined, even if no records are added
+                participant[nodes[node]['id_field_full']] = []
 
-            participant['survival.survival_id'] = []
-            survival: dict[str, any]
-            for survival in survivals:
-                survival['participant.participant_id'] = participant['participant_id']
-                participant['survival.survival_id'].append(survival['survival_id'])
+                harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, rec)
+                # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
+                if not (harmonized_recs or node in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)):
+                    _logger.warning(
+                        '%s (%s): Unable to build "%s" node for source record "%s"',
+                        transformation.get('name'),
+                        study_id,
+                        node,
+                        rec['source_file_name']
+                    )
 
-            participant['study.study_id'] = study['study_id']
-            study['participant.participant_id'].append(participant['participant_id'])
+                harmonized_rec: dict[str, any]
+                for harmonized_rec in harmonized_recs:
+                    # set referential ids for this observation node and parent participant
+                    harmonized_rec[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = participant[
+                        nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']
+                    ]
+                    participant[nodes[node]['id_field_full']].append(harmonized_rec[nodes[node]['id_field']])
 
-            nodes['diagnoses'].extend(diagnoses)
-            nodes['survivals'].extend(survivals)
-            nodes['participants'].append(participant)
+                # populate final transformed record collection for this observation node
+                nodes[node]['harmonized_records'].extend(harmonized_recs)
 
-        nodes['studies'].append(study)
+            participant[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
+                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            ]
+            study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
+                participant[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']]
+            )
+            nodes[C3dcEtlModelNode.PARTICIPANT]['harmonized_records'].append(participant)
+
+        # check for dupe ids
+        for node, node_props in nodes.items():
+            node_rec: dict[str, any]
+            id_cache: set[str] = set()
+            dupe_ids: set[str] = set()
+            for node_rec in node_props['harmonized_records']:
+                if node_rec[node_props['id_field']] in id_cache:
+                    dupe_ids.add(node_rec[node_props['id_field']])
+                id_cache.add(node_rec[node_props['id_field']])
+            if dupe_ids:
+                raise RuntimeError(f'Duplicate {node} id(s) found: {dupe_ids}')
+
+        # attach the main study object
+        nodes[C3dcEtlModelNode.STUDY]['harmonized_records'].append(study)
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
-        self._json_etl_data_sets[study_id][transformation.get('name')] = nodes
+        self._json_etl_data_sets[study_id][transformation.get('name')] = {
+            C3dcEtl.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
+        }
 
         _logger.info(
-            '1 study, %d diagnosis, %d survival, %d participant, %d reference file records built for transformation %s',
-            len(nodes['diagnoses']),
-            len(nodes['survivals']),
-            len(nodes['participants']),
-            len(nodes['reference_files']),
-            transformation.get('name')
+            '%s records built for transformation "%s"',
+            ', '.join(f'{len(v["harmonized_records"])} {k}' for k,v in nodes.items()),
+            transformation.get("name")
         )
 
         return self._json_etl_data_sets[study_id][transformation.get('name')]
