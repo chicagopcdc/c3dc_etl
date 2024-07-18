@@ -180,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 66280
+                            "new_value": 69218
                         }
                     ]
                 },
@@ -192,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "02d97955c4a467970ced4c9238a792ac"
+                            "new_value": "dd194b2d90251accffc442910194642a"
                         }
                     ]
                 },
@@ -216,7 +216,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240712.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -300,7 +300,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240712.1/schema/schema.json"
                         }
                     ]
                 },
@@ -348,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 231859
+                            "new_value": 250606
                         }
                     ]
                 },
@@ -360,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "9f75f619008d8366a7934102656f898c"
+                            "new_value": "ad1d625abc3b173de929b4e518c212c7"
                         }
                     ]
                 },
@@ -384,7 +384,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240712.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -432,7 +432,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 34365
+                            "new_value": 39178
                         }
                     ]
                 },
@@ -444,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "8863a77522f317728018b4b18c8d7142"
+                            "new_value": "4074cbd20d2aad8f97a961772f370c8c"
                         }
                     ]
                 },
@@ -468,7 +468,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240604.1/etl/ccdi/transformations/phs002518.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240712.1/etl/ccdi/transformations/phs002518.json"
                         }
                     ]
                 },
@@ -849,6 +849,126 @@
                         {
                             "old_value": "*",
                             "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_id",
+                    "source_field": "therapeutic_procedure.therapeutic_procedure_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_start",
+                    "source_field": "therapeutic_procedure.age_at_treatment_start",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_end",
+                    "source_field": "therapeutic_procedure.age_at_treatment_end",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_type",
+                    "source_field": "therapeutic_procedure.treatment_type",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_agent",
+                    "source_field": "therapeutic_procedure.therapeutic_agent",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.treatment_response_id",
+                    "source_field": "therapeutic_procedure.therapeutic_procedure_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.response",
+                    "source_field": "therapeutic_procedure.treatment_outcome",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.age_at_response",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.response_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.response_system",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Unknown"
                         }
                     ]
                 }
