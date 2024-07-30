@@ -80,8 +80,8 @@ as a starting point and customized as needed.
   harmonized data file created by the ETL script. Can also be a local file path. For example
   `https://raw.githubusercontent.com/chicagopcdc/c3dc_etl/main/schema/schema.json` or `/path/to/schema.json`
 * `STUDY_CONFIGURATIONS`: Required. A string-ified list of objects, with one configuration object per study.
-  * `study`: The unique name or identifier for this study configuration object. This value must be unique within the
-    list of study configuration objects. For example `phs002430`.
+  * `study`: Required. The unique name or identifier for this study configuration object. This value must be unique
+    within the list of study configuration objects. For example `phs002430`.
   * `active`: Optional. Boolean string (`True` or `False`, default `False`) that indicates whether this configuration
     object and the transformations specified within will be processed (`True`) or ignored (`False`).
   * `transformations_url`: Required. String specifying the location of the file containing the transformations
