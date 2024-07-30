@@ -90,6 +90,8 @@ class C3dcEtl:
 
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
+        self._verify_config()
+
         self._json_schema_url: str = config.get('JSON_SCHEMA_URL')
         self._json_schema: dict[str, any] = {}
         self._json_schema_nodes: dict[str, any] = {}
@@ -283,6 +285,34 @@ class C3dcEtl:
             transformation: dict[str, any]
             for transformation in study_configuration.get('transformations', []):
                 self._create_json_etl_file(study_configuration.get('study'), transformation)
+
+    def _verify_config(self) -> None:
+        required_config_var: str
+        missing_config_vars: list[str] = []
+        for required_config_var in ('JSON_SCHEMA_URL', 'STUDY_CONFIGURATIONS'):
+            if not self._config.get(required_config_var):
+                missing_config_vars.append(required_config_var)
+        if missing_config_vars:
+            raise RuntimeError(
+                f'One or more required variables not specified in configuration: {tuple(missing_config_vars)}'
+            )
+
+        study_configs: list[dict[str, any]] = json.loads(self._config.get('STUDY_CONFIGURATIONS', '[]'))
+        study_config: dict[str, any]
+        for study_config in study_configs:
+            for required_config_var in ('study', 'transformations', 'transformations_url'):
+                if not study_config.get(required_config_var):
+                    missing_config_vars.append(f'STUDY_CONFIGURATIONS => {required_config_var}')
+            xform: dict[str, any]
+            for xform in study_config.get('transformations', []):
+                for required_config_var in ('name', 'source_file_path', 'output_file_path'):
+                    if not xform.get(required_config_var):
+                        missing_config_vars.append(f'STUDY_CONFIGURATIONS => transformations => {required_config_var}')
+
+        if missing_config_vars:
+            raise RuntimeError(
+                f'One or more required variables not specified in configuration: {tuple(missing_config_vars)}'
+            )
 
     def _get_petl_table_from_source_file(self, source_file_path: str, xl_sheet_name: str = None) -> any:
         """ Load and return PETL table for data within specified source file """

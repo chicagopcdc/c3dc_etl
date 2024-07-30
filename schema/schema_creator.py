@@ -93,6 +93,16 @@ class SchemaRelMul(str, Enum):
 
 class SchemaCreator:
     """ Build C3DC json schema from yaml file source(s) """
+    REQUIRED_CONFIG_VARS: tuple[str, ...] = (
+        'META_SCHEMA_URL',
+        'NODES_SOURCE_URL',
+        'PROPS_SOURCE_URL',
+        'SCHEMA_FILE_PATH',
+        'SCHEMA_ROOT_ID',
+        'SCHEMA_ROOT_NODE',
+        'SCHEMA_ROOT_URL'
+    )
+
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
         self._nodes_source_url: str = config.get('NODES_SOURCE_URL')
@@ -107,6 +117,16 @@ class SchemaCreator:
         self._schema_file_path: str = self._config.get('SCHEMA_FILE_PATH', './schema.json')
         self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
         self._schema: dict[str, any] = {}
+
+        required_config_var: str
+        missing_config_vars: list[str] = []
+        for required_config_var in SchemaCreator.REQUIRED_CONFIG_VARS:
+            if not self._config.get(required_config_var):
+                missing_config_vars.append(required_config_var)
+        if missing_config_vars:
+            raise RuntimeError(
+                f'One or more required variables not specified in configuration: {tuple(missing_config_vars)}'
+            )
 
     @staticmethod
     def pluralize_node_name(name: str) -> str:
@@ -212,8 +232,8 @@ class SchemaCreator:
         schema: dict[str, any] = {}
         schema['$id'] = urljoin(self._config['SCHEMA_ROOT_URL'], self._config['SCHEMA_ROOT_ID'])
         schema['$schema'] = self._config['META_SCHEMA_URL']
-        schema['description'] = self._config['SCHEMA_ROOT_DESCRIPTION']
-        schema['$comment'] = self._config['SCHEMA_ROOT_COMMENT']
+        schema['description'] = self._config.get('SCHEMA_ROOT_DESCRIPTION', '')
+        schema['$comment'] = self._config.get('SCHEMA_ROOT_COMMENT', '')
         schema['$ref'] = urljoin(self._config['SCHEMA_ROOT_URL'], self._config['SCHEMA_ROOT_NODE'])
         schema['$defs'] = self._build_schema_root_defs()
         return schema

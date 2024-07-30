@@ -91,8 +91,26 @@ class MappingUnpivoter(ContextDecorator):
     REF_FILE_CATEGORY_OUTPUT_SCHEMA: str = 'output schema'
     REF_FILE_CATEGORY_INPUT_SOURCE_DATA: str = 'input source data'
 
+    REQUIRED_CONFIG_VARS: tuple[str, ...] = (
+        'JSON_SCHEMA_URL',
+        'OUTPUT_FILE',
+        'VERSION',
+        'TRANSFORMATION_MAPPINGS_FILES'
+    )
+
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
+
+        required_config_var: str
+        missing_config_vars: list[str] = []
+        for required_config_var in MappingUnpivoter.REQUIRED_CONFIG_VARS:
+            if not self._config.get(required_config_var):
+                missing_config_vars.append(required_config_var)
+        if missing_config_vars:
+            raise RuntimeError(
+                f'One or more required variables not specified in configuration: {tuple(missing_config_vars)}'
+            )
+
         self._version: str = config.get('VERSION')
         self._json_schema_url: str = config.get('JSON_SCHEMA_URL')
         self._json_schema: dict[str, any] = {}
@@ -105,6 +123,17 @@ class MappingUnpivoter(ContextDecorator):
             config.get('TRANSFORMATION_MAPPINGS_FILES', '[]')
         )
         self._transformation_config: dict[str, any] = {'version': self._version, 'transformations': []}
+
+        transformation_mappings_file: dict[str, any]
+        for transformation_mappings_file in self._transformation_mappings_files:
+            for required_config_var in ('transformation_name', 'mappings_file', 'mappings_file_sheet'):
+                if not transformation_mappings_file.get(required_config_var):
+                    missing_config_vars.append(required_config_var)
+        if missing_config_vars:
+            raise RuntimeError(
+                'One or more required variables not specified in TRANSFORMATION_MAPPINGS_FILES configuration: ' +
+                str(tuple(missing_config_vars))
+            )
 
     def __enter__(self) -> None:
         """ download the JSON schema to a local file """
