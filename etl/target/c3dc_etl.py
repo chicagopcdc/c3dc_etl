@@ -87,6 +87,9 @@ class C3dcEtl:
         'integer': int,
         'string': str
     }
+    MULTIPLE_VALUE_DELIMITER: str = ';'
+    ETHNICITY_ALLOWED_VALUES: set[str] = {'Hispanic or Latino'}
+    RACE_UNDETERMINED_VALUES: set[str] = {'Not Allowed to Collect', 'Not Reported', 'Unknown'}
 
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
@@ -101,6 +104,11 @@ class C3dcEtl:
         self._raw_etl_data_tables: dict[str, any] = {}
         self._random: random.Random = random.Random()
         self._c3dc_file_manager: C3dcFileManager = C3dcFileManager()
+
+        # These are the schema properties for which 'sub' source records may be needed as they're enum/string
+        # properties for which source values may be delimited (';'). Enum/string properties in the schema where
+        # the allowed values may contain ';' (diagnosis.diagnosis) will be excluded
+        self._sub_source_record_enum_properties: dict[str, str] = {}
 
         # Remote study config should contain env-agnostic info like mappings, local study config
         # should contain info specific to the local env like file paths; remote and local will be
@@ -154,6 +162,51 @@ class C3dcEtl:
                 (isinstance(value, (list, set, tuple)) and value and set(value or {}).issubset(allowed_values))
             )
         )
+
+    @staticmethod
+    def is_replacement_match(
+        source_field: str,
+        source_record: dict[str, any],
+        old_value: str
+    ) -> bool:
+        """ Determine whether the specified source value is a replacement match for the old value """
+        # source field is single field
+        if not (source_field.startswith('[') and source_field.endswith(']')):
+            old_value = '' if old_value is None else str(old_value).strip().casefold()
+            source_value: str = source_record.get(source_field, '')
+            source_value = '' if source_value is None else str(source_value).strip().casefold()
+            return (
+                source_field == '[string_literal]'
+                or
+                old_value == '*'
+                or
+                (old_value == '+' and source_value != '')
+                or
+                source_value and old_value and source_value == old_value
+            )
+
+        # source field contains multiple fields, e.g. [race, ethnicity], so check to
+        # see if old values to be replaced match source values by ordinal position
+        source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+        old_values: list[str] = (
+            list(next(csv.reader([old_value.strip(' []')], delimiter=C3dcEtl.MULTIPLE_VALUE_DELIMITER)))
+        ) if old_value not in ('*', '+') else [old_value for n in source_field_names]
+        if len(old_values) != len(source_field_names):
+            raise RuntimeError(
+                'Invalid replacement entry, number of old values to be replaced must match number of (compound) ' +
+                f'source fields: old value => "{old_value}", source field => "{source_field}"'
+            )
+        index: int
+        source_field_name: str
+        for index, source_field_name in enumerate(source_field_names):
+            old_val: str = old_values[index]
+            old_val = '' if old_val is None else str(old_val).strip().casefold()
+            src_val: str = source_record.get(source_field_name, '')
+            src_val = '' if src_val is None else str(src_val).strip().casefold()
+
+            if not (old_val == '*' or (old_val == '+' and src_val != '') or src_val == old_val):
+                return False
+        return True
 
     @staticmethod
     def get_pluralized_node_name(node: str) -> str:
@@ -214,6 +267,16 @@ class C3dcEtl:
                     study_config.get('study')
                 )
 
+        # cache source => output field mappings for the enum/string properties for each transformation
+        for study_config in self._study_configurations:
+            transformation: dict[str, any]
+            for transformation in study_config.get('transformations', []):
+                sub_src_rec_enum_prop: str
+                for sub_src_rec_enum_prop in self._sub_source_record_enum_properties:
+                    self._sub_source_record_enum_properties[sub_src_rec_enum_prop] = (
+                        self._find_source_field(transformation, sub_src_rec_enum_prop) or None
+                    )
+
         return self._study_configurations
 
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
@@ -240,6 +303,7 @@ class C3dcEtl:
         self._json_schema_nodes = {k:v for k,v in self._json_schema['$defs'].items() if C3dcEtlModelNode.get(k)}
 
         # cache allowed values for enum properties; map node.property => [permissible values]
+        self._sub_source_record_enum_properties.clear()
         self._json_schema_property_enum_values.clear()
         node_type: str
         for node_type in self._json_schema_nodes:
@@ -253,6 +317,10 @@ class C3dcEtl:
                 enum_values: list[str] = prop_props.get('enum', None)
                 enum_values = prop_props.get('items', {}).get('enum', []) if enum_values is None else enum_values
                 self._json_schema_property_enum_values[f'{node_type}.{prop_name}'] = enum_values
+                # enum properties that contain ';' in any of the permissible values don't support
+                # multiple delimited values since ';' is the delimiting character
+                if not any(C3dcEtl.MULTIPLE_VALUE_DELIMITER in v for v in enum_values):
+                    self._sub_source_record_enum_properties[f'{node_type}.{prop_name}'] = None
 
         # cache allowed values for enum codes; map node.property => {enum code => enum value}
         self._json_schema_property_enum_code_values.clear()
@@ -330,7 +398,8 @@ class C3dcEtl:
                 tbl = petl.fromxlsx(
                     C3dcFileManager.url_to_path(source_file_path)
                         if source_file_path.startswith('file://')
-                        else source_file_path
+                        else source_file_path,
+                    sheet=xl_sheet_name
                 )
             else:
                 tmp_file: any
@@ -339,7 +408,7 @@ class C3dcEtl:
                     tmp_file.write(self._c3dc_file_manager.read_file(source_file_path))
                     tmp_file.flush()
                     tmp_file.close()
-                    tbl = petl.fromxlsx(tmp_file.name, xl_sheet_name)
+                    tbl = petl.fromxlsx(tmp_file.name, sheet=xl_sheet_name)
 
                     # reload from in-memory data because petl maintains association with table source file
                     # after delete, even if eager access methods (lookall, convertall, etc) are called
@@ -356,6 +425,46 @@ class C3dcEtl:
     def _generate_uuid(self) -> uuid.UUID:
         """ Generate and return UUID(v4) using internal RNG that may be seeded for idempotent values """
         return uuid.UUID(int=self._random.getrandbits(128), version=4)
+
+    def _get_race(self, source_race: str, source_ethnicity: str = None) -> list[str]:
+        """ Determine race given specified source values of race and ethnicity """
+        # Note delimited multi-entry source values are supported for both
+        # race ("White;Other") and ethnicity ("Not Reported;Unknown")
+
+        races: set[str] = set()
+        # keep source ethnicity(-ies) if allowed and determinate race value like 'Hispanic or Latino' specified
+        # and not indeterminate value such as 'Not Reported', 'Unknown', etc
+        if source_ethnicity:
+            source_ethnicities: set[str] = {
+                e.strip() for e in source_ethnicity.split(C3dcEtl.MULTIPLE_VALUE_DELIMITER)
+                    if e.strip().casefold() in {v.casefold() for v in C3dcEtl.ETHNICITY_ALLOWED_VALUES}
+            }
+            if all(
+                e.casefold() in {v.casefold() for v in C3dcEtl.ETHNICITY_ALLOWED_VALUES} for e in source_ethnicities
+            ):
+                races.update(source_ethnicities)
+
+        # keep source race(s) if:
+        #   - specified as allowed and determinate value (not 'Unknown', 'Not Allowed to Collect', 'Not Reported', etc)
+        #   *OR*
+        #   - source ethnicity not specified or not allowed/determinate race value
+        if source_race:
+            source_races: set[str] = {r.strip() for r in source_race.split(C3dcEtl.MULTIPLE_VALUE_DELIMITER)}
+            if not races:
+                # no ethnicity value provided so just use race values whether they're determinate or not
+                races.update(source_races)
+            else:
+                # determinate race value ('Hispanic or Latino') came through ethnicity field so add only determinate
+                # values from race field since indeterminate values ('Not Reported', 'Unknown', etc) don't apply
+                races.update(
+                    {
+                        r for r in source_races if r.strip().casefold() not in {
+                            v.casefold() for v in C3dcEtl.RACE_UNDETERMINED_VALUES
+                        }
+                    }
+                )
+
+        return list(races)
 
     def _is_json_etl_data_valid(self, study_id: str, transformation_name: str) -> bool:
         """ Validate JSON ETL data for specified transformation against JSON schema """
@@ -454,10 +563,8 @@ class C3dcEtl:
         if value is None:
             return None
 
-        if isinstance(value, (list, set, tuple)):
-            _logger.critical('Unsupported value type (list|set|tuple) for conversion:')
-            _logger.critical(value)
-            raise RuntimeError('Unsupported value type (list|set|tuple) for conversion')
+        # collate into string if collection specified
+        value = C3dcEtl.MULTIPLE_VALUE_DELIMITER.join(value) if isinstance(value, (list, set, tuple)) else value
 
         if '.' not in node_type_dot_property_name:
             raise RuntimeError(f'Unexpected schema property name ("." not present): "{node_type_dot_property_name}"')
@@ -469,10 +576,11 @@ class C3dcEtl:
         python_type = C3dcEtl.TYPE_NAME_CLASS_MAP.get(json_type)
         if python_type == list:
             if node_type_dot_property_name not in self._json_schema_property_enum_values:
-                return [value]
+                # values not constrained, split on delimiter
+                return [s.strip() for s in str(value).split(C3dcEtl.MULTIPLE_VALUE_DELIMITER)]
 
-            # multi-valued properties may specify multiple values using semi-colon delimiter
-            vals: dict[str, str] = {v:v for v in value.split(';')}
+            # multi-valued properties may specify multiple values using delimiter
+            vals: dict[str, str] = {v:v for v in value.split(C3dcEtl.MULTIPLE_VALUE_DELIMITER)}
             val: str
             for val in vals:
                 case_matched_val: str = self._case_match_json_schema_enum_value(node_type_dot_property_name, val)
@@ -550,7 +658,7 @@ class C3dcEtl:
             if not (
                 (macro_text.startswith('"') and macro_text.endswith('"')) or
                 (macro_text.startswith("'") and macro_text.endswith("'")) or
-                macro_text.lower() in ('find_enum_value', 'sum', 'uuid') or
+                macro_text.lower() in ('find_enum_value', 'race', 'sum', 'uuid') or
                 (
                     macro_text.lower().startswith('field:')
                     and
@@ -571,13 +679,14 @@ class C3dcEtl:
         """ Get errors for specified transformation mapping """
         errors: list[str] = []
 
+        compound_source_fields: list[str] = []
         source_field: str = mapping.get('source_field')
         if not source_field:
             errors.append(f'{transformation_name} ({study_id}): mapping source field not specified: {mapping}')
         if source_field.startswith('[') and source_field.endswith(']'):
             # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
-            source_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
-            if not {s for s in source_fields if s != 'string_literal'}.issubset(set(source_header)):
+            compound_source_fields = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+            if not {s for s in compound_source_fields if s != 'string_literal'}.issubset(set(source_header)):
                 errors.append(
                     f'{transformation_name} ({study_id}): compound source field in mapping ("{source_field}") ' +
                     f'not present in source data header: {source_header}'
@@ -598,16 +707,17 @@ class C3dcEtl:
         output_node: str = output_field_parts.pop(0)
         output_property: str = '.'.join(output_field_parts)
         if (
-            output_node not in self._json_schema_nodes or
+            output_node not in self._json_schema_nodes
+            or
             output_property not in self._json_schema_nodes.get(output_node, {}).get('properties', {})
         ):
-            errors.append(f'{transformation_name}: mapping output field invalid: {mapping}')
+            errors.append(f'{transformation_name} ({study_id}): mapping output field invalid: {mapping}')
 
         replacement_entry: dict[str, str]
         for replacement_entry in mapping.get('replacement_values', []):
             if 'old_value' not in replacement_entry or 'new_value' not in replacement_entry:
                 errors.append(
-                    f'{transformation_name}: replacement entry missing new or old value: ' +
+                    f'{transformation_name} ({study_id}): replacement entry missing new or old value: ' +
                     str(replacement_entry)
                 )
 
@@ -616,9 +726,24 @@ class C3dcEtl:
 
             if source_field == '[string_literal]' and old_value not in ('+', '*'):
                 errors.append(
-                    f'{transformation_name}: replacement entry has invalid old value for ' +
+                    f'{transformation_name} ({study_id}): replacement entry has invalid old value for ' +
                     f'string literal source: {mapping}'
                 )
+
+            # if multiple source fields then old value must be wildcard or be multi-valued with matching count
+            if old_value != '*' and compound_source_fields:
+                old_values: list[str] = [
+                    o.strip() for o in next(
+                        csv.reader([old_value.strip(' []')], delimiter=C3dcEtl.MULTIPLE_VALUE_DELIMITER)
+                    )
+                ]
+                if len(old_values) != len(compound_source_fields):
+                    errors.append(
+                        f'{transformation_name} ({study_id}): replacement entry for mapping with multiple source ' +
+                        'field (macro?) must have old value set to wildcard ("*") or contain same number of values ' +
+                        'as source fields, delimited by "{C3dcEtl.MULTIPLE_VALUE_DELIMITER}"'
+                    )
+                    errors.append('ex: [source_field_1,source_field_2] => "old_value_1;old_value_2"')
 
             # new_value can be list or scalar so handle scalars as single-valued lists and enumerate all
             new_value = [new_value] if not isinstance(new_value, (list, set, tuple)) else new_value
@@ -771,7 +896,7 @@ class C3dcEtl:
                     # source field should contain list of source fields to be added together
                     if not (source_field.startswith('[') and source_field.endswith(']')):
                         msg = (
-                            f'Invalid source field "{source_field} for "sum" macro in row ' +
+                            f'Invalid source field "{source_field}" for "sum" macro in row ' +
                             f'{source_record["source_file_row_num"]}, must be comma-delimited ' +
                             '(csv) string within square brackets, e.g. "[field1, field2]"'
                         )
@@ -798,6 +923,48 @@ class C3dcEtl:
                             addend = float(addend)
                             addends.append(addend if not addend.is_integer() else int(addend))
                     new_val = sum(addends) if all(a is not None for a in addends) else default_value
+                elif macro_text.lower() == 'race':
+                    # source field may contain 'race' and 'ethnicity' source
+                    # fields from which to derive final 'race' output value
+                    source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+                    if not source_field_names or len(source_field_names) > 2:
+                        msg = (
+                            f'Invalid source field "{source_field}" for "race" macro in source row ' +
+                            f'{source_record["source_file_row_num"]}, must be single field OR comma-separated ' +
+                            '(csv) string within square brackets specifying race and ethnicity fields such as ' +
+                            '[race, ethnicity]'
+                        )
+                        _logger.critical(msg)
+                        raise RuntimeError(msg)
+                    source_race: str = source_record.get(source_field_names[0])
+                    source_race = (
+                        C3dcEtl.MULTIPLE_VALUE_DELIMITER.join(source_race)
+                            if isinstance(source_race, (list, set, tuple))
+                            else source_race
+                    )
+                    source_ethnicity: str = (
+                        source_record.get(source_field_names[1]) if len(source_field_names) == 2 else ''
+                    )
+                    source_ethnicity = (
+                        C3dcEtl.MULTIPLE_VALUE_DELIMITER.join(source_ethnicity)
+                            if isinstance(source_ethnicity, (list, set, tuple))
+                            else source_ethnicity
+                    )
+                    races: list[str] = self._get_race(source_race, source_ethnicity)
+                    race: str
+                    valid_races: list[str] = []
+                    output_field: str = mapping.get('output_field')
+                    for race in races:
+                        case_matched_race: str = self._case_match_json_schema_enum_value(output_field, race)
+                        if case_matched_race:
+                            valid_races.append(case_matched_race)
+                        else:
+                            msg = (
+                                f'Invalid source value "{race}" in "{source_field}" for "race" macro in source row ' +
+                                f'{source_record["source_file_row_num"]}, not found in data dictionary'
+                            )
+                            _logger.warning(msg)
+                    new_val = sorted(valid_races) if all(r not in ('', None) for r in valid_races) else default_value
                 new_vals[i] = new_val
 
             if new_value == '{find_enum_value}' and new_val is None:
@@ -808,12 +975,7 @@ class C3dcEtl:
                 continue
 
             new_value = new_vals if isinstance(new_value, (list, set, tuple)) else new_vals[0]
-            if (
-                source_field == '[string_literal]' or
-                old_value == '*' or
-                (old_value == '+' and source_value) or
-                (str(source_value) or '').lower() == (str(old_value) or '').lower()
-            ):
+            if C3dcEtl.is_replacement_match(source_field, source_record, old_value):
                 output_value = new_value
                 break
 
@@ -912,6 +1074,16 @@ class C3dcEtl:
             allowed_values.add(None)
 
         return allowed_values
+
+    def _find_source_field(self, transformation: dict[str, any], output_field: str) -> str:
+        """
+        Find source field for specified output field in transformation mappings. If the number of matches found
+        is not equal to 1 then None will be returned.
+        """
+        matched_mappings: list[dict[str, any]] = [
+            m for m in transformation.get('mappings', []) if m.get('output_field', '').strip() == output_field
+        ]
+        return matched_mappings[0].get('source_field', '').strip() if len(matched_mappings) == 1 else None
 
     def _transform_record_default(
         self,
@@ -1049,17 +1221,76 @@ class C3dcEtl:
 
         return transform_method(transformation, node_type, source_record)
 
+    def _build_sub_source_records(
+        self,
+        source_record: dict[str, any],
+        node_props: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """
+        If source record contains enum fields having multiple values separated by delimiter then process as multiple
+        source records for each distinct value with all other properties kept the same except record id, which must
+        be unique for each newly created record
+        """
+        # check each property in the source record that is an enum/string (as opposed to enum/array)
+        # where ';' isn't present in the list of permissible values. if the source value contains ';'
+        # then create a sub source record for each distinct value otherwise return empty collection
+        sub_source_records: list[dict[str, any]] = []
+        sub_src_rec_enum_props: set[str] = {
+            p for p in self._sub_source_record_enum_properties if p.startswith(f'{node_props["type"]}.')
+        }
+        sub_src_rec_enum_prop: str
+        for sub_src_rec_enum_prop in sub_src_rec_enum_props:
+            source_field: str = self._sub_source_record_enum_properties.get(sub_src_rec_enum_prop)
+            if not source_field or C3dcEtl.MULTIPLE_VALUE_DELIMITER not in str(source_record.get(source_field, '')):
+                continue
+            sub_src_ids_vals: dict[str, str] = {
+                f'{source_record[node_props["source_id_field"]]}_{k}':v for k,v in dict(
+                    enumerate(
+                        sorted(
+                            set(
+                                s.strip() for s in source_record[source_field].split(
+                                    C3dcEtl.MULTIPLE_VALUE_DELIMITER
+                                ) if s.strip()
+                            )
+                        ),
+                        1
+                    )
+                ).items()
+            }
+            _logger.info(
+                (
+                    '"%s" "%s" has %d distinct delimited value(s) for "%s" ("%s"), creating separate record per value'
+                ),
+                node_props['type'],
+                source_record[node_props["source_id_field"]],
+                len(sub_src_ids_vals),
+                sub_src_rec_enum_prop.partition('.')[2],
+                source_field
+            )
+            sub_src_id: str
+            sub_src_val: str
+            for sub_src_id, sub_src_val in sub_src_ids_vals.items():
+                src_rec_clone: dict[str, any] = json.loads(json.dumps(source_record))
+                src_rec_clone[node_props['source_id_field']] = sub_src_id
+                src_rec_clone[source_field] = sub_src_val
+                sub_source_records.append(src_rec_clone)
+        return sub_source_records
+
     def _transform_source_data(self, study_id: str, transformation: dict[str, any]) -> dict[str, any]:
         """ Transform and return ETL data transformed using rules specified in config """
-        if (
-            not self._raw_etl_data_tables.get(study_id, {}).get(transformation.get('name'), {})
-            or
-            not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')])
-        ):
+        _logger.info('Transforming source data')
+        if not petl.nrows(self._raw_etl_data_tables.get(study_id, {}).get(transformation.get('name'), petl.empty())):
             self._load_source_data(study_id, transformation)
             if not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')]):
                 raise RuntimeError(f'No data loaded to transform for study {study_id}')
 
+        participant_id_field: str = f'{C3dcEtlModelNode.PARTICIPANT}.{C3dcEtlModelNode.PARTICIPANT}_id'
+        subject_id_field: str = self._find_source_field(transformation, participant_id_field)
+        if not subject_id_field:
+            raise RuntimeError(
+                f'Unable to find single source mapping for "{participant_id_field}" in transformation mappings; ' +
+                f'"{participant_id_field}" is either not mapped or is mapped multple times'
+            )
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
             C3dcEtlModelNode.DIAGNOSIS: {},
             C3dcEtlModelNode.PARTICIPANT: {},
@@ -1076,6 +1307,7 @@ class C3dcEtl:
             node_props['type'] = node
             node_props['id_field'] = f'{node}_id'
             node_props['id_field_full'] = f'{node}.{node_props["id_field"]}'
+            node_props['source_id_field'] = subject_id_field
 
         # build study node and add to node collection
         study: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.STUDY)
@@ -1129,27 +1361,31 @@ class C3dcEtl:
                 # make sure relationship collection is defined, even if no records are added
                 participant[nodes[node]['id_field_full']] = []
 
-                harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, rec)
-                # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
-                if not (harmonized_recs or node in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)):
-                    _logger.warning(
-                        '%s (%s): Unable to build "%s" node for source record "%s"',
-                        transformation.get('name'),
-                        study_id,
-                        node,
-                        rec['source_file_name']
-                    )
+                sub_src_rec: dict[str, any]
+                for sub_src_rec in self._build_sub_source_records(rec, nodes[node]) or [rec]:
+                    harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
+                    # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
+                    if not (
+                        harmonized_recs or node in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)
+                    ):
+                        _logger.warning(
+                            '%s (%s): Unable to build "%s" node for source record "%s"',
+                            transformation.get('name'),
+                            study_id,
+                            node,
+                            sub_src_rec['source_file_name']
+                        )
 
-                harmonized_rec: dict[str, any]
-                for harmonized_rec in harmonized_recs:
-                    # set referential ids for this observation node and parent participant
-                    harmonized_rec[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = participant[
-                        nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']
-                    ]
-                    participant[nodes[node]['id_field_full']].append(harmonized_rec[nodes[node]['id_field']])
+                    harmonized_rec: dict[str, any]
+                    for harmonized_rec in harmonized_recs:
+                        # set referential ids for this observation node and parent participant
+                        harmonized_rec[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = participant[
+                            nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']
+                        ]
+                        participant[nodes[node]['id_field_full']].append(harmonized_rec[nodes[node]['id_field']])
 
-                # populate final transformed record collection for this observation node
-                nodes[node]['harmonized_records'].extend(harmonized_recs)
+                    # populate final transformed record collection for this observation node
+                    nodes[node]['harmonized_records'].extend(harmonized_recs)
 
             participant[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
                 nodes[C3dcEtlModelNode.STUDY]['id_field']

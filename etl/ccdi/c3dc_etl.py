@@ -87,6 +87,11 @@ class C3dcEtl:
         'integer': int,
         'string': str
     }
+    MULTIPLE_VALUE_DELIMITER: str = ';'
+    LKSS_FIELD: str = 'last_known_survival_status'
+    AGE_AT_LKSS_FIELD: str = 'age_at_last_known_survival_status'
+    LKSS_DEAD: str = 'Dead'
+    LKSS_ALIVE: str = 'Alive'
 
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
@@ -105,7 +110,7 @@ class C3dcEtl:
         # These are the schema properties for which 'sub' source records may be needed as they're enum/string
         # properties for which source values may be delimited (';'). Enum/string properties in the schema where
         # the allowed values may contain ';' (diagnosis.diagnosis) will be excluded
-        self._sub_source_record_enum_properties: set[str] = set()
+        self._sub_source_record_enum_properties: dict[str, str] = {}
 
         # Remote study config should contain env-agnostic info like mappings, local study config
         # should contain info specific to the local env like file paths; remote and local will be
@@ -161,6 +166,51 @@ class C3dcEtl:
                 (isinstance(value, (list, set, tuple)) and value and set(value or {}).issubset(allowed_values))
             )
         )
+
+    @staticmethod
+    def is_replacement_match(
+        source_field: str,
+        source_record: dict[str, any],
+        old_value: str
+    ) -> bool:
+        """ Determine whether the specified source value is a replacement match for the old value """
+        # source field is single field
+        if not (source_field.startswith('[') and source_field.endswith(']')):
+            old_value = '' if old_value is None else str(old_value).strip().casefold()
+            source_value: str = source_record.get(source_field, '')
+            source_value = '' if source_value is None else str(source_value).strip().casefold()
+            return (
+                source_field == '[string_literal]'
+                or
+                old_value == '*'
+                or
+                (old_value == '+' and source_value != '')
+                or
+                source_value and old_value and source_value == old_value
+            )
+
+        # source field contains multiple fields, e.g. [race, ethnicity], so check to
+        # see if old values to be replaced match source values by ordinal position
+        source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+        old_values: list[str] = (
+            list(next(csv.reader([old_value.strip(' []')], delimiter=C3dcEtl.MULTIPLE_VALUE_DELIMITER)))
+        ) if old_value not in ('*', '+') else [old_value for n in source_field_names]
+        if len(old_values) != len(source_field_names):
+            raise RuntimeError(
+                'Invalid replacement entry, number of old values to be replaced must match number of (compound) ' +
+                f'source fields: old value => "{old_value}", source field => "{source_field}"'
+            )
+        index: int
+        source_field_name: str
+        for index, source_field_name in enumerate(source_field_names):
+            old_val: str = old_values[index]
+            old_val = '' if old_val is None else str(old_val).strip().casefold()
+            src_val: str = source_record.get(source_field_name, '')
+            src_val = '' if src_val is None else str(src_val).strip().casefold()
+
+            if not (old_val == '*' or (old_val == '+' and src_val != '') or src_val == old_val):
+                return False
+        return True
 
     @staticmethod
     def get_pluralized_node_name(node: str) -> str:
@@ -221,6 +271,16 @@ class C3dcEtl:
                     study_config.get('study')
                 )
 
+        # cache source => output field mappings for the enum/string properties for each transformation
+        for study_config in self._study_configurations:
+            transformation: dict[str, any]
+            for transformation in study_config.get('transformations', []):
+                sub_src_rec_enum_prop: str
+                for sub_src_rec_enum_prop in self._sub_source_record_enum_properties:
+                    self._sub_source_record_enum_properties[sub_src_rec_enum_prop] = (
+                        self._find_source_field(transformation, sub_src_rec_enum_prop) or None
+                    )
+
         return self._study_configurations
 
     def load_json_schema(self, save_local_copy: bool = False) -> dict[str, any]:
@@ -261,10 +321,10 @@ class C3dcEtl:
                 enum_values: list[str] = prop_props.get('enum', None)
                 enum_values = prop_props.get('items', {}).get('enum', []) if enum_values is None else enum_values
                 self._json_schema_property_enum_values[f'{node_type}.{prop_name}'] = enum_values
-                # properties that contain ';' in any of the permissible values don't support
+                # enum properties that contain ';' in any of the permissible values don't support
                 # multiple delimited values since ';' is the delimiting character
-                if not any(';' in v for v in enum_values):
-                    self._sub_source_record_enum_properties.add(f'{node_type}.{prop_name}')
+                if not any(C3dcEtl.MULTIPLE_VALUE_DELIMITER in v for v in enum_values):
+                    self._sub_source_record_enum_properties[f'{node_type}.{prop_name}'] = None
 
         return self._json_schema
 
@@ -335,6 +395,7 @@ class C3dcEtl:
                     C3dcFileManager.url_to_path(source_file_path)
                         if source_file_path.startswith('file://')
                         else source_file_path,
+                    sheet=xl_sheet_name,
                     read_only=True
                 )
             else:
@@ -507,10 +568,8 @@ class C3dcEtl:
         if value is None:
             return None
 
-        if isinstance(value, (list, set, tuple)):
-            _logger.critical('Unsupported value type (list|set|tuple) for conversion:')
-            _logger.critical(value)
-            raise RuntimeError('Unsupported value type (list|set|tuple) for conversion')
+        # collate into string if collection specified
+        value = C3dcEtl.MULTIPLE_VALUE_DELIMITER.join(value) if isinstance(value, (list, set, tuple)) else value
 
         if '.' not in node_type_dot_property_name:
             raise RuntimeError(f'Unexpected schema property name ("." not present): "{node_type_dot_property_name}"')
@@ -522,10 +581,11 @@ class C3dcEtl:
         python_type = C3dcEtl.TYPE_NAME_CLASS_MAP.get(json_type)
         if python_type == list:
             if node_type_dot_property_name not in self._json_schema_property_enum_values:
-                return [value]
+                # values not constrained, split on delimiter
+                return [s.strip() for s in str(value).split(C3dcEtl.MULTIPLE_VALUE_DELIMITER)]
 
-            # multi-valued properties may specify multiple values using semi-colon delimiter
-            vals: dict[str, str] = {v:v for v in value.split(';')}
+            # multi-valued properties may specify multiple values using delimiter
+            vals: dict[str, str] = {v:v for v in value.split(C3dcEtl.MULTIPLE_VALUE_DELIMITER)}
             val: str
             for val in vals:
                 case_matched_val: str = self._case_match_json_schema_enum_value(node_type_dot_property_name, val)
@@ -537,7 +597,7 @@ class C3dcEtl:
                         val,
                         node_type_dot_property_name
                     )
-            return [v for v in vals.values() if v is not None]
+            return sorted([v for v in vals.values() if v is not None])
         if python_type == int:
             return int(float(value))
         if python_type == str:
@@ -624,13 +684,14 @@ class C3dcEtl:
         """ Get errors for specified transformation mapping """
         errors: list[str] = []
 
+        compound_source_fields: list[str] = []
         source_field: str = mapping.get('source_field')
         if not source_field:
             errors.append(f'{transformation_name} ({study_id}): mapping source field not specified: {mapping}')
         if source_field.startswith('[') and source_field.endswith(']'):
             # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
-            source_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
-            if not {s for s in source_fields if s != 'string_literal'}.issubset(set(source_header)):
+            compound_source_fields = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+            if not {s for s in compound_source_fields if s != 'string_literal'}.issubset(set(source_header)):
                 errors.append(
                     f'{transformation_name} ({study_id}): compound source field in mapping ("{source_field}") ' +
                     f'not present in source data header: {source_header}'
@@ -651,16 +712,17 @@ class C3dcEtl:
         output_node: str = output_field_parts.pop(0)
         output_property: str = '.'.join(output_field_parts)
         if (
-            output_node not in self._json_schema_nodes or
+            output_node not in self._json_schema_nodes
+            or
             output_property not in self._json_schema_nodes.get(output_node, {}).get('properties', {})
         ):
-            errors.append(f'{transformation_name}: mapping output field invalid: {mapping}')
+            errors.append(f'{transformation_name} ({study_id}): mapping output field invalid: {mapping}')
 
         replacement_entry: dict[str, str]
         for replacement_entry in mapping.get('replacement_values', []):
             if 'old_value' not in replacement_entry or 'new_value' not in replacement_entry:
                 errors.append(
-                    f'{transformation_name}: replacement entry missing new or old value: ' +
+                    f'{transformation_name} ({study_id}): replacement entry missing new or old value: ' +
                     str(replacement_entry)
                 )
 
@@ -669,9 +731,24 @@ class C3dcEtl:
 
             if source_field == '[string_literal]' and old_value not in ('+', '*'):
                 errors.append(
-                    f'{transformation_name}: replacement entry has invalid old value for ' +
+                    f'{transformation_name} ({study_id}): replacement entry has invalid old value for ' +
                     f'string literal source: {mapping}'
                 )
+
+            # if multiple source fields then old value must be wildcard or be multi-valued with matching count
+            if old_value != '*' and compound_source_fields:
+                old_values: list[str] = [
+                    o.strip() for o in next(
+                        csv.reader([old_value.strip(' []')], delimiter=C3dcEtl.MULTIPLE_VALUE_DELIMITER)
+                    )
+                ]
+                if len(old_values) != len(compound_source_fields):
+                    errors.append(
+                        f'{transformation_name} ({study_id}): replacement entry for mapping with multiple source ' +
+                        'field (macro?) must have old value set to wildcard ("*") or contain same number of values ' +
+                        'as source fields, delimited by "{C3dcEtl.MULTIPLE_VALUE_DELIMITER}"'
+                    )
+                    errors.append('ex: [source_field_1,source_field_2] => "old_value_1;old_value_2"')
 
             # new_value can be list or scalar so handle scalars as single-valued lists and enumerate all
             new_value = [new_value] if not isinstance(new_value, (list, set, tuple)) else new_value
@@ -795,9 +872,7 @@ class C3dcEtl:
         output_value: any = None
 
         node_type: str = source_record.get('type', '')
-        source_tab: str = self._output_type_source_tabs.get(node_type)
-        source_field: str = self._get_source_field(mapping, node_type, source_tab)
-        source_value: str = source_record.get(source_field, None)
+        source_field: str = self._get_source_field(mapping, node_type)
 
         default_value: any = mapping.get('default_value', None)
 
@@ -830,7 +905,7 @@ class C3dcEtl:
                     # source field should contain list of source fields to be added together
                     if not (source_field.startswith('[') and source_field.endswith(']')):
                         msg = (
-                            f'Invalid source field "{source_field} for "sum" macro in row ' +
+                            f'Invalid source field "{source_field}" for "sum" macro in row ' +
                             f'{source_record["source_file_row_num"]}, must be comma-delimited ' +
                             '(csv) string within square brackets, e.g. "[field1, field2]"'
                         )
@@ -858,13 +933,10 @@ class C3dcEtl:
                             addends.append(addend if not addend.is_integer() else int(addend))
                     new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 new_vals[i] = new_val
+
             new_value = new_vals if isinstance(new_value, (list, set, tuple)) else new_vals[0]
-            if (
-                source_field == '[string_literal]' or
-                old_value == '*' or
-                (old_value == '+' and source_value) or
-                (str(source_value) or '').lower() == (str(old_value) or '').lower()
-            ):
+            # only return mapped output value when source and old values are not blank/null
+            if C3dcEtl.is_replacement_match(source_field, source_record, old_value):
                 output_value = new_value
                 break
 
@@ -932,8 +1004,20 @@ class C3dcEtl:
         transformation['_type_group_index_mappings'][node_type] = type_group_index_mappings
         return type_group_index_mappings
 
-    def _get_source_field(self, mapping: dict[str, any], node_type: C3dcEtlModelNode, source_tab: str) -> str:
-        """ Get source field for specified mapping, node type and source tab """
+    def _find_source_field(self, transformation: dict[str, any], output_field: str) -> str:
+        """
+        Find source field for specified output field in transformation mappings. If the number of matches found
+        is not equal to 1 then None will be returned.
+        """
+        matched_mappings: list[dict[str, any]] = [
+            m for m in transformation.get('mappings', []) if m.get('output_field', '').strip() == output_field
+        ]
+        return matched_mappings[0].get('source_field', '').strip() if len(matched_mappings) == 1 else None
+
+    def _get_source_field(self, mapping: dict[str, any], node_type: C3dcEtlModelNode) -> str:
+        """ Get source field for specified mapping and node type """
+        # source tab may be blank for types w/o source tab mapping such as reference_file
+        source_tab: str = self._output_type_source_tabs.get(node_type)
         source_field: str = mapping.get('source_field').strip(' \'"')
         if source_field.startswith(f'{node_type}.'):
             source_field = source_field[len(f'{node_type}.'):]
@@ -944,7 +1028,7 @@ class C3dcEtl:
     def _get_source_id_field(self, transformation: dict[str, any], node_type: C3dcEtlModelNode) -> str:
         """
         Get source id field for specified transformation and (harmonized) node type, for example
-        survival => follow_up.follow_up_id, treatment => therapeutic_procedure.therapeutic_procedure_id, etc
+        survival => survival.survival_id, treatment => treatment.treatment_id, etc
         """
         source_id_mappings: list[dict[str, any]] = [
             m['source_field'].strip() for m in transformation.get('mappings', [])
@@ -978,8 +1062,6 @@ class C3dcEtl:
             _logger.warning('No mappings found for type %s, unable to transform record', node_type)
             return []
 
-        # may be blank for types w/o source tab mapping such as reference_file
-        source_tab: str = self._output_type_source_tabs.get(node_type)
         output_source_field_map: dict[str, str] = {}
 
         # if there are multiple type group indexes (multiple records are mapped) then default
@@ -999,7 +1081,7 @@ class C3dcEtl:
 
                 default_value: any = mapping.get('default_value')
 
-                source_field: str = self._get_source_field(mapping, node_type, source_tab)
+                source_field: str = self._get_source_field(mapping, node_type)
                 source_value: str = source_record.get(source_field, None)
 
                 if source_value in ('', None) and default_value is not None:
@@ -1049,10 +1131,15 @@ class C3dcEtl:
             required_property: str
             for required_property in required_properties:
                 schema_field: str = f'{node_type}.{required_property}'
-                if output_record.get(required_property, None) in ('', None):
+                required_property_value: any = output_record.get(required_property, None)
+                if (
+                    required_property_value in ('', None, [])
+                    or
+                    isinstance(required_property_value, list) and all(v in ('', None) for v in required_property_value)
+                ):
                     record_valid = False
                     _logger.warning(
-                        'Required output field "%s" (source field "%s") has null value for source record file "%s"',
+                        'Required output field "%s" (source field "%s") is null/empty for source record file "%s"',
                         schema_field,
                         output_source_field_map.get(schema_field, '*not mapped*'),
                         source_record.get("source_file_row_num")
@@ -1069,88 +1156,41 @@ class C3dcEtl:
 
         return output_records
 
-    def _get_latest_follow_up_record(self, follow_ups: list[dict[str, any]]) -> dict[str, any]:
-        """ Find and return follow up record having most recent event age, prioritizing 'Dead' over 'Alive' """
+    def _get_latest_survival_record(self, survivals: list[dict[str, any]]) -> dict[str, any]:
+        """ Find and return survival record having most recent event age, prioritizing 'Dead' over 'Alive' """
         # check for any 'Alive' records having event age greater than any 'Dead' records
-        dead_fus: list[dict[str, any]] = [f for f in follow_ups if f['vital_status'] == 'Dead']
-        max_dead_fu_age: int = max((int(float(f['age_at_follow_up'])) for f in dead_fus), default=sys.maxsize)
-        alive_fus: list[dict[str, any]] = [f for f in follow_ups if f['vital_status'] == 'Alive']
-        max_alive_fu_age: int = max((int(float(f['age_at_follow_up'])) for f in alive_fus), default=-999)
-        if max_alive_fu_age > -999 and max_alive_fu_age > max_dead_fu_age:
+        dead_survs: list[dict[str, any]] = [s for s in survivals if s[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_DEAD]
+        max_dead_surv_age: int = max((int(float(s[C3dcEtl.AGE_AT_LKSS_FIELD])) for s in dead_survs),default=sys.maxsize)
+        alive_survs: list[dict[str, any]] = [s for s in survivals if s[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_ALIVE]
+        max_alive_surv_age: int = max((int(float(s[C3dcEtl.AGE_AT_LKSS_FIELD])) for s in alive_survs), default=-999)
+        if max_alive_surv_age > -999 and max_alive_surv_age > max_dead_surv_age:
             _logger.warning(
                 (
-                    'Follow up record having status "Alive" preceded by record with status "Dead", ' +
-                    'unable to determine latest follow up record: %s'
+                    'Survival record having status "%s" preceded by record with status "%s", ' +
+                    'unable to determine latest survival record: %s'
                 ),
-                follow_ups
+                C3dcEtl.LKSS_ALIVE,
+                C3dcEtl.LKSS_DEAD,
+                survivals
             )
             return {}
 
-        final_follow_up: dict[str, any] = {}
-        follow_up: dict[str, any]
-        for follow_up in follow_ups:
-            if not final_follow_up:
-                final_follow_up = follow_up
+        final_survival: dict[str, any] = {}
+        survival: dict[str, any]
+        for survival in survivals:
+            if not final_survival:
+                final_survival = survival
                 continue
 
             if (
-                follow_up['vital_status'] == 'Dead'
+                survival[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_DEAD
                 or
-                int(float(follow_up['age_at_follow_up'])) > int(float(final_follow_up['age_at_follow_up']))
+                int(float(survival[C3dcEtl.AGE_AT_LKSS_FIELD])) > int(float(final_survival[C3dcEtl.AGE_AT_LKSS_FIELD]))
             ):
-                final_follow_up = follow_up
+                final_survival = survival
                 break
 
-        return final_follow_up
-
-    def _build_sub_source_records(
-        self,
-        source_record: dict[str, any],
-        node_props: dict[str, any]
-    ) -> list[dict[str, any]]:
-        """
-        # If source record contains enum fields having multiple values separated by semi-colons (;) then process
-        # as multiple source records for each distinct value with all other properties kept the same except record
-        # id, which must be unique for each newly created record
-        """
-        # check each property in the source record that is an enum/string (as opposed to enum/array)
-        # where ';' isn't present in the list of permissible values. if the source value contains ';'
-        # then create a sub source records for each distinct value otherwise return a single element
-        # list containing the original source record
-        sub_source_records: list[dict[str, any]] = []
-        schema_property: str
-        sub_src_rec_enum_props: set[str] = {
-            p.partition('.')[2] for p in self._sub_source_record_enum_properties
-                if p.startswith(f'{node_props["type"]}.')
-        }
-        for schema_property in sub_src_rec_enum_props:
-            sub_src_ids_vals: dict[str, str]
-            if ';' in str(source_record.get(schema_property, '') or ''):
-                sub_src_ids_vals = {
-                    f'{source_record[node_props["source_id_field"]]}_{k}':v for k,v in dict(
-                        enumerate(
-                            sorted(set(s.strip() for s in source_record[schema_property].split(';') if s.strip())),
-                            1
-                        )
-                    ).items()
-                }
-                _logger.info(
-                    (
-                        '"%s" "%s" has %d distinct delimited value(s) for "%s", creating separate record per value'
-                    ),
-                    node_props['type'],
-                    source_record[node_props["source_id_field"]],
-                    len(sub_src_ids_vals),
-                    schema_property
-                )
-                sub_src_id: str
-                sub_src_val: str
-                for sub_src_id, sub_src_val in sub_src_ids_vals.items():
-                    src_rec_clone: dict[str, any] = json.loads(json.dumps(source_record))
-                    src_rec_clone[node_props['source_id_field']] = sub_src_id
-                    src_rec_clone[schema_property] = sub_src_val
-                    sub_source_records.append(src_rec_clone)
-        return sub_source_records
+        return final_survival
 
     def _build_node(
         self,
@@ -1165,21 +1205,75 @@ class C3dcEtl:
         transform_method_name: str = f'_transform_record_{node_type}'
         transform_method: any = getattr(self, transform_method_name, lambda: None)
         if (
-            transform_method is None or
-            not hasattr(self, transform_method_name) or
+            transform_method is None
+            or
+            not hasattr(self, transform_method_name)
+            or
             not callable(transform_method)
         ):
             return self._transform_record_default(transformation, node_type, source_record)
 
         return transform_method(transformation, node_type, source_record)
 
+    def _build_sub_source_records(
+        self,
+        source_record: dict[str, any],
+        node_props: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """
+        If source record contains enum fields having multiple values separated by delimiter then process as multiple
+        source records for each distinct value with all other properties kept the same except record id, which must
+        be unique for each newly created record
+        """
+        # check each property in the source record that is an enum/string (as opposed to enum/array)
+        # where ';' isn't present in the list of permissible values. if the source value contains ';'
+        # then create a sub source record for each distinct value otherwise return empty collection
+        sub_source_records: list[dict[str, any]] = []
+        sub_src_rec_enum_props: set[str] = {
+            p.partition('.')[2] for p in self._sub_source_record_enum_properties
+                if p.startswith(f'{node_props["type"]}.')
+        }
+        source_field: str
+        for source_field in sub_src_rec_enum_props:
+            if C3dcEtl.MULTIPLE_VALUE_DELIMITER not in str(source_record.get(source_field, '')):
+                continue
+            sub_src_ids_vals: dict[str, str] = {
+                f'{source_record[node_props["source_id_field"]]}_{k}':v for k,v in dict(
+                    enumerate(
+                        sorted(
+                            set(
+                                s.strip() for s in source_record[source_field].split(
+                                    C3dcEtl.MULTIPLE_VALUE_DELIMITER
+                                ) if s.strip()
+                            )
+                        ),
+                        1
+                    )
+                ).items()
+            }
+            _logger.info(
+                (
+                    '"%s" "%s" has %d distinct delimited value(s) for "%s" ("%s"), creating separate record per value'
+                ),
+                node_props['type'],
+                source_record[node_props["source_id_field"]],
+                len(sub_src_ids_vals),
+                source_field.partition('.')[2],
+                source_field
+            )
+            sub_src_id: str
+            sub_src_val: str
+            for sub_src_id, sub_src_val in sub_src_ids_vals.items():
+                src_rec_clone: dict[str, any] = json.loads(json.dumps(source_record))
+                src_rec_clone[node_props['source_id_field']] = sub_src_id
+                src_rec_clone[source_field] = sub_src_val
+                sub_source_records.append(src_rec_clone)
+        return sub_source_records
+
     def _transform_source_data(self, study_id: str, transformation: dict[str, any]) -> dict[str, any]:
         """ Transform and return ETL data transformed using rules specified in config """
-        if (
-            not self._raw_etl_data_tables.get(study_id, {}).get(transformation.get('name'), {})
-            or
-            not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')])
-        ):
+        _logger.info('Transforming source data')
+        if not petl.nrows(self._raw_etl_data_tables.get(study_id, {}).get(transformation.get('name'), petl.empty())):
             self._load_source_data(study_id, transformation)
             if not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')]):
                 raise RuntimeError(f'No data loaded to transform for study {study_id}')
@@ -1298,11 +1392,12 @@ class C3dcEtl:
 
                 if node == C3dcEtlModelNode.SURVIVAL:
                     # harmonize output using latest survival record per participant
-                    src_recs = [self._get_latest_follow_up_record(src_recs)]
+                    src_recs = [self._get_latest_survival_record(src_recs)]
                 for src_rec in src_recs:
                     # if source record has eligible enum properties with multiple delimited values (;) then
                     # process as multiple source records for each distinct value with all other properties
                     # kept same except record id, which must be unique
+                    sub_src_rec: dict[str, any]
                     for sub_src_rec in self._build_sub_source_records(src_rec, nodes[node]) or [src_rec]:
                         harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
                         if not harmonized_recs:

@@ -1,5 +1,5 @@
 {
-    "version": "20240730.1",
+    "version": "20240815.1",
     "transformations": [
         {
             "name": "phs000467_discovery",
@@ -29,18 +29,6 @@
                     ]
                 },
                 {
-                    "output_field": "study.acl",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "['phs000467']"
-                        }
-                    ]
-                },
-                {
                     "output_field": "study.study_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -49,18 +37,6 @@
                         {
                             "old_value": "*",
                             "new_value": "TARGET NBL"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.study_acronym",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "TARGET_NBL"
                         }
                     ]
                 },
@@ -180,7 +156,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 59447
+                            "new_value": 74770
                         }
                     ]
                 },
@@ -192,7 +168,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7633f620751a240046c8fef6d2f88628"
+                            "new_value": "e44ddb4269e7a7c47a6b0cdb196fed1e"
                         }
                     ]
                 },
@@ -216,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/c3dc_etl.py"
                         }
                     ]
                 },
@@ -264,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 162407
+                            "new_value": 161697
                         }
                     ]
                 },
@@ -276,7 +252,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b68f9ec11693d1076bd70f017f929f"
+                            "new_value": "369a16a86d5c68d976cc0a1c9fe80a2c"
                         }
                     ]
                 },
@@ -300,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/schema/schema.json"
                         }
                     ]
                 },
@@ -348,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 163460
+                            "new_value": 159319
                         }
                     ]
                 },
@@ -360,7 +336,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b1fd72c3e851bd7e43230d06c497e3"
+                            "new_value": "77764ac31dec8cd7994c21978301d62e"
                         }
                     ]
                 },
@@ -384,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -432,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 94321
+                            "new_value": 89397
                         }
                     ]
                 },
@@ -444,7 +420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3bb619fdec18a7e209c486bf522805de"
+                            "new_value": "9966022d0538735f161db54ec67b500c"
                         }
                     ]
                 },
@@ -468,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/transformations/phs000467.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/transformations/phs000467.json"
                         }
                     ]
                 },
@@ -694,81 +670,33 @@
                 },
                 {
                     "output_field": "participant.race",
-                    "source_field": "Race",
+                    "source_field": "[Race, Ethnicity]",
                     "type_group_index": "*",
                     "default_value": [
                         "Not Reported"
                     ],
                     "replacement_values": [
                         {
-                            "old_value": "American Indian or Alaska Native",
-                            "new_value": [
-                                "American Indian or Alaska Native"
-                            ]
-                        },
-                        {
-                            "old_value": "Asian",
-                            "new_value": [
-                                "Asian"
-                            ]
-                        },
-                        {
-                            "old_value": "Black or African American",
-                            "new_value": [
-                                "Black or African American"
-                            ]
-                        },
-                        {
-                            "old_value": "Native Hawaiian or other Pacific Islander",
-                            "new_value": [
-                                "Native Hawaiian or other Pacific Islander"
-                            ]
-                        },
-                        {
-                            "old_value": "Not reported",
-                            "new_value": [
-                                "Not Reported"
-                            ]
-                        },
-                        {
-                            "old_value": "Unknown",
-                            "new_value": [
-                                "Unknown"
-                            ]
-                        },
-                        {
-                            "old_value": "White",
-                            "new_value": [
-                                "White"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "output_field": "participant.ethnicity",
-                    "source_field": "Ethnicity",
-                    "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
-                    "replacement_values": [
-                        {
-                            "old_value": "Hispanic or Latino",
+                            "old_value": "Unknown;Hispanic or Latino",
                             "new_value": [
                                 "Hispanic or Latino"
                             ]
                         },
                         {
-                            "old_value": "Not Hispanic or Latino",
-                            "new_value": [
-                                "Not Hispanic or Latino"
-                            ]
-                        },
-                        {
-                            "old_value": "Unknown",
+                            "old_value": "Unknown;Not Hispanic or Latino",
                             "new_value": [
                                 "Unknown"
                             ]
+                        },
+                        {
+                            "old_value": "Unknown;Unknown",
+                            "new_value": [
+                                "Unknown"
+                            ]
+                        },
+                        {
+                            "old_value": "*",
+                            "new_value": "{race}"
                         }
                     ]
                 },
@@ -936,9 +864,7 @@
                     "output_field": "diagnosis.anatomic_site",
                     "source_field": "ICDO",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -950,9 +876,7 @@
                     "output_field": "diagnosis.toronto_childhood_cancer_staging",
                     "source_field": "INSS Stage",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Stage 1",
@@ -988,9 +912,7 @@
                     "output_field": "diagnosis.tumor_grade",
                     "source_field": "Grade",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Undifferentiated or Poorly Differentiated",
@@ -1139,6 +1061,18 @@
                         {
                             "old_value": "*",
                             "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.cause_of_death",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
                         }
                     ]
                 }
@@ -1172,18 +1106,6 @@
                     ]
                 },
                 {
-                    "output_field": "study.acl",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "['phs000467']"
-                        }
-                    ]
-                },
-                {
                     "output_field": "study.study_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -1192,18 +1114,6 @@
                         {
                             "old_value": "*",
                             "new_value": "TARGET NBL"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.study_acronym",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "TARGET_NBL"
                         }
                     ]
                 },
@@ -1323,7 +1233,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 59447
+                            "new_value": 74770
                         }
                     ]
                 },
@@ -1335,7 +1245,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7633f620751a240046c8fef6d2f88628"
+                            "new_value": "e44ddb4269e7a7c47a6b0cdb196fed1e"
                         }
                     ]
                 },
@@ -1359,7 +1269,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/c3dc_etl.py"
                         }
                     ]
                 },
@@ -1407,7 +1317,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 162407
+                            "new_value": 161697
                         }
                     ]
                 },
@@ -1419,7 +1329,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b68f9ec11693d1076bd70f017f929f"
+                            "new_value": "369a16a86d5c68d976cc0a1c9fe80a2c"
                         }
                     ]
                 },
@@ -1443,7 +1353,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/schema/schema.json"
                         }
                     ]
                 },
@@ -1491,7 +1401,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 163460
+                            "new_value": 159319
                         }
                     ]
                 },
@@ -1503,7 +1413,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b1fd72c3e851bd7e43230d06c497e3"
+                            "new_value": "77764ac31dec8cd7994c21978301d62e"
                         }
                     ]
                 },
@@ -1527,7 +1437,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -1575,7 +1485,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 94321
+                            "new_value": 89397
                         }
                     ]
                 },
@@ -1587,7 +1497,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3bb619fdec18a7e209c486bf522805de"
+                            "new_value": "9966022d0538735f161db54ec67b500c"
                         }
                     ]
                 },
@@ -1611,7 +1521,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/transformations/phs000467.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/transformations/phs000467.json"
                         }
                     ]
                 },
@@ -1837,81 +1747,33 @@
                 },
                 {
                     "output_field": "participant.race",
-                    "source_field": "Race",
+                    "source_field": "[Race, Ethnicity]",
                     "type_group_index": "*",
                     "default_value": [
                         "Not Reported"
                     ],
                     "replacement_values": [
                         {
-                            "old_value": "American Indian or Alaska Native",
-                            "new_value": [
-                                "American Indian or Alaska Native"
-                            ]
-                        },
-                        {
-                            "old_value": "Asian",
-                            "new_value": [
-                                "Asian"
-                            ]
-                        },
-                        {
-                            "old_value": "Black or African American",
-                            "new_value": [
-                                "Black or African American"
-                            ]
-                        },
-                        {
-                            "old_value": "Native Hawaiian or other Pacific Islander",
-                            "new_value": [
-                                "Native Hawaiian or other Pacific Islander"
-                            ]
-                        },
-                        {
-                            "old_value": "Not reported",
-                            "new_value": [
-                                "Not Reported"
-                            ]
-                        },
-                        {
-                            "old_value": "Unknown",
-                            "new_value": [
-                                "Unknown"
-                            ]
-                        },
-                        {
-                            "old_value": "White",
-                            "new_value": [
-                                "White"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "output_field": "participant.ethnicity",
-                    "source_field": "Ethnicity",
-                    "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
-                    "replacement_values": [
-                        {
-                            "old_value": "Hispanic or Latino",
+                            "old_value": "Unknown;Hispanic or Latino",
                             "new_value": [
                                 "Hispanic or Latino"
                             ]
                         },
                         {
-                            "old_value": "Not Hispanic or Latino",
-                            "new_value": [
-                                "Not Hispanic or Latino"
-                            ]
-                        },
-                        {
-                            "old_value": "Unknown",
+                            "old_value": "Unknown;Not Hispanic or Latino",
                             "new_value": [
                                 "Unknown"
                             ]
+                        },
+                        {
+                            "old_value": "Unknown;Unknown",
+                            "new_value": [
+                                "Unknown"
+                            ]
+                        },
+                        {
+                            "old_value": "*",
+                            "new_value": "{race}"
                         }
                     ]
                 },
@@ -2079,9 +1941,7 @@
                     "output_field": "diagnosis.anatomic_site",
                     "source_field": "ICDO",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2093,9 +1953,7 @@
                     "output_field": "diagnosis.toronto_childhood_cancer_staging",
                     "source_field": "INSS Stage",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Stage 1",
@@ -2131,9 +1989,7 @@
                     "output_field": "diagnosis.tumor_grade",
                     "source_field": "Grade",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": "Not Reported",
                     "replacement_values": [
                         {
                             "old_value": "Undifferentiated or Poorly Differentiated",
@@ -2282,6 +2138,18 @@
                         {
                             "old_value": "*",
                             "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.cause_of_death",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
                         }
                     ]
                 }

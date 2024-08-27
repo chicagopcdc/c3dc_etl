@@ -468,19 +468,20 @@ class SchemaCreator:
             value_type_name: str = type_value.get('value_type', '')
             if not value_type_name:
                 log_msg = (
-                    f'YAML property {name} sub-property Type does not have "value_type" ' +
+                    f'YAML property "{name}" sub-property Type does not have "value_type" ' +
                     'attribute defined, unable to determine JSON schema type'
                 )
-            elif value_type_name == 'list' and 'Enum' not in type_value:
-                log_msg = (
-                    f'YAML property {name} sub-property Type has "value_type" set to "list" ' +
-                    'but does not have "Enum" defined, unable to determine JSON schema type'
-                )
-
-            if log_msg:
                 _logger.critical(log_msg)
                 _logger.critical(obj)
                 raise RuntimeError(log_msg)
+            if value_type_name == 'list' and 'Enum' in type_value and not type_value['Enum']:
+                _logger.warning(
+                    (
+                        'YAML property "%s" sub-property Type has "value_type" set to "list" ' +
+                        'but "Enum" property is empty'
+                    ),
+                    name
+                )
             return 'array' if value_type_name == 'list' else value_type_name
 
         log_msg = f'YAML property {name} does not have Type or Enum defined, unable to determine JSON schema type'
@@ -492,7 +493,6 @@ class SchemaCreator:
         if 'Enum' in obj:
             return list(obj['Enum'])
 
-        log_msg: str
         if 'Type' in obj and isinstance(obj['Type'], dict):
             if 'Enum' in obj['Type']:
                 # skip section/category header entries that start with '[---- ' and end with ' ----]'
@@ -502,14 +502,13 @@ class SchemaCreator:
                 if len(allowed_values) == len(set(allowed_values)):
                     return allowed_values
 
-                log_msg = f'YAML property {name} is Enum but contains duplicate permissible values'
-                raise RuntimeError(log_msg)
-            log_msg = (
-                f'YAML property {name} is dict but does not have "value_type" set ' +
-                'to "list" and "Enum" property containing allowed values'
-            )
-            _logger.critical(log_msg)
-            raise RuntimeError(log_msg)
+                raise RuntimeError(f'YAML property "{name}" is Enum but contains duplicate permissible values')
+
+            if obj['Type'].get('value_type') != 'list':
+                _logger.warning(
+                    'YAML property "%s" has complex "Type" property but "Type.value_type" not set to "list"',
+                    name
+                )
 
         return []
 

@@ -179,6 +179,12 @@ The remote configuration JSON file can be created using the mapping unpivoter sc
             `diagnosis.anatomic_site`, the source value `C22.0` would match `C22.0 : Liver`. If there are multiple
             permissible list values with the same code/prefix then the **last** matching entry would be used as the
             replacement value.
+          * `"{race}"`: Replace with the calculated race value based on the value(s) specified in the source
+            field(s). Historically TARGET source data contained both race (`Race`) and ethnicity (`Ethnicity`)
+            values, for example `White` and `Hispanic or Latino`. This macro can be used to determine the race value
+            in accordance with the
+            [OMB standard to maintain, collect and present race and ethnicity as of 2024](https://www.federalregister.gov/documents/2024/03/29/2024-06469/revisions-to-ombs-statistical-policy-directive-no-15-standards-for-maintaining-collecting-and)
+            whether the source data contains both race and ethnicity or only race.
           * `"{sum}"`: Replace with the sum of the values for the source fields specified in `source_field`.
           * `"{uuid}"`: Replace with a UUID (v4); see the description for `uuid_seed` config var for information
             on how UUIDs are generated.
