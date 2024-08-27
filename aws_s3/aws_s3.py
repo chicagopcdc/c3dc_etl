@@ -14,7 +14,10 @@ from botocore.exceptions import ClientError
 _logger: logging.Logger = logging.getLogger(__name__)
 
 # suppress DEBUG logging from s3 transfers
+logging.getLogger('boto3').setLevel(logging.ERROR)
+logging.getLogger('botocore').setLevel(logging.ERROR)
 logging.getLogger('s3transfer').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
 
 
 class AwsS3:

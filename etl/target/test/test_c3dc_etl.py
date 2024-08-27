@@ -47,7 +47,7 @@ def test_adhoc() -> None:
 
 @pytest.mark.skip('test_is_number')
 def test_is_number() -> None:
-    """ test is_number """
+    """ test_is_number """
     _logger.info(test_is_number.__name__)
     values: dict[any, bool] = {
         '123': True,
@@ -69,7 +69,7 @@ def test_is_number() -> None:
 
 @pytest.mark.skip('test_is_allowed_value')
 def test_is_allowed_value() -> None:
-    """ test is_allowed_value """
+    """ test_is_allowed_value """
     _logger.info(test_is_allowed_value.__name__)
     allowed_values: set[any] = {0, '1', '', None, 'test'}
     values: dict[any, bool] = {
@@ -90,9 +90,55 @@ def test_is_allowed_value() -> None:
         assert is_num == expected_status
 
 
+@pytest.mark.skip('test_is_replacement_match')
+def test_is_replacement_match() -> None:
+    """ test_is_replacement_match """
+    _logger.info(test_is_replacement_match.__name__)
+
+    test_cases: list[dict[str, any]] = [
+        {
+            'source_field': 'source_field1',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': '*',
+            'expected_outcome': True
+        },
+        {
+            'source_field': 'source_field1',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': 'source_value1;source_value3',
+            'expected_outcome': False
+        },
+        {
+            'source_field': '[source_field1, source_field2]',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': '*',
+            'expected_outcome': True
+        },
+        {
+            'source_field': '[source_field1, source_field2]',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': 'source_value1;source_value3',
+            'expected_outcome': False
+        },
+        {
+            'source_field': '[source_field1, source_field2]',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': 'source_value1;source_value2',
+            'expected_outcome': True
+        }
+    ]
+    test_case: dict[str, any]
+    for test_case in test_cases:
+        assert test_case['expected_outcome'] == C3dcEtl.is_replacement_match(
+            test_case['source_field'],
+            test_case['source_record'],
+            test_case['old_value']
+        )
+
+
 @pytest.mark.skip('test_get_pluralized_node_name')
 def test_get_pluralized_node_name() -> None:
-    """ test get_pluralized_node_name """
+    """ test_get_pluralized_node_name """
     _logger.info(test_get_pluralized_node_name.__name__)
     singular_plural_names: dict[str, str] = {
         'diagnosis': 'diagnoses',
@@ -113,7 +159,7 @@ def test_get_pluralized_node_name() -> None:
 
 @pytest.mark.skip('test_load_transformations')
 def test_load_transformations() -> None:
-    """ test load_transformations """
+    """ test_load_transformations """
     _logger.info(test_load_transformations.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
 
@@ -130,7 +176,7 @@ def test_load_transformations() -> None:
 
 @pytest.mark.skip('test_load_json_schema')
 def test_load_json_schema() -> None:
-    """ test load_json_schema """
+    """ test_load_json_schema """
     _logger.info(test_load_json_schema.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
 
@@ -142,7 +188,7 @@ def test_load_json_schema() -> None:
 
 @pytest.mark.skip('test_validate_json_etl_data')
 def test_validate_json_etl_data() -> None:
-    """ test validate_json_etl_data """
+    """ test_validate_json_etl_data """
     _logger.info(test_validate_json_etl_data.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
 
@@ -155,7 +201,7 @@ def test_validate_json_etl_data() -> None:
 
 @pytest.mark.skip('test_create_json_etl_files')
 def test_create_json_etl_files() -> None:
-    """ test create_json_etl_files """
+    """ test_create_json_etl_files """
     _logger.info(test_create_json_etl_files.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
     c3dc_file_manager: C3dcFileManager = C3dcFileManager()

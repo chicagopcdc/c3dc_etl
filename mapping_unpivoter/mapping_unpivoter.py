@@ -276,9 +276,22 @@ class MappingUnpivoter(ContextDecorator):
                         errors.append(err_msg)
                         continue
 
-                    existing_unpivoted_mappings[0].get('replacement_values').extend(
-                        unpivoted_mapping['replacement_values']
-                    )
+                    # don't add duplicate replacement values
+                    replacement_value: dict[str, str]
+                    for replacement_value in unpivoted_mapping['replacement_values']:
+                        duplicate_replacement_values: list[dict[str, str]] = [
+                            r for r in existing_unpivoted_mappings[0].get('replacement_values')
+                                if (
+                                    r['old_value'] == replacement_value['old_value']
+                                    and
+                                    r['new_value'] == replacement_value['new_value']
+                                )
+                        ]
+                        if not duplicate_replacement_values:
+                            existing_unpivoted_mappings[0].get('replacement_values').append(replacement_value)
+                        else:
+                            _logger.warning('Skipping duplicate replacement value pair: %s', replacement_value)
+                            _logger.warning('Mapping record: %s', record)
 
             transformation: dict[str, any] = {
                 'name': transformation_mappings_file['transformation_name'],
@@ -465,16 +478,15 @@ class MappingUnpivoter(ContextDecorator):
             unpivoted_mapping['type_group_index'] = str(pivoted_mapping['Type Group Index'])
             unpivoted_mapping['default_value'] = json.loads(pivoted_mapping['Default Value If Null/Blank'] or 'null')
             unpivoted_mapping['replacement_values'] = unpivoted_mapping.get('replacement_values', [])
+            repl_vals: dict[str, str] = json.loads(pivoted_mapping.get('Replacement Values', '{}') or '{}')
+            replacement_values: list[dict[str, str]] = [{'old_value': k, 'new_value': v} for k,v in repl_vals.items()]
+            unpivoted_mapping['replacement_values'].extend(replacement_values)
             unpivoted_mapping['replacement_values'].append(
                 {
                     'old_value': json.loads(pivoted_mapping['Source Permissible Values Term'] or '""'),
                     'new_value': json.loads(pivoted_mapping['Target Permissible Values Term'] or '""')
                 }
             )
-
-            repl_vals: dict[str, str] = json.loads(pivoted_mapping.get('Replacement Values', '{}') or '{}')
-            replacement_values: list[dict[str, str]] = [{'old_value': k, 'new_value': v} for k,v in repl_vals.items()]
-            unpivoted_mapping['replacement_values'].extend(replacement_values)
         except json.decoder.JSONDecodeError as err:
             _logger.error('Error loading replacement values while unpivoting mapping:')
             _logger.error(err)

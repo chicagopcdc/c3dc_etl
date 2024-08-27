@@ -1,5 +1,5 @@
 {
-    "version": "20240730.1",
+    "version": "20240815.1",
     "transformations": [
         {
             "name": "phs000470_discovery",
@@ -29,18 +29,6 @@
                     ]
                 },
                 {
-                    "output_field": "study.acl",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "['phs000470']"
-                        }
-                    ]
-                },
-                {
                     "output_field": "study.study_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -49,18 +37,6 @@
                         {
                             "old_value": "*",
                             "new_value": "TARGET RT"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.study_acronym",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "TARGET_RT"
                         }
                     ]
                 },
@@ -96,7 +72,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000470.v19.p8"
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000470"
                         }
                     ]
                 },
@@ -180,7 +156,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 59447
+                            "new_value": 74770
                         }
                     ]
                 },
@@ -192,7 +168,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7633f620751a240046c8fef6d2f88628"
+                            "new_value": "e44ddb4269e7a7c47a6b0cdb196fed1e"
                         }
                     ]
                 },
@@ -216,7 +192,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/c3dc_etl.py"
                         }
                     ]
                 },
@@ -264,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 162407
+                            "new_value": 161697
                         }
                     ]
                 },
@@ -276,7 +252,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b68f9ec11693d1076bd70f017f929f"
+                            "new_value": "369a16a86d5c68d976cc0a1c9fe80a2c"
                         }
                     ]
                 },
@@ -300,7 +276,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/schema/schema.json"
                         }
                     ]
                 },
@@ -348,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 163460
+                            "new_value": 159319
                         }
                     ]
                 },
@@ -360,7 +336,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b1fd72c3e851bd7e43230d06c497e3"
+                            "new_value": "77764ac31dec8cd7994c21978301d62e"
                         }
                     ]
                 },
@@ -384,7 +360,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -432,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 90479
+                            "new_value": 84423
                         }
                     ]
                 },
@@ -444,7 +420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "0f49f0d688a8c8913b85a842b9bb1f9f"
+                            "new_value": "816cccacd16840eb258c8ddd6723d858"
                         }
                     ]
                 },
@@ -468,7 +444,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/transformations/phs000470.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/transformations/phs000470.json"
                         }
                     ]
                 },
@@ -683,96 +659,40 @@
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "Female",
-                            "new_value": "Female"
-                        },
-                        {
                             "old_value": " Male",
                             "new_value": "Male"
                         },
                         {
                             "old_value": " Female",
+                            "new_value": "Female"
+                        },
+                        {
+                            "old_value": "Female",
                             "new_value": "Female"
                         },
                         {
                             "old_value": "Male",
                             "new_value": "Male"
-                        },
-                        {
-                            "old_value": " Male",
-                            "new_value": "Male"
-                        },
-                        {
-                            "old_value": " Female",
-                            "new_value": "Female"
                         }
                     ]
                 },
                 {
                     "output_field": "participant.race",
-                    "source_field": "Race",
+                    "source_field": "[Race, Ethnicity]",
                     "type_group_index": "*",
                     "default_value": [
                         "Not Reported"
                     ],
                     "replacement_values": [
                         {
-                            "old_value": "Black or African American",
-                            "new_value": [
-                                "Black or African American"
-                            ]
-                        },
-                        {
-                            "old_value": "Other",
+                            "old_value": "Other;Not Hispanic or Latino",
                             "new_value": [
                                 "Unknown"
                             ]
                         },
                         {
-                            "old_value": "Unknown",
-                            "new_value": [
-                                "Unknown"
-                            ]
-                        },
-                        {
-                            "old_value": "White",
-                            "new_value": [
-                                "White"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "output_field": "participant.ethnicity",
-                    "source_field": "Ethnicity",
-                    "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
-                    "replacement_values": [
-                        {
-                            "old_value": "Hispanic or Latino",
-                            "new_value": [
-                                "Hispanic or Latino"
-                            ]
-                        },
-                        {
-                            "old_value": "Not Hispanic or Latino",
-                            "new_value": [
-                                "Not Hispanic or Latino"
-                            ]
-                        },
-                        {
-                            "old_value": "Not reported",
-                            "new_value": [
-                                "Not Reported"
-                            ]
-                        },
-                        {
-                            "old_value": "Unknown",
-                            "new_value": [
-                                "Unknown"
-                            ]
+                            "old_value": "*",
+                            "new_value": "{race}"
                         }
                     ]
                 },
@@ -1138,18 +1058,6 @@
                     ]
                 },
                 {
-                    "output_field": "study.acl",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "['phs000470']"
-                        }
-                    ]
-                },
-                {
                     "output_field": "study.study_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -1158,18 +1066,6 @@
                         {
                             "old_value": "*",
                             "new_value": "TARGET RT"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.study_acronym",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "TARGET_RT"
                         }
                     ]
                 },
@@ -1205,7 +1101,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000470.v19.p8"
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000470"
                         }
                     ]
                 },
@@ -1289,7 +1185,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 59447
+                            "new_value": 74770
                         }
                     ]
                 },
@@ -1301,7 +1197,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "7633f620751a240046c8fef6d2f88628"
+                            "new_value": "e44ddb4269e7a7c47a6b0cdb196fed1e"
                         }
                     ]
                 },
@@ -1325,7 +1221,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/c3dc_etl.py"
                         }
                     ]
                 },
@@ -1373,7 +1269,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 162407
+                            "new_value": 161697
                         }
                     ]
                 },
@@ -1385,7 +1281,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b68f9ec11693d1076bd70f017f929f"
+                            "new_value": "369a16a86d5c68d976cc0a1c9fe80a2c"
                         }
                     ]
                 },
@@ -1409,7 +1305,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/schema/schema.json"
                         }
                     ]
                 },
@@ -1457,7 +1353,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 163460
+                            "new_value": 159319
                         }
                     ]
                 },
@@ -1469,7 +1365,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "78b1fd72c3e851bd7e43230d06c497e3"
+                            "new_value": "77764ac31dec8cd7994c21978301d62e"
                         }
                     ]
                 },
@@ -1493,7 +1389,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -1541,7 +1437,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 90479
+                            "new_value": 84423
                         }
                     ]
                 },
@@ -1553,7 +1449,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "0f49f0d688a8c8913b85a842b9bb1f9f"
+                            "new_value": "816cccacd16840eb258c8ddd6723d858"
                         }
                     ]
                 },
@@ -1577,7 +1473,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240730.1/etl/target/transformations/phs000470.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20240815.1/etl/target/transformations/phs000470.json"
                         }
                     ]
                 },
@@ -1792,96 +1688,40 @@
                     "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "Female",
-                            "new_value": "Female"
-                        },
-                        {
                             "old_value": " Male",
                             "new_value": "Male"
                         },
                         {
                             "old_value": " Female",
+                            "new_value": "Female"
+                        },
+                        {
+                            "old_value": "Female",
                             "new_value": "Female"
                         },
                         {
                             "old_value": "Male",
                             "new_value": "Male"
-                        },
-                        {
-                            "old_value": " Male",
-                            "new_value": "Male"
-                        },
-                        {
-                            "old_value": " Female",
-                            "new_value": "Female"
                         }
                     ]
                 },
                 {
                     "output_field": "participant.race",
-                    "source_field": "Race",
+                    "source_field": "[Race, Ethnicity]",
                     "type_group_index": "*",
                     "default_value": [
                         "Not Reported"
                     ],
                     "replacement_values": [
                         {
-                            "old_value": "Black or African American",
-                            "new_value": [
-                                "Black or African American"
-                            ]
-                        },
-                        {
-                            "old_value": "Other",
+                            "old_value": "Other;Not Hispanic or Latino",
                             "new_value": [
                                 "Unknown"
                             ]
                         },
                         {
-                            "old_value": "Unknown",
-                            "new_value": [
-                                "Unknown"
-                            ]
-                        },
-                        {
-                            "old_value": "White",
-                            "new_value": [
-                                "White"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "output_field": "participant.ethnicity",
-                    "source_field": "Ethnicity",
-                    "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
-                    "replacement_values": [
-                        {
-                            "old_value": "Hispanic or Latino",
-                            "new_value": [
-                                "Hispanic or Latino"
-                            ]
-                        },
-                        {
-                            "old_value": "Not Hispanic or Latino",
-                            "new_value": [
-                                "Not Hispanic or Latino"
-                            ]
-                        },
-                        {
-                            "old_value": "Not reported",
-                            "new_value": [
-                                "Not Reported"
-                            ]
-                        },
-                        {
-                            "old_value": "Unknown",
-                            "new_value": [
-                                "Unknown"
-                            ]
+                            "old_value": "*",
+                            "new_value": "{race}"
                         }
                     ]
                 },

@@ -90,6 +90,52 @@ def test_is_allowed_value() -> None:
         assert is_num == expected_status
 
 
+@pytest.mark.skip('test_is_replacement_match')
+def test_is_replacement_match() -> None:
+    """ test_is_replacement_match """
+    _logger.info(test_is_replacement_match.__name__)
+
+    test_cases: list[dict[str, any]] = [
+        {
+            'source_field': 'source_field1',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': '*',
+            'expected_outcome': True
+        },
+        {
+            'source_field': 'source_field1',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': 'source_value1;source_value3',
+            'expected_outcome': False
+        },
+        {
+            'source_field': '[source_field1, source_field2]',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': '*',
+            'expected_outcome': True
+        },
+        {
+            'source_field': '[source_field1, source_field2]',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': 'source_value1;source_value3',
+            'expected_outcome': False
+        },
+        {
+            'source_field': '[source_field1, source_field2]',
+            'source_record': {'source_field1': 'source_value1', 'source_field2': 'source_value2'},
+            'old_value': 'source_value1;source_value2',
+            'expected_outcome': True
+        }
+    ]
+    test_case: dict[str, any]
+    for test_case in test_cases:
+        assert test_case['expected_outcome'] == C3dcEtl.is_replacement_match(
+            test_case['source_field'],
+            test_case['source_record'],
+            test_case['old_value']
+        )
+
+
 @pytest.mark.skip('test_get_pluralized_node_name')
 def test_get_pluralized_node_name() -> None:
     """ test get_pluralized_node_name """

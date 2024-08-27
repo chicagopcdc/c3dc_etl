@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-06-04",
+  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-08-15",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -1817,7 +1817,7 @@
           "enum": [
             "Clinical",
             "Molecular",
-            "Pathological",
+            "Pathology",
             "Unknown",
             "Not Reported"
           ]
@@ -2231,7 +2231,7 @@
           "type": "integer",
           "description": "Age at the time of diagnosis expressed in number of days since birth.",
           "cde": [
-            "caDSR:10609539",
+            "caDSR:15019300",
             "NCIt:C156420"
           ],
           "maximum": 54750
@@ -2462,7 +2462,6 @@
       "required": [
         "participant_id",
         "race",
-        "ethnicity",
         "sex_at_birth"
       ],
       "properties": {
@@ -2486,29 +2485,13 @@
               "American Indian or Alaska Native",
               "Asian",
               "Black or African American",
+              "Hispanic or Latino",
+              "Middle Eastern or North African",
               "Native Hawaiian or other Pacific Islander",
-              "Not allowed to collect",
+              "Not Allowed to Collect",
               "Not Reported",
               "Unknown",
               "White"
-            ]
-          }
-        },
-        "ethnicity": {
-          "type": "array",
-          "description": "The text for reporting information about ethnicity based on the Office of Management and Budget (OMB) categories.",
-          "cde": [
-            "caDSR:2192217"
-          ],
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "enum": [
-              "Hispanic or Latino",
-              "Not allowed to collect",
-              "Not Hispanic or Latino",
-              "Not Reported",
-              "Unknown"
             ]
           }
         },
@@ -3194,9 +3177,7 @@
       "required": [
         "study_id",
         "dbgap_accession",
-        "acl",
         "study_name",
-        "study_acronym",
         "study_description",
         "consent",
         "consent_number",
@@ -3217,25 +3198,11 @@
             "caDSR:11524544"
           ]
         },
-        "acl": {
-          "type": "string",
-          "description": "A free text field used to document whether the data in a repository is open access or controlled access.",
-          "cde": [
-            "caDSR:11555664"
-          ]
-        },
         "study_name": {
           "type": "string",
           "description": "The narrative title used as a textual label for a research data collection.",
           "cde": [
             "caDSR:11459810"
-          ]
-        },
-        "study_acronym": {
-          "type": "string",
-          "description": "The acronym or abbreviated form of the title for a research data collection.",
-          "cde": [
-            "caDSR:11459812"
           ]
         },
         "study_description": {
@@ -3307,7 +3274,8 @@
         "age_at_last_known_survival_status",
         "event_free_survival_status",
         "age_at_event_free_survival_status",
-        "first_event"
+        "first_event",
+        "cause_of_death"
       ],
       "properties": {
         "survival_id": {
@@ -3453,9 +3421,12 @@
             "3-Dimensional Conformal Radiation Therapy",
             "Allogeneic Hematopoietic Stem Cell Transplantation",
             "Autologous Stem Cell Transplantation",
+            "Brachytherapy",
+            "Cellular Therapy",
             "Chemotherapy",
             "Concurrent Chemoradiation",
             "Conventional Radiotherapy",
+            "Electron Beam Radiation Therapy",
             "External Beam Radiation Therapy",
             "High-Dose Rate Brachytherapy",
             "Hormone Therapy",
@@ -3463,10 +3434,15 @@
             "Intensity-Modulated Radiation Therapy",
             "Low-Dose Rate Brachytherapy",
             "Not Reported",
+            "Organ Transplantation",
+            "Palliative Care",
             "Pharmacotherapy",
+            "Photon Beam Radiation Therapy",
             "Proton Beam Radiation Therapy",
-            "Radiation Therapy, NOS",
+            "Radiation Therapy",
             "Radiofrequency Ablation",
+            "Radiopharmaceutical",
+            "Stem Cell Transplant",
             "Stereotactic Body Radiation Therapy",
             "Stereotactic Radiosurgery",
             "Surgical Procedure",
@@ -3475,7 +3451,7 @@
           ]
         },
         "treatment_agent": {
-          "type": "string",
+          "type": "array",
           "description": "The name of the individual therapeutic agent(s) used as part of a treatment regimen.",
           "cde": [
             "caDSR:13579886"
