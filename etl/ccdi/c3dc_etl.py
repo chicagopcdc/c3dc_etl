@@ -13,11 +13,13 @@ import tempfile
 import uuid
 import warnings
 
-from c3dc_etl_model_node import C3dcEtlModelNode
 import dotenv
 import jsonschema
 from jsonschema import ValidationError
 import petl
+
+from c3dc_etl_model_node import C3dcEtlModelNode
+
 
 def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
     """ Append specified dir_name to sys path for import """
@@ -917,7 +919,8 @@ class C3dcEtl:
                     source_field_name: str
                     for source_field_name in source_field_names:
                         addend: str = source_record.get(source_field_name, f'{source_field_name} not found')
-                        if not str(addend or '').strip():
+                        addend = '' if addend is None else str(addend).strip()
+                        if addend in (None, ''):
                             # set output sum to blank/null if any addend is invalid/blank/null
                             return None
 
@@ -1253,12 +1256,11 @@ class C3dcEtl:
             }
             _logger.info(
                 (
-                    '"%s" "%s" has %d distinct delimited value(s) for "%s" ("%s"), creating separate record per value'
+                    '"%s" "%s" has %d distinct delimited value(s) for "%s", creating separate record per value'
                 ),
                 node_props['type'],
                 source_record[node_props["source_id_field"]],
                 len(sub_src_ids_vals),
-                source_field.partition('.')[2],
                 source_field
             )
             sub_src_id: str

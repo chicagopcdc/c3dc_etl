@@ -17,6 +17,7 @@ import openpyxl
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
+
 def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
     """ Append specified dir_name to sys path for import """
     dir_to_find: str

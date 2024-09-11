@@ -13,13 +13,15 @@ import sys
 import uuid
 import warnings
 
-from c3dc_etl_model_node import C3dcEtlModelNode
 import dotenv
 import jsonschema
 from jsonschema import ValidationError
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
+
+from c3dc_etl_model_node import C3dcEtlModelNode
+from c3dc_row_mapped_builder import C3dcRowMappedBuilder
 
 
 def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
@@ -118,6 +120,22 @@ class C3dcEtl:
         # merged together to form the final study configuration object
         self._study_configurations: list[dict[str, any]] = json.loads(config.get('STUDY_CONFIGURATIONS', '[]'))
         self._study_configurations = [sc for sc in self._study_configurations if sc.get('active', True)]
+
+        # track mappings for row-mapped nodes (ex: treatments and treatment responses) separately for each
+        # transformation as nested dicts: {node type => {transformation name => list of mappings}}
+        self._row_mapped_node_mappings: dict[str, dict[str, list[dict[str, any]]]] = {}
+        self._row_mapped_node_builders: dict[str, any] = {}
+        row_mapped_node: C3dcEtlModelNode
+        for row_mapped_node in C3dcRowMappedBuilder.NODE_SOURCE_VARIABLE_FIELDS:
+            builder: C3dcRowMappedBuilder = C3dcRowMappedBuilder.get_instance(row_mapped_node)
+            builder.generate_uuid_callback = self._generate_uuid
+            builder.convert_output_value_callback = self._get_json_schema_node_property_converted_value
+            builder.is_output_property_required_callback = self._is_json_schema_node_property_required
+            builder.logger = _logger
+
+            self._row_mapped_node_builders[row_mapped_node] = builder
+            self._row_mapped_node_mappings[row_mapped_node] = {}
+
         self._source_field_output_types: dict[str, str] = {}
 
         self.load_json_schema()
@@ -270,7 +288,9 @@ class C3dcEtl:
                     if source_field.startswith('[') and source_field.endswith(']'):
                         # composite/derived source field, strip extra spaces; note csv
                         # module parses "field1, field2" into ["field1", " field2"]
-                        sub_fields: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+                        sub_fields: list[str] = [s.strip() for s in next(
+                            csv.reader([source_field.strip(' []')]))
+                        ]
                         sub_field: str
                         for sub_field in sub_fields:
                             self._source_field_output_types[sub_field] = (
@@ -280,6 +300,30 @@ class C3dcEtl:
                         self._source_field_output_types[source_field] = (
                             self._get_json_schema_node_property_type(mapping.get('output_field'))
                         )
+
+                # load row-mapped node mappings if specified in transform config
+                row_mapped_node: C3dcEtlModelNode
+                row_mapped_builder: C3dcRowMappedBuilder
+                for row_mapped_node, row_mapped_builder in self._row_mapped_node_builders.items():
+                    if f'{row_mapped_node}_mappings_path' not in transform_config:
+                        _logger.info('No "%s" mappings found, skipping row-mapped mapping ETL', row_mapped_node)
+                        continue
+
+                    row_mapped_mappings: list[dict[str, any]] = self._get_row_mapped_node_mappings(
+                        transform_config,
+                        row_mapped_node
+                    )
+                    self._row_mapped_node_mappings[row_mapped_node][transform_config['name']] = row_mapped_mappings
+                    row_mapped_builder.mappings = row_mapped_mappings
+
+                    # row-mapped mappings like treatment and treatment response aren't 1:1 mappings of source to
+                    # output fields however we still need to add the mapping source fields to
+                    # self._source_field_output_types to make sure that the mapped source field values are loaded
+                    # by self._load_source_data for harmonization
+                    row_mapped_source_fields: list[str] = row_mapped_builder.get_mapped_source_fields()
+                    row_mapped_source_field: str
+                    for row_mapped_source_field in row_mapped_source_fields:
+                        self._source_field_output_types[row_mapped_source_field] = 'string'
 
             # log warnings for any unmatched transformations
             unmatched_transforms: list[dict[str, any]] = [
@@ -507,13 +551,13 @@ class C3dcEtl:
             and
             self._c3dc_file_manager.file_exists(transformation.get('source_file_manifest_path'))
         ):
-            _logger.info('Source file manifest data not availble, skipping load')
+            _logger.info('Source file manifest data not available, skipping load')
             return {}
 
         _logger.info('Loading source file manifest data from "%s"', transformation.get('source_file_manifest_path'))
         manifest_file_path: str = transformation['source_file_manifest_path']
         if pathlib.Path(manifest_file_path).suffix.lower() != '.xlsx':
-            raise RuntimeError(f'Unsupported transformation mappings file type: "{manifest_file_path}"')
+            raise RuntimeError(f'Unsupported source file manifest data file type: "{manifest_file_path}"')
 
         manifest_file_data: bytes = self._c3dc_file_manager.read_file(manifest_file_path)
         sheet_name: str = transformation.get('source_file_manifest_sheet', 'clinical_measure_file')[:31]
@@ -533,6 +577,7 @@ class C3dcEtl:
         }
         for row in ws.iter_rows():
             if not cols:
+                # first row is header
                 cols = [cell.value for cell in row]
                 continue
             manifest: dict[str, any] = {}
@@ -554,6 +599,60 @@ class C3dcEtl:
         if not manifests:
             raise RuntimeError('No manifest records loaded')
         return manifests
+
+    def _get_row_mapped_node_mappings(
+        self,
+        transformation: dict[str, any],
+        node: C3dcEtlModelNode
+    ) -> list[dict[str, any]]:
+        """ Read and return row-mapped node mappings from file and sheet specified in transformation """
+        mappings: list[dict[str, any]] = []
+        mappings_path_config_name: str = f'{node}_mappings_path'
+        mappings_sheet_config_name: str = f'{node}_mappings_sheet'
+        if not (
+            transformation.get(mappings_path_config_name)
+            and
+            self._c3dc_file_manager.file_exists(transformation.get(mappings_path_config_name))
+        ):
+            _logger.info('Mappings file for "%s" not available, skipping load', node)
+            return []
+
+        _logger.info('Loading "%s" mappings from "%s"', node, transformation.get(mappings_path_config_name))
+        mappings_file_path: str = transformation[mappings_path_config_name]
+        if pathlib.Path(mappings_file_path).suffix.lower() != '.xlsx':
+            raise RuntimeError(f'Unsupported "{node}" mappings file type: "{mappings_file_path}"')
+
+        mappings_file_data: bytes = self._c3dc_file_manager.read_file(mappings_file_path)
+        sheet_name: str = transformation.get(mappings_sheet_config_name, f'phs002790_{node}')[:31]
+        wb: Workbook = openpyxl.load_workbook(io.BytesIO(mappings_file_data), data_only=True)
+        if sheet_name not in wb.sheetnames:
+            raise RuntimeError(f'Worksheet "{sheet_name}" not found in workbook worksheet list: {wb.sheetnames}')
+        ws: Worksheet = wb[sheet_name] if sheet_name else wb.worksheets[0]
+        rownum: int
+        row: any
+        cols: list[str] = []
+        for rownum, row in enumerate(ws.iter_rows(), start=1):
+            if not cols:
+                # first row is header
+                cols = [cell.value for cell in row]
+                if len(cols) != len(set(cols)):
+                    raise RuntimeError('Total columns > unique columns; check for duplicate columns')
+                continue
+            mapping: dict[str, any] = {}
+            col_num: int
+            for col_num, cell in enumerate(row):
+                value: any = cell.value
+                mapping[cols[col_num]] = str(value).strip() if value is not None else ''
+            if not mapping or all(m in ('', None) for m in mapping):
+                _logger.warning('Invalid/empty mapping in row %d, skipping', rownum)
+                continue
+            if any(mapping == m for m in mappings):
+                _logger.warning('Duplicate mapping in row %d, skipping', rownum)
+                continue
+            mappings.append(mapping)
+        if not mappings:
+            raise RuntimeError(f'No "{node}" mapping records loaded')
+        return mappings
 
     def _load_source_data(
         self,
@@ -674,7 +773,7 @@ class C3dcEtl:
         self,
         node_type_dot_property_name: str,
         value: any
-    ) -> list | int | str:
+    ) -> list | int | str | None:
         """ Get output value converted to JSON schema type for specified property array, integer, string """
         if value is None:
             return None
@@ -943,6 +1042,8 @@ class C3dcEtl:
 
         error: str
         for error in errors:
+            if 'PYTEST_CURRENT_TEST' in os.environ:
+                print(error)
             _logger.error(error)
         if errors:
             raise RuntimeError('Invalid transformation(s) found')
@@ -1206,7 +1307,8 @@ class C3dcEtl:
                     source_field_name: str
                     for source_field_name in source_field_names:
                         addend: str = source_record.get(source_field_name)
-                        if not str(addend or '').strip():
+                        addend = '' if addend is None else str(addend).strip()
+                        if addend in (None, ''):
                             # set output sum to blank/null if any addend is invalid/blank/null
                             return None
 
@@ -1394,7 +1496,7 @@ class C3dcEtl:
         node_type: C3dcEtlModelNode,
         source_record: dict[str, any] = None
     ) -> list[dict[str, any]]:
-        """ Transform and return result after applying non-customized transformation to specified source record """
+        """ Transform and return result after applying non row-mapped transformation to specified source record """
         source_record = source_record or {}
         output_records: list[dict[str, any]] = []
 
@@ -1403,9 +1505,7 @@ class C3dcEtl:
             node_type
         )
         if not type_group_index_mappings:
-            if node_type not in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE):
-                # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
-                _logger.warning('No mappings found for type %s, unable to transform record', node_type)
+            _logger.warning('No mappings found for type %s, unable to transform record', node_type)
             return []
 
         # a single source field can be mapped to multiple target fields, for example
@@ -1502,6 +1602,35 @@ class C3dcEtl:
 
         return output_records
 
+    def _transform_record_row_mapped(
+        self,
+        transformation: dict[str, any],
+        node_type: C3dcEtlModelNode,
+        source_record: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """ get row-mapped records for specified transformation, node type and source_record """
+        if node_type not in self._row_mapped_node_builders:
+            raise RuntimeError(f'No row-mapped builder defined for node type "{node_type}"')
+        builder: C3dcRowMappedBuilder = self._row_mapped_node_builders[node_type]
+        builder.mappings = self._row_mapped_node_mappings[node_type][transformation['name']]
+        return builder.get_records(source_record)
+
+    def _transform_record_treatment(
+        self,
+        transformation: dict[str, any],
+        source_record: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """ get treatment records for specified source record """
+        return self._transform_record_row_mapped(transformation, C3dcEtlModelNode.TREATMENT, source_record)
+
+    def _transform_record_treatment_response(
+        self,
+        transformation: dict[str, any],
+        source_record: dict[str, any]
+    ) -> list[dict[str, any]]:
+        """ get treatment response records for specified source record """
+        return self._transform_record_row_mapped(transformation, C3dcEtlModelNode.TREATMENT_RESPONSE, source_record)
+
     def _build_node(
         self,
         transformation: dict[str, any],
@@ -1521,7 +1650,7 @@ class C3dcEtl:
         ):
             return self._transform_record_default(transformation, node_type, source_record)
 
-        return transform_method(transformation, node_type, source_record)
+        return transform_method(transformation, source_record)
 
     def _build_sub_source_records(
         self,
@@ -1594,15 +1723,24 @@ class C3dcEtl:
                 f'"{participant_id_field}" is either not mapped or is mapped multple times'
             )
 
+        # define row-mapped nodes like treatment and treatment response separately for logging purposes
+        row_mapped_nodes: tuple[C3dcEtlModelNode, ...] = (
+            C3dcEtlModelNode.TREATMENT,
+            C3dcEtlModelNode.TREATMENT_RESPONSE
+        )
+        row_mapped_node: C3dcEtlModelNode
+
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
             C3dcEtlModelNode.DIAGNOSIS: {},
             C3dcEtlModelNode.PARTICIPANT: {},
             C3dcEtlModelNode.REFERENCE_FILE: {},
             C3dcEtlModelNode.STUDY: {},
-            C3dcEtlModelNode.SURVIVAL: {},
-            C3dcEtlModelNode.TREATMENT: {},
-            C3dcEtlModelNode.TREATMENT_RESPONSE: {}
+            C3dcEtlModelNode.SURVIVAL: {}
         }
+        # append row-mapped nodes to main nodes collection
+        for row_mapped_node in row_mapped_nodes:
+            nodes[row_mapped_node] = {}
+
         node: C3dcEtlModelNode
         node_props: dict[str, any]
         for node, node_props in nodes.items():
@@ -1619,6 +1757,18 @@ class C3dcEtl:
         study = study[0]
         study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
         study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']] = []
+
+        # verify mappings defined for row-mapped nodes
+        for row_mapped_node in row_mapped_nodes:
+            mappings: list[dict[str, any]] = self._row_mapped_node_mappings.get(row_mapped_node, {}).get(
+                transformation['name']
+            )
+            if not mappings:
+                _logger.warning(
+                    '"%s" builder mappings not specified, "%s" records will not be harmonized',
+                    row_mapped_node,
+                    row_mapped_node
+                )
 
         # add observation and participant records to match source data records
         rec: dict[str, any]
@@ -1654,10 +1804,7 @@ class C3dcEtl:
                 sub_src_rec: dict[str, any]
                 for sub_src_rec in self._build_sub_source_records(rec, nodes[node]) or [rec]:
                     harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
-                    # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
-                    if not (
-                        harmonized_recs or node in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)
-                    ):
+                    if not harmonized_recs:
                         _logger.warning(
                             '%s (%s): Unable to build "%s" node for source record "%s"',
                             transformation.get('name'),
@@ -1702,7 +1849,57 @@ class C3dcEtl:
             study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']].append(
                 reference_file[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field']]
             )
-        nodes[C3dcEtlModelNode.REFERENCE_FILE]['harmonized_records'].extend(reference_files)       
+        nodes[C3dcEtlModelNode.REFERENCE_FILE]['harmonized_records'].extend(reference_files)
+
+        # log record counts for row-mapped nodes
+        for row_mapped_node in row_mapped_nodes:
+            _logger.info(
+                '%d "%s" record(s) harmonized for %d distinct subject(s)',
+                len(nodes[row_mapped_node]['harmonized_records']),
+                row_mapped_node,
+                len(
+                    set(
+                        r['participant.participant_id']
+                            for r in nodes[row_mapped_node]['harmonized_records']
+                    )
+                )
+            )
+
+        # check for participants having treatment responses but not treatments
+        participants_w_response_wo_treatment: list[dict[str, any]] = [
+            p for p in nodes[C3dcEtlModelNode.PARTICIPANT]['harmonized_records']
+                if (
+                    p[nodes[C3dcEtlModelNode.TREATMENT_RESPONSE]['id_field_full']]
+                    and
+                    not p[nodes[C3dcEtlModelNode.TREATMENT]['id_field_full']]
+                )
+        ]
+        if participants_w_response_wo_treatment:
+            _logger.warning(
+                '%d participants assigned "%s" records without "%s" records:',
+                len(participants_w_response_wo_treatment),
+                C3dcEtlModelNode.TREATMENT_RESPONSE,
+                C3dcEtlModelNode.TREATMENT
+            )
+            _logger.warning(
+                [p[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']] for p in participants_w_response_wo_treatment]
+            )
+            remission_response_participant_ids_all: list[str] = [
+                r[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']]
+                    for r in nodes[C3dcEtlModelNode.TREATMENT_RESPONSE]['harmonized_records']
+                        if r['response'] == 'Complete Remission'
+            ]
+            remission_participant_ids: list[str] = [
+                pid for pid in remission_response_participant_ids_all
+                    if pid in [
+                        p[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']] for p in participants_w_response_wo_treatment
+                    ]
+            ]
+            _logger.warning(
+                '%d participants having "response" set to "Complete Remission":',
+                len(remission_participant_ids)
+            )
+            _logger.warning(remission_participant_ids)
 
         # check for dupe ids
         for node, node_props in nodes.items():

@@ -60,6 +60,122 @@ recommended to use the script in lieu of editing and maintaining the JSON transf
 See the [README file](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md) for configuration
 and execution details.
 
+## Mapping rules for `treatment` and `treatment_response` records
+The `treatment` and `treatment_response` mapping rules are formatted and processed differently than the mappings for
+other objects like `participant`, `diagnosis`, `survival`, etc, that are contained in the Excel (XLSX) document
+referenced above and described in the 
+[README file for the mapping unpivoter scripts](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md#excel-xlsx-mapping-file-columns).
+The `treatment` and `treatment_response` mapping rules are specified in a separate tab/sheet with each row containing
+a mapping rule which, when matched, will result in a distinct `treatment` or `treatment_response` record being
+added to the harmonized output file for the corresponding subject. Each mapping rule specifies the source record
+field(s) to check and the value(s) of the source record field(s) that will be considered a match. The remaining
+fields of the mapping rule specify the values of the resulting `treatment` or `treatment_response` record that will
+be added to the harmonized output file.
+
+### Treatment mapping rule columns
+* `Source Variable Name`: Required. String specifying the name of the source record field to be evaluated for a match.
+  Note that the field name can be specified as `form.field_name`, for example `ON_STUDY_DX_CNS.TUM_RES_EXT_TP`, to
+  uniquely identify fields that may exist in multiple forms.
+* `Source Variable Value`: Required. String specifying the value of the source record field specified above in
+  `Source Variable Name` which will be evaluated for a match resulting in a `treatment` record for the source record
+  subject being added to the harmonized output. A source record will be considered to be a match for the mapping rule
+  if the value of the field specified in `Source Variable Name` is equal to the value specified in
+  `Source Variable Value`.
+* `treatment.treatment_id`: Required. String specifying the value of the harmonized `treatment` record's `treatment_id`
+  field. The 'macro-like' function `{uuid}` can be used to indicate that the value of the `treatment_id` field should
+  be set to a UUID using the same mechanism described below in the [Configuration](#configuration) section.
+* `treatment.treatment_agent`: Required. String specifying the value of the harmonized `treatment` record's
+  `treatment_agent` field.
+* `treatment.treatment_type`: Required. String specifying the value of the harmonized `treatment` record's
+  `treatment_type` field.
+* `treatment.age_at_treatment_start`: Required. Integer specifying the value of the harmonized `treatment` record's
+  `age_at_treatment_start` field. The value `-999` can be used as a default value to indicate Not Available, Not
+  Reported, Unknown, etc. The 'macro-like' function `{sum_abs_first}` can also be specified to indicate that the value
+  of the `age_at_treatment_start` field should be set to the sum of two source record fields. For example
+  `{sum_abs_first(DM_BRTHDAT, PT_SURGICAL_RESEC_DT)}` would result in the `age_at_treatment_start` field being set to
+  the sum of the absolute value of the `DM_BRTHDAT` field and the as-is value of the `PT_SURGICAL_RESEC_DT` field.
+* `treatment.age_at_treatment_end`: Required. Integer specifying the value of the harmonized `treatment` record's
+  `age_at_treatment_end` field. The value `-999` can be used as a default value to indicate Not Available, Not
+  Reported, Unknown, etc. The 'macro-like' function `{sum_abs_first}` can also be specified to indicate that the value
+  of the `age_at_treatment_end` field should be set to the sum of two source record fields. For example
+  `{sum_abs_first(DM_BRTHDAT, PT_SURGICAL_RESEC_DT)}` would result in the `age_at_treatment_end` field being set to
+  the sum of the absolute value of the `DM_BRTHDAT` field and the as-is value of the `PT_SURGICAL_RESEC_DT` field.
+
+### Example mapping rules for `treatment` records
+For the example mapping rules below and a source record having field `FSTLNTXINIDXADMCAT_A1` set to `checked`, a
+`treatment` record would be added for the corresponding subject with `treatment_id` set to a randomly generated UUID,
+`treatment_agent` set to `Not Reported`, `treatment_type` set to `Pharmacotherapy` and both `age_at_treatment_start`
+and `age_at_treatment_end` set to -999. Each mapping rule row is evaluated independently so if the source record
+also matched each of the remaining mapping rules (`ON_STUDY_DX_CNS.TUM_RES_EXT_TP` = `Gross Total Resection`,
+`SURG_RESECTION_OSTEOSARCOMA.TUM_RES_EXT_TP` = `Gross Total Resection`, and `AGT_ADM_NM_A01` = `checked`) there would
+be a total of 4 `treatment` records added to the harmonized output for the source record subject having the values
+specified in each mapping rule's `treatment.*` fields. 
+
+Source Variable Name | Source Variable Value | treatment.treatment_id | treatment.treatment_agent | treatment.treatment_type | treatment.age_at_treatment_start | treatment.age_at_treatment_end
+--- | --- | --- | --- | --- | --- | ---
+FSTLNTXINIDXADMCAT_A1 | checked | {uuid} | Not Reported | Pharmacotherapy | -999 | -999
+ON_STUDY_DX_CNS.TUM_RES_EXT_TP | Gross Total Resection | {uuid} | Not Reported | Surgical Procedure | {sum_abs_first(DM_BRTHDAT, PT_SURGICAL_RESEC_DT)} | -999
+SURG_RESECTION_OSTEOSARCOMA.TUM_RES_EXT_TP | Gross Total Resection | {uuid} | Not Reported | Surgical Procedure | {sum_abs_first(DM_BRTHDAT, PT_SURGICAL_RESEC_DT)} | -999
+AGT_ADM_NM_A01 | checked | {uuid} | Isotretinoin | Pharmacotherapy | -999 | -999  
+
+&nbsp;
+
+### Treatment response mapping columns
+* `Source Variable Name 1`: Required. String specifying the name of the first source record field to be checked for
+  a match. Note that the field name can be specified as `form.field_name`, for example
+  `FOLLOW_UP.COMP_RESP_CONF_IND_3`, to uniquely identify a field that may exist in multiple forms.
+* `Source Variable Value 1`: Required. String specifying the value of the first source record field specified above in
+  `Source Variable Name 1` which will be evaluated for a match resulting in a `treatment` record for the source record
+  subject being added to the harmonized output.
+* `Source Variable Name 2`: Required. String specifying the name of the second source record field to be checked for
+  a match. As with `Source Variable Name 1` the field name can be specified as `form.field_name`, for example
+  `FOLLOW_UP.DZ_EXM_REP_IND_2`, to uniquely identify a field that may exist in multiple forms.
+* `Source Variable Value 2`: Required. String specifying the value of the first source record field specified above in
+  `Source Variable Name 2` which will be evaluated for a match resulting in a `treatment` record for the source record
+  subject being added to the harmonized output. A source record will be considered to be a match for the mapping rule
+  if the value of the field specified in `Source Variable Name 1` is equal to the value specified in
+  `Source Variable Value 1` __AND ALSO__ the value of the field specified in `Source Variable Name 2` is equal to the
+  value specified in `Source Variable Value 2`.
+* `treatment.treatment_response_id`: Required. String specifying the value of the harmonized `treatment_response`
+  record's `treatment_response_id` field. The 'macro-like' function `{uuid}` can be used to indicate that the value
+  of the `treatment_response_id` field should be set to a UUID using the same mechanism described below in the
+  [Configuration](#configuration) section.
+* `treatment_response.response`: Required. String specifying the value of the harmonized `treatment_response` record's
+  `response` field.
+* `treatment_response.age_at_response`: Required. Integer specifying the value of the harmonized `treatment_response`
+  record's `age_at_response` field. The value `-999` can be used as a default value to indicate Not Available, Not
+  Reported, Unknown, etc. The 'macro-like' function `{sum_abs_first}` can also be specified to indicate that the
+  value of the `age_at_treatment_start` field should be set to the sum of two source record fields. For example
+  `{sum_abs_first(DM_BRTHDAT, PT_SURGICAL_RESEC_DT)}` would result in the `age_at_response` field being set to the
+  sum of the absolute value of the `DM_BRTHDAT` field and the as-is value of the `PT_SURGICAL_RESEC_DT` field.
+* `treatment_response.response_category`: Required. String specifying the value of the harmonized `treatment_response`
+  record's `response_category` field.
+  be set to a UUID using the same mechanism described above in the used for the study configuration section.
+* `treatment_response.response_system`: Required. String specifying the value of the harmonized `treatment_response`
+  record's `response_system` field.
+
+### Example mapping rules for `treatment_response` records
+For the example mapping rules below and a source record having field `COMP_RESP_CONF_IND_3` set to `Yes` and
+`DZ_EXM_REP_IND_2` set to `Yes`, a `treatment_response` record would be added for the corresponding subject with
+`treatment_response_id` set to a randomly generated UUID, `response` set to `Complete Remission`, `age_at_response`
+set to `-999` and both `response_category` and `response_system` set to `Not Reported`. Some of the mapping
+rules can in practice be evaluated using a single field, for example `COMP_RESP_CONF_IND_3` = `Unknown` results in a
+`treatment_response` record having `response` set to `Unknown` regardless of the value of `DZ_EXM_REP_IND_2`. However
+the mapping rules were implemented to always match sources records by evaluating two fields to simplify the
+harmonization process.
+
+Source Variable Name 1 | Source Variable Value 1 | Source Variable Name 2 | Source Variable Value 2 | treatment_response.treatment_response_id | treatment_response.response | treatment_response.age_at_response | treatment_response.response_category | treatment_response.response_system
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+COMP_RESP_CONF_IND_3 | Yes | DZ_EXM_REP_IND_2 | Yes | {uuid} | Complete Remission | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | Yes | DZ_EXM_REP_IND_2 | No | {uuid} | Complete Remission | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | Yes | DZ_EXM_REP_IND_2 |  | {uuid} | Complete Remission | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | No | DZ_EXM_REP_IND_2 | Yes | {uuid} | Unknown | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | No | DZ_EXM_REP_IND_2 | No | {uuid} | Not Done | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | No | DZ_EXM_REP_IND_2 |  | {uuid} | Unknown | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | Unknown | DZ_EXM_REP_IND_2 | Yes | {uuid} | Unknown | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | Unknown | DZ_EXM_REP_IND_2 | No | {uuid} | Unknown | -999 | Not Reported | Not Reported
+COMP_RESP_CONF_IND_3 | Unknown | DZ_EXM_REP_IND_2 |  | {uuid} | Unknown | -999 | Not Reported | Not Reported
+
 ## ETL script
 The c3dc_etl.py script ingests the source data in tabular (XLSX) format and transforms it into a harmonized (JSON)
 data file.
@@ -132,10 +248,23 @@ as a starting point and customized as needed.
       For example `phs002790`.
     * `source_file_path`: Required. String specifying the location of the file containing the source data. Can be a
       local path or AWS S3 URL. For example `/path/to/source/file` or `s3://bucket/path/to/source/file`.
-    * `source_file_manifest_path`: Optional. String specifying the location of the the source data manifest file
-      containing metadata about each source file such as globally unique identifier (guid), size, MD5 hash, and URL.
-      Can be a local path or AWS S3 URL. For example `/path/to/source/file/manifest` or
-      `s3://bucket/path/to/source/file/manifest`.
+    * `source_file_manifest_path`: Optional. String specifying the location of the Excel (XLSX) source data manifest
+      file containing metadata about each source file such as globally unique identifier (guid), size, MD5 hash, and
+      URL. Can be a local path or AWS S3 URL. For example `/path/to/source/file/manifest.xlsx` or
+      `s3://bucket/path/to/source/file/manifest.xlsx`.
+    * `source_file_manifest_sheet`: Optional. String specifying the name of the source data manifest file worksheet
+      containing the metadata rows. Defaults to `clinical_measure_file` if not specified.
+    * `treatment_mappings_path`: Optional. String specifying the location of the Excel (XLSX) document containing
+      the mapping rules that will be used to find and derive `treatment` records. Can be a local path or AWS S3 URL.
+      For example `/path/to/source/file/manifest.xlsx` or `s3://bucket/path/to/source/file/manifest.xlsx`.
+    * `treatment_mappings_sheet`: Optional. String specifying the name of the treatment mappings file worksheet
+      containing the mapping rows. Defaults to `phs002790_treatment` if not specified.
+    * `treatment_response_mappings_path`: Optional. String specifying the location of the Excel (XLSX) document
+      containing the mapping rules that will be used to find and derive `treatment_response` records. Can be a local
+      path or AWS S3 URL. For example `/path/to/source/file/manifest.xlsx` or
+      `s3://bucket/path/to/source/file/manifest.xlsx`.
+    * `treatment_response_mappings_sheet`: Optional. String specifying the name of the treatment mappings file
+      worksheet containing the mapping rows. Defaults to `phs002790_treatment_response` if not specified.
     * `output_file_path`: Required. String specifying the location of the file where the harmonized data will be
       saved. Can be a local path or AWS S3 URL. For example `/path/to/harmonized/data/file` or
       `s3://bucket/path/to/harmonized/data/file`.

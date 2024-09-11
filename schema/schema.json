@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-08-15",
+  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-09-09",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -1795,7 +1795,7 @@
           "cde": [
             "caDSR:14714144",
             "NCIt:C42673",
-            "NCIt:C91220",
+            "caDSR:15026558",
             "NCIt:C159157"
           ],
           "enum": [
