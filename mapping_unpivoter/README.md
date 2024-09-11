@@ -75,6 +75,10 @@ calculate and update the `reference_file` values within an existing transformati
     MCI ETL script that adds reference file mappings for each of the individual source data files harmonized.
 
 ## Excel (XLSX) mapping file columns
+__NOTE__: the `phs002790_treatment` and `phs002790_treatment_response` tabs/sheets contain mappings specific to
+the MCI (phs002790) study and are ignored by the mapping unpivoter script. See the
+[MCI readme](https://github.com/chicagopcdc/c3dc_etl/blob/main/etl/mci/README.md) for additional details.
+
 Unknown columns will be ignored. See the remote configuration section in the README file for each harmonization study
 group (CCDI, MCI, Target NBL) for details on the transformed output JSON mapping file.
 * `Source Variable Name`: Required. Corresponds to the `source_field` property of the transformed output JSON mapping
