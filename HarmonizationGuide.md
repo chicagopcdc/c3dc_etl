@@ -29,6 +29,12 @@ The primary data transformation script, aka the ETL script, has three input depe
 This guide lists the steps needed to create the JSON schema and transformation/mapping files and pass them to the ETL
 script to create the final harmonized data output file for a given source input data set.
 
+## Steps/Sections
+* [Prepare harmonization environment](#prepare-harmonization-environment)
+* [Create JSON schema file](#create-json-schema-file)
+* [Create JSON transformation/mapping file](#create-json-transformationmapping-file)
+* [Create the harmonized data output file](#create-the-harmonized-data-output-file)
+
 ## Prepare harmonization environment
 The Python script interpreter and dependencies can be installed using the Miniconda aka conda package manager.
 1. Download and install the [Git](https://git-scm.com/downloads) source code control system if not already installed.
