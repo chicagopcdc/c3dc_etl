@@ -859,6 +859,7 @@ class C3dcEtl:
         default_value: any = mapping.get('default_value', None)
 
         replacement_entry: dict[str, str]
+        # pylint: disable=too-many-nested-blocks
         for replacement_entry in mapping.get('replacement_values', []):
             old_value: str = replacement_entry.get('old_value', '*')
             new_value: any = replacement_entry.get('new_value', None)
@@ -923,8 +924,7 @@ class C3dcEtl:
                             _logger.warning(msg)
                             addends.append(None)
                         else:
-                            addend = float(addend)
-                            addends.append(addend if not addend.is_integer() else int(addend))
+                            addends.append(float(addend))
                     new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 elif macro_text.lower() == 'race':
                     # source field may contain 'race' and 'ethnicity' source
@@ -967,7 +967,11 @@ class C3dcEtl:
                                 f'{source_record["source_file_row_num"]}, not found in data dictionary'
                             )
                             _logger.warning(msg)
-                    new_val = sorted(valid_races) if all(r not in ('', None) for r in valid_races) else default_value
+                    new_val = (
+                        sorted(valid_races)
+                            if valid_races and all(r not in ('', None) for r in valid_races)
+                            else default_value
+                    )
                 new_vals[i] = new_val
 
             if new_value == '{find_enum_value}' and new_val is None:
@@ -1138,6 +1142,7 @@ class C3dcEtl:
             for mapping in mappings:
                 output_field: str = mapping.get('output_field')
                 output_field_property: str = output_field[len(f'{node_type}.'):]
+                output_field_type: str = self._get_json_schema_node_property_type(output_field)
 
                 default_value: any = mapping.get('default_value')
 
@@ -1170,12 +1175,22 @@ class C3dcEtl:
                 allowed_values = self._get_allowed_values(mapping)
                 source_value_allowed = C3dcEtl.is_allowed_value(source_value, allowed_values)
                 if allowed_values and not source_value_allowed:
-                    _logger.info('value "%s" not allowed for source field "%s"', source_value, source_field)
+                    _logger.info(
+                        'value "%s" not allowed for source field "%s" (type group "%s")',
+                        source_value,
+                        source_field,
+                        type_group_index
+                    )
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
 
                 output_record[output_field_property] = output_value if output_value is not None else source_value
+                if output_field_type == 'integer':
+                    # some source values are read from Excel as floats instead of ints, e.g. age at diagnosis
+                    # 3660.9999999999995 instead of 3661 for some TARGET OS records, so round (not int() which
+                    # will truncate) harmonized values for integer output fields
+                    output_record[output_field_property] = round(output_record[output_field_property])
 
             # verify that record is valid and contains all required properties
             record_valid: bool = True
@@ -1183,10 +1198,15 @@ class C3dcEtl:
             required_property: str
             for required_property in required_properties:
                 schema_field: str = f'{node_type}.{required_property}'
-                if output_record.get(required_property, None) in ('', None):
+                required_property_value: any = output_record.get(required_property, None)
+                if (
+                    required_property_value in ('', None, [])
+                    or
+                    isinstance(required_property_value, list) and all(v in ('', None) for v in required_property_value)
+                ):
                     record_valid = False
                     _logger.warning(
-                        'Required output field "%s" (source field "%s") has null value for source record file "%s"',
+                        'Required output field "%s" (source field "%s") is null/empty for source record file "%s"',
                         schema_field,
                         output_source_field_map.get(schema_field, '*not mapped*'),
                         source_record.get("source_file_row_num")
@@ -1376,7 +1396,7 @@ class C3dcEtl:
                             transformation.get('name'),
                             study_id,
                             node,
-                            sub_src_rec['source_file_name']
+                            sub_src_rec['source_file_row_num']
                         )
 
                     harmonized_rec: dict[str, any]

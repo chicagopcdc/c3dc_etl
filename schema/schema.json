@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-09-09",
+  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-10-04",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -2505,7 +2505,6 @@
             "Female",
             "Intersex",
             "Male",
-            "X",
             "Not Reported",
             "Unknown",
             "Don't Know",

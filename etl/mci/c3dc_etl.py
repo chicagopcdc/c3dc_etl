@@ -1366,7 +1366,11 @@ class C3dcEtl:
                                 f'{source_record["source_file_name"]}, not found in data dictionary'
                             )
                             _logger.warning(msg)
-                    new_val = sorted(valid_races) if all(r not in ('', None) for r in valid_races) else default_value
+                    new_val = (
+                        sorted(valid_races)
+                            if valid_races and all(r not in ('', None) for r in valid_races)
+                            else default_value
+                    )
                 new_vals[i] = new_val
 
             if new_value == '{find_enum_value}' and new_val is None:
@@ -1582,10 +1586,15 @@ class C3dcEtl:
             required_property: str
             for required_property in required_properties:
                 schema_field: str = f'{node_type}.{required_property}'
-                if output_record.get(required_property, None) in ('', None):
+                required_property_value: any = output_record.get(required_property, None)
+                if (
+                    required_property_value in ('', None, [])
+                    or
+                    isinstance(required_property_value, list) and all(v in ('', None) for v in required_property_value)
+                ):
                     record_valid = False
                     _logger.warning(
-                        'Required output field "%s" (source field "%s") has null value for source record file "%s"',
+                        'Required output field "%s" (source field "%s") is null/empty for source record file "%s"',
                         schema_field,
                         output_source_field_map.get(schema_field, '*not mapped*'),
                         source_record.get("source_file_name")
