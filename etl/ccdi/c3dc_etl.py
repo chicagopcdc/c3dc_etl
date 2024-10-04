@@ -933,7 +933,6 @@ class C3dcEtl:
                             addends.append(None)
                         else:
                             addend = float(addend)
-                            addends.append(addend if not addend.is_integer() else int(addend))
                     new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 new_vals[i] = new_val
 
@@ -1081,6 +1080,7 @@ class C3dcEtl:
             for mapping in mappings:
                 output_field: str = mapping.get('output_field')
                 output_field_property: str = output_field[len(f'{node_type}.'):]
+                output_field_type: str = self._get_json_schema_node_property_type(output_field)
 
                 default_value: any = mapping.get('default_value')
 
@@ -1128,6 +1128,12 @@ class C3dcEtl:
                             continue
                         output_record[output_field_property] = converted_source_value
 
+                if output_field_property in output_record and output_field_type == 'integer':
+                    # some source values are read from Excel as floats instead of ints, e.g. age at diagnosis
+                    # 3660.9999999999995 instead of 3661 for some TARGET OS records, so round (not int() which
+                    # will truncate) harmonized values for integer output fields
+                    output_record[output_field_property] = round(output_record[output_field_property])
+
             # verify that record is valid and contains all required properties
             record_valid: bool = True
             required_properties: dict[str, any] = self._get_json_schema_node_required_properties(node_type)
@@ -1163,9 +1169,15 @@ class C3dcEtl:
         """ Find and return survival record having most recent event age, prioritizing 'Dead' over 'Alive' """
         # check for any 'Alive' records having event age greater than any 'Dead' records
         dead_survs: list[dict[str, any]] = [s for s in survivals if s[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_DEAD]
-        max_dead_surv_age: int = max((int(float(s[C3dcEtl.AGE_AT_LKSS_FIELD])) for s in dead_survs),default=sys.maxsize)
+        max_dead_surv_age: int = max(
+            (round(float(s[C3dcEtl.AGE_AT_LKSS_FIELD])) for s in dead_survs),
+            default=sys.maxsize
+        )
         alive_survs: list[dict[str, any]] = [s for s in survivals if s[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_ALIVE]
-        max_alive_surv_age: int = max((int(float(s[C3dcEtl.AGE_AT_LKSS_FIELD])) for s in alive_survs), default=-999)
+        max_alive_surv_age: int = max(
+            (round(float(s[C3dcEtl.AGE_AT_LKSS_FIELD])) for s in alive_survs),
+            default=-999
+        )
         if max_alive_surv_age > -999 and max_alive_surv_age > max_dead_surv_age:
             _logger.warning(
                 (
@@ -1178,22 +1190,22 @@ class C3dcEtl:
             )
             return {}
 
-        final_survival: dict[str, any] = {}
+        survival_latest: dict[str, any] = {}
         survival: dict[str, any]
         for survival in survivals:
-            if not final_survival:
-                final_survival = survival
+            if survival[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_DEAD:
+                return survival
+
+            if not survival_latest:
+                survival_latest = survival
                 continue
 
-            if (
-                survival[C3dcEtl.LKSS_FIELD] == C3dcEtl.LKSS_DEAD
-                or
-                int(float(survival[C3dcEtl.AGE_AT_LKSS_FIELD])) > int(float(final_survival[C3dcEtl.AGE_AT_LKSS_FIELD]))
-            ):
-                final_survival = survival
-                break
+            age_at_lkss: int = round(float(survival[C3dcEtl.AGE_AT_LKSS_FIELD]))
+            age_at_lkss_latest = round(float(survival_latest[C3dcEtl.AGE_AT_LKSS_FIELD]))
+            if age_at_lkss >= age_at_lkss_latest:
+                survival_latest = survival
 
-        return final_survival
+        return survival_latest
 
     def _build_node(
         self,

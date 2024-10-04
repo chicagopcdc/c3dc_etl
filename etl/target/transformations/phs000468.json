@@ -1,0 +1,2487 @@
+{
+    "version": "20241004.1",
+    "transformations": [
+        {
+            "name": "phs000468_discovery",
+            "mappings": [
+                {
+                    "output_field": "study.study_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000468"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.dbgap_accession",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000468"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET OS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.consent",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "DS-PEDCR"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.consent_number",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 1
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.external_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000468"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "There are 93 fully characterized patient cases that make up the TARGET OS dataset, each with gene expression, tumor and paired normal copy number analyses, methylation, miRNA profiles, along with comprehensive next-generation sequencing to include mRNA-seq and exome sequencing (whole genome sequencing where available). There are additional cases with partial molecular characterization and/or sequencing data available, making this an informative genomic dataset."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "programmatic source code"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 75882
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "e7d481ee272c664b75e54a304f6c7b78"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Python script implementation of ETL process"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/etl/target/c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "output schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 161683
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "9324758960aa2492d80291594e2f11db"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON schema representation of YAML C3DC model schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/schema/schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "C3DC Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 202535
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "f6195d07f941fc68259ef8bbfe580068"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing tabular source-to-destination mappings and transformations. Transformed by mapping unpivoter script into JSON format for input into ETL script."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000468.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 102091
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "e2e232985d5ea8c5ff2ebf592c1c36b6"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/etl/target/transformations/phs000468.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_OS_ClinicalData_Discovery_20210520.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 23010
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "5d5abb085b7bc575002e79046f09ec65"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "s3://cds-447-target-c3dc/TARGET-OS_clinicalData_PUBLIC_20220211/TARGET_OS_ClinicalData_Discovery_20210520.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/12871718-823a-4d0a-9db2-0a59444a3981"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_OS_ClinicalData_Validation_20211108.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 46031
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "e67bcdd07a847fc32bcd2a953a45113b"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "s3://cds-447-target-c3dc/TARGET-OS_clinicalData_PUBLIC_20220211/TARGET_OS_ClinicalData_Validation_20211108.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/113619a6-c3fe-4714-b128-5030abe46e62"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.participant_id",
+                    "source_field": "TARGET USI",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.sex_at_birth",
+                    "source_field": "Gender",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Female",
+                            "new_value": "Female"
+                        },
+                        {
+                            "old_value": "Male",
+                            "new_value": "Male"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.race",
+                    "source_field": "[Race, Ethnicity]",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "Unknown;Hispanic or Latino",
+                            "new_value": [
+                                "Hispanic or Latino"
+                            ]
+                        },
+                        {
+                            "old_value": "Unknown;Not Hispanic or Latino",
+                            "new_value": [
+                                "Unknown"
+                            ]
+                        },
+                        {
+                            "old_value": "Unknown;Unknown",
+                            "new_value": [
+                                "Unknown"
+                            ]
+                        },
+                        {
+                            "old_value": "*",
+                            "new_value": "{race}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.disease_phase",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Initial Diagnosis"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_classification_system",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "ICD-O-3.2"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_basis",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.age_at_diagnosis",
+                    "source_field": "Age at Diagnosis in Days",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_t",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_n",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_m",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_comment",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "999 : Unknown, to be completed later",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "9180/3 : Osteosarcoma, NOS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.toronto_childhood_cancer_staging",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_grade",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "Specific tumor site",
+                    "type_group_index": "1",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "Acetabulum",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Arm NOS",
+                            "new_value": "C76.4 : Arm, NOS"
+                        },
+                        {
+                            "old_value": "Femur",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Fibula",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Fibular head",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Foot NOS",
+                            "new_value": "C76.5 : Foot, NOS"
+                        },
+                        {
+                            "old_value": "Humerus",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "Ilium",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Jaw",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "Leg NOS",
+                            "new_value": "C76.5 : Lower limb, NOS"
+                        },
+                        {
+                            "old_value": "Pelvis",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "post-auricular region",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "Pubic Ramus",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Radius",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "Ribs",
+                            "new_value": "C41.3 : Rib, sternum, clavicle and associated joints"
+                        },
+                        {
+                            "old_value": "Sacrum",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Sacrum  ",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Skull",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "Tibia",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Ulna",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Primary"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "Metastasis site",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Bone",
+                            "new_value": "C41.9 : Bone, NOS"
+                        },
+                        {
+                            "old_value": "Bone and lung",
+                            "new_value": "C41.9 : Bone, NOS"
+                        },
+                        {
+                            "old_value": "Bone only",
+                            "new_value": "C41.9 : Bone, NOS"
+                        },
+                        {
+                            "old_value": "Left femur, tibia",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Lung only",
+                            "new_value": "C34.9 : Lung, NOS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Metastatic"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "Metastasis site",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Bone and lung",
+                            "new_value": "C34.9 : Lung, NOS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Metastatic"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.survival_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.last_known_survival_status",
+                    "source_field": "Vital Status",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "Alive",
+                            "new_value": "Alive"
+                        },
+                        {
+                            "old_value": "Dead",
+                            "new_value": "Dead"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.age_at_last_known_survival_status",
+                    "source_field": "[Age at Diagnosis in Days, Overall Survival Time in Days]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.event_free_survival_status",
+                    "source_field": "First Event",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "None",
+                            "new_value": "Censored"
+                        },
+                        {
+                            "old_value": "Relapse",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Censored",
+                            "new_value": "Censored"
+                        },
+                        {
+                            "old_value": "Death",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Death without Remission",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Presented With Mets",
+                            "new_value": "Unknown"
+                        },
+                        {
+                            "old_value": "Progression",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Second Malignant Neoplasm",
+                            "new_value": "Not Censored"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.first_event",
+                    "source_field": "First Event",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "None",
+                            "new_value": "Not Applicable"
+                        },
+                        {
+                            "old_value": "Relapse",
+                            "new_value": "Relapse"
+                        },
+                        {
+                            "old_value": "Censored",
+                            "new_value": "Not Applicable"
+                        },
+                        {
+                            "old_value": "Death",
+                            "new_value": "Death"
+                        },
+                        {
+                            "old_value": "Death without Remission",
+                            "new_value": "Death"
+                        },
+                        {
+                            "old_value": "Presented With Mets",
+                            "new_value": "Unknown"
+                        },
+                        {
+                            "old_value": "Progression",
+                            "new_value": "Progression"
+                        },
+                        {
+                            "old_value": "Second Malignant Neoplasm",
+                            "new_value": "Second Malignant Neoplasm"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.age_at_event_free_survival_status",
+                    "source_field": "[Age at Diagnosis in Days, Event Free Survival Time in Days]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.cause_of_death",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_start",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_end",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_type",
+                    "source_field": "Definitive Surgery",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Amputation",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Amputation ",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Amputation and hemipvelvectomy",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Limb sparing",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Limb Sparing",
+                            "new_value": "Surgical Procedure"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_agent",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": [
+                                "Not Reported"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "phs000468_validation",
+            "mappings": [
+                {
+                    "output_field": "study.study_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000468"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.dbgap_accession",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000468"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET OS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.consent",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "DS-PEDCR"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.consent_number",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 1
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.external_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs000468"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "There are 93 fully characterized patient cases that make up the TARGET OS dataset, each with gene expression, tumor and paired normal copy number analyses, methylation, miRNA profiles, along with comprehensive next-generation sequencing to include mRNA-seq and exome sequencing (whole genome sequencing where available). There are additional cases with partial molecular characterization and/or sequencing data available, making this an informative genomic dataset."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "programmatic source code"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 75882
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "e7d481ee272c664b75e54a304f6c7b78"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Python script implementation of ETL process"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/etl/target/c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "output schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 161683
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "9324758960aa2492d80291594e2f11db"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON schema representation of YAML C3DC model schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/schema/schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "C3DC Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 202535
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "f6195d07f941fc68259ef8bbfe580068"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing tabular source-to-destination mappings and transformations. Transformed by mapping unpivoter script into JSON format for input into ETL script."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs000468.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 102091
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "e2e232985d5ea8c5ff2ebf592c1c36b6"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241004.1/etl/target/transformations/phs000468.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_OS_ClinicalData_Discovery_20210520.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 23010
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "5d5abb085b7bc575002e79046f09ec65"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "s3://cds-447-target-c3dc/TARGET-OS_clinicalData_PUBLIC_20220211/TARGET_OS_ClinicalData_Discovery_20210520.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/12871718-823a-4d0a-9db2-0a59444a3981"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "TARGET_OS_ClinicalData_Validation_20211108.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 46031
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "e67bcdd07a847fc32bcd2a953a45113b"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "s3://cds-447-target-c3dc/TARGET-OS_clinicalData_PUBLIC_20220211/TARGET_OS_ClinicalData_Validation_20211108.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "6",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "dg.4DFC/113619a6-c3fe-4714-b128-5030abe46e62"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.participant_id",
+                    "source_field": "TARGET USI",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.sex_at_birth",
+                    "source_field": "Gender",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Female",
+                            "new_value": "Female"
+                        },
+                        {
+                            "old_value": "Male",
+                            "new_value": "Male"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.race",
+                    "source_field": "[Race, Ethnicity]",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "Unknown;Hispanic or Latino",
+                            "new_value": [
+                                "Hispanic or Latino"
+                            ]
+                        },
+                        {
+                            "old_value": "Unknown;Not Hispanic or Latino",
+                            "new_value": [
+                                "Unknown"
+                            ]
+                        },
+                        {
+                            "old_value": "Unknown;Unknown",
+                            "new_value": [
+                                "Unknown"
+                            ]
+                        },
+                        {
+                            "old_value": "*",
+                            "new_value": "{race}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.disease_phase",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Initial Diagnosis"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_classification_system",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "ICD-O-3.2"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_basis",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.age_at_diagnosis",
+                    "source_field": "Age at Diagnosis in Days",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_t",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_n",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_m",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_comment",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "999 : Unknown, to be completed later",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "9180/3 : Osteosarcoma, NOS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.toronto_childhood_cancer_staging",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_grade",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "Specific tumor site",
+                    "type_group_index": "1",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "Acetabulum",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Arm NOS",
+                            "new_value": "C76.4 : Arm, NOS"
+                        },
+                        {
+                            "old_value": "Femur",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Fibula",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Fibular head",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Foot NOS",
+                            "new_value": "C76.5 : Foot, NOS"
+                        },
+                        {
+                            "old_value": "Humerus",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "Ilium",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Jaw",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "Leg NOS",
+                            "new_value": "C76.5 : Lower limb, NOS"
+                        },
+                        {
+                            "old_value": "Pelvis",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "post-auricular region",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "Pubic Ramus",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Radius",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "Ribs",
+                            "new_value": "C41.3 : Rib, sternum, clavicle and associated joints"
+                        },
+                        {
+                            "old_value": "Sacrum",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Sacrum  ",
+                            "new_value": "C76.3 : Pelvis, NOS"
+                        },
+                        {
+                            "old_value": "Skull",
+                            "new_value": "C41.0 : Bones of skull and face and associated joints"
+                        },
+                        {
+                            "old_value": "Tibia",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Ulna",
+                            "new_value": "C40.0 : Long bones of upper limb, scapula and associated joints"
+                        },
+                        {
+                            "old_value": "",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Primary"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "Metastasis site",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Bone",
+                            "new_value": "C41.9 : Bone, NOS"
+                        },
+                        {
+                            "old_value": "Bone and lung",
+                            "new_value": "C41.9 : Bone, NOS"
+                        },
+                        {
+                            "old_value": "Bone only",
+                            "new_value": "C41.9 : Bone, NOS"
+                        },
+                        {
+                            "old_value": "Left femur, tibia",
+                            "new_value": "C40.2 : Long bones of lower limb and associated joints"
+                        },
+                        {
+                            "old_value": "Lung only",
+                            "new_value": "C34.9 : Lung, NOS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Metastatic"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "Metastasis site",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Bone and lung",
+                            "new_value": "C34.9 : Lung, NOS"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Metastatic"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.survival_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.last_known_survival_status",
+                    "source_field": "Vital Status",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "Alive",
+                            "new_value": "Alive"
+                        },
+                        {
+                            "old_value": "Dead",
+                            "new_value": "Dead"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.age_at_last_known_survival_status",
+                    "source_field": "[Age at Diagnosis in Days, Overall Survival Time in Days]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.event_free_survival_status",
+                    "source_field": "First Event",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "None",
+                            "new_value": "Censored"
+                        },
+                        {
+                            "old_value": "Relapse",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Censored",
+                            "new_value": "Censored"
+                        },
+                        {
+                            "old_value": "Death",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Death without Remission",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Presented With Mets",
+                            "new_value": "Unknown"
+                        },
+                        {
+                            "old_value": "Progression",
+                            "new_value": "Not Censored"
+                        },
+                        {
+                            "old_value": "Second Malignant Neoplasm",
+                            "new_value": "Not Censored"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.first_event",
+                    "source_field": "First Event",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "None",
+                            "new_value": "Not Applicable"
+                        },
+                        {
+                            "old_value": "Relapse",
+                            "new_value": "Relapse"
+                        },
+                        {
+                            "old_value": "Censored",
+                            "new_value": "Not Applicable"
+                        },
+                        {
+                            "old_value": "Death",
+                            "new_value": "Death"
+                        },
+                        {
+                            "old_value": "Death without Remission",
+                            "new_value": "Death"
+                        },
+                        {
+                            "old_value": "Presented With Mets",
+                            "new_value": "Unknown"
+                        },
+                        {
+                            "old_value": "Progression",
+                            "new_value": "Progression"
+                        },
+                        {
+                            "old_value": "Second Malignant Neoplasm",
+                            "new_value": "Second Malignant Neoplasm"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.age_at_event_free_survival_status",
+                    "source_field": "[Age at Diagnosis in Days, Event Free Survival Time in Days]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{sum}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.cause_of_death",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_start",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_end",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_type",
+                    "source_field": "Definitive Surgery",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Amputation",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Amputation ",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Amputation and hemipvelvectomy",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Limb sparing",
+                            "new_value": "Surgical Procedure"
+                        },
+                        {
+                            "old_value": "Limb Sparing",
+                            "new_value": "Surgical Procedure"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_agent",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": [
+                                "Not Reported"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
