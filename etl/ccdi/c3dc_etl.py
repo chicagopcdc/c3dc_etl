@@ -933,8 +933,6 @@ class C3dcEtl:
                             addends.append(None)
                         else:
                             addend = float(addend)
-                            # TODO: fixme
-                            addends.append(addend if not addend.is_integer() else round(addend))
                     new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 new_vals[i] = new_val
 
@@ -1204,7 +1202,7 @@ class C3dcEtl:
 
             age_at_lkss: int = round(float(survival[C3dcEtl.AGE_AT_LKSS_FIELD]))
             age_at_lkss_latest = round(float(survival_latest[C3dcEtl.AGE_AT_LKSS_FIELD]))
-            if age_at_lkss > age_at_lkss_latest:
+            if age_at_lkss >= age_at_lkss_latest:
                 survival_latest = survival
 
         return survival_latest
