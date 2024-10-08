@@ -103,6 +103,8 @@ class SchemaCreator:
         'SCHEMA_ROOT_NODE',
         'SCHEMA_ROOT_URL'
     )
+    IGNORED_PV_PREFIXES: tuple[str, ...] = ('[---- ', )
+    IGNORED_PV_SUFFIXES: tuple[str, ...] = (' ----]', )
 
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
@@ -156,7 +158,7 @@ class SchemaCreator:
         download_url: str
         download_path: str
         for download_url, download_path in source_files.items():
-            _logger.debug('Downloading %s to file %s', download_url, download_path)
+            _logger.info('Downloading "%s" to file "%s"', download_url, download_path)
 
             if not (
                 os.path.exists(download_path) and
@@ -169,14 +171,14 @@ class SchemaCreator:
         """ Convert downloaded source files from yaml to json """
         source_file_path_yaml: str
         source_file_path_json: str
-        _logger.debug('Converting source files to json')
+        _logger.info('Converting source files to json')
         if not os.path.exists(self._nodes_source_file) or not os.path.exists(self._props_source_file):
-            _logger.debug('Source file(s) not found, downloading')
+            _logger.info('Source file(s) not found, downloading')
             self.download_source_files()
 
         for source_file_path_yaml in (self._nodes_source_file, self._props_source_file):
             source_file_path_json = str(pathlib.Path(source_file_path_yaml).with_suffix('.json'))
-            _logger.debug('Converting source file %s and saving as %s', source_file_path_yaml, source_file_path_json)
+            _logger.info('Converting source file "%s" and saving as "%s"', source_file_path_yaml, source_file_path_json)
             YamlJsonConverter.convert(source_file_path_yaml, source_file_path_json)
 
     def save_schema_to_file(self) -> None:
@@ -186,7 +188,7 @@ class SchemaCreator:
             self.build_schema()
         if not self._schema_file_path:
             raise RuntimeError('Schema file path not specified')
-        _logger.info('Saving schema to %s', self._schema_file_path)
+        _logger.info('Saving schema to "%s"', self._schema_file_path)
         if self._schema_file_path.lower().startswith('s3://'):
             buffer: bytes = json.dumps(self._schema, indent=2).encode('utf-8')
             c3dc_file_manager: C3dcFileManager = C3dcFileManager()
@@ -203,9 +205,9 @@ class SchemaCreator:
         self.download_source_files()
 
         # load yaml source files
-        _logger.debug('Loading yaml file %s', self._nodes_source_file)
+        _logger.info('Loading yaml file "%s"', self._nodes_source_file)
         self._nodes_source_data = YamlJsonConverter.load_yaml(self._nodes_source_file)
-        _logger.debug('Loading yaml file %s', self._props_source_file)
+        _logger.info('Loading yaml file "%s"', self._props_source_file)
         self._props_source_data = YamlJsonConverter.load_yaml(self._props_source_file)
 
         # build internal json source representations of properties, nodes, and relationships
@@ -226,6 +228,17 @@ class SchemaCreator:
         if unassigned_properties:
             _logger.warning('Properties not assigned to schema node: %s', unassigned_properties)
 
+        # summary log
+        node: str
+        node_items: dict[str, any]
+        _logger.info('Built %d schema nodes:', len(self._schema['$defs']))
+        for node, node_items in self._schema['$defs'].items():
+            _logger.info(
+                '\t"%s", %d properties (%d required)',
+                node,
+                len(node_items['properties']),
+                len(node_items.get('required', []))
+            )
         return self._schema
 
     def _build_schema_root(self) -> dict[str, any]:
@@ -282,7 +295,7 @@ class SchemaCreator:
 
     def _build_and_populate_node_schemas(self) -> dict[str, any]:
         """ Build and return json schema for source nodes """
-        _logger.debug('Building and populating node schemas')
+        _logger.info('Building and populating node schemas')
         self._schema_nodes.clear()
 
         # build individual node schemas
@@ -357,7 +370,7 @@ class SchemaCreator:
 
     def _build_and_populate_node_relationships(self) -> None:
         """ Build relationships (as properties) for all nodes """
-        _logger.debug('Building and populating node relationships')
+        _logger.info('Building and populating node relationships')
         rel_name: str
         rel_obj: dict[str, any]
         for rel_name, rel_obj in self._nodes_source_data['Relationships'].items():
@@ -418,7 +431,7 @@ class SchemaCreator:
 
     def _build_and_populate_property_schemas(self) -> dict[str, any]:
         """ Build and return json schema for source properties """
-        _logger.debug('Building and populating property schemas')
+        _logger.info('Building and populating property schemas')
         self._schema_props.clear()
         for prop_name, prop_obj in self._props_source_data['PropDefinitions'].items():
             self._schema_props[prop_name] = self._build_property_schema(prop_name.lower(), prop_obj)
@@ -445,13 +458,13 @@ class SchemaCreator:
             if name.startswith('age_at') or '_age_at_' in name:
                 schema['maximum'] = 54750 # 365 * 150
 
-        allowed_values: list[str] = self._get_property_allowed_values(name, obj)
-        if allowed_values:
+        permissible_values: list[str] = self._get_property_permissible_values(name, obj)
+        if permissible_values:
             if schema['type'] == 'array':
                 schema['uniqueItems'] = True
-                schema['items'] = {'type': 'string', 'enum': allowed_values}
+                schema['items'] = {'type': 'string', 'enum': permissible_values}
             else:
-                schema['enum'] = allowed_values
+                schema['enum'] = permissible_values
         return schema
 
     def _get_property_type(self, name: str, obj: dict[str, any]) -> str:
@@ -489,29 +502,33 @@ class SchemaCreator:
         _logger.critical(log_msg)
         raise RuntimeError(log_msg)
 
-    def _get_property_allowed_values(self, name: str, obj: dict[str, any]) -> list[str]:
-        """ Get list of allowed values for specified property """
+    def _get_property_permissible_values(self, name: str, obj: dict[str, any]) -> list[str]:
+        """ Get list of permissible values for specified property """
+        permissible_values: list[str] = []
         if 'Enum' in obj:
-            return list(obj['Enum'])
+            permissible_values = list(obj['Enum'])
+        elif (
+            'Type' in obj
+            and
+            isinstance(obj['Type'], dict)
+            and
+            obj['Type'].get('value_type', '') == 'list'
+            and
+            obj['Type'].get('item_type', [])
+        ):
+            permissible_values = list(obj['Type']['item_type'])
+            if len(permissible_values) != len(set(permissible_values)):
+                raise RuntimeError(f'YAML property "{name}" is but contains duplicate permissible values')
 
-        if 'Type' in obj and isinstance(obj['Type'], dict):
-            if 'Enum' in obj['Type']:
-                # skip section/category header entries that start with '[---- ' and end with ' ----]'
-                allowed_values: list[str] = [
-                    pv for pv in obj['Type']['Enum'] if not (pv.startswith('[---- ') and pv.endswith(' ----]'))
-                ]
-                if len(allowed_values) == len(set(allowed_values)):
-                    return allowed_values
-
-                raise RuntimeError(f'YAML property "{name}" is Enum but contains duplicate permissible values')
-
-            if obj['Type'].get('value_type') != 'list':
-                _logger.warning(
-                    'YAML property "%s" has complex "Type" property but "Type.value_type" not set to "list"',
-                    name
+        # skip section/category header entries that start with '[---- ' and end with ' ----]'
+        return [
+            pv for pv in permissible_values
+                if not (
+                    pv.startswith(SchemaCreator.IGNORED_PV_PREFIXES)
+                    and
+                    pv.endswith(SchemaCreator.IGNORED_PV_SUFFIXES)
                 )
-
-        return []
+        ]
 
 
 def main() -> None:
