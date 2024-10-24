@@ -5,6 +5,7 @@ import logging.config
 import os
 import pathlib
 import sys
+from typing import TextIO
 
 import dotenv
 import pytest
@@ -47,7 +48,7 @@ def test_adhoc() -> None:
 
 @pytest.mark.skip('test_is_number')
 def test_is_number() -> None:
-    """ test is_number """
+    """ test_is_number """
     _logger.info(test_is_number.__name__)
     values: dict[any, bool] = {
         '123': True,
@@ -63,13 +64,13 @@ def test_is_number() -> None:
     expected_status: bool
     for value, expected_status in values.items():
         is_num: bool = C3dcEtl.is_number(value)
-        logging.info('is_number: %s => %s', value, is_num)
+        _logger.info('is_number: %s => %s', value, is_num)
         assert is_num == expected_status
 
 
 @pytest.mark.skip('test_is_allowed_value')
 def test_is_allowed_value() -> None:
-    """ test is_allowed_value """
+    """ test_is_allowed_value """
     _logger.info(test_is_allowed_value.__name__)
     allowed_values: set[any] = {0, '1', '', None, 'test'}
     values: dict[any, bool] = {
@@ -86,7 +87,7 @@ def test_is_allowed_value() -> None:
     expected_status: bool
     for value, expected_status in values.items():
         is_num: bool = C3dcEtl.is_allowed_value(value, allowed_values)
-        logging.info('is_allowed_value: %s => %s', value, is_num)
+        _logger.info('is_allowed_value: %s => %s', value, is_num)
         assert is_num == expected_status
 
 
@@ -138,7 +139,7 @@ def test_is_replacement_match() -> None:
 
 @pytest.mark.skip('test_get_pluralized_node_name')
 def test_get_pluralized_node_name() -> None:
-    """ test get_pluralized_node_name """
+    """ test_get_pluralized_node_name """
     _logger.info(test_get_pluralized_node_name.__name__)
     singular_plural_names: dict[str, str] = {
         'diagnosis': 'diagnoses',
@@ -153,13 +154,31 @@ def test_get_pluralized_node_name() -> None:
     expected_plural_name: str
     for singular_name, expected_plural_name in singular_plural_names.items():
         plural_name:str = C3dcEtl.get_pluralized_node_name(singular_name)
-        logging.info('get_pluralized_node_name: %s => %s', singular_name, plural_name)
+        _logger.info('get_pluralized_node_name: %s => %s', singular_name, plural_name)
         assert plural_name == expected_plural_name
+
+
+@pytest.mark.skip('test_collate_form_data')
+def test_collate_form_data() -> None:
+    """ test_test_collate_form_data """
+    _logger.info(test_collate_form_data.__name__)
+    source_file_path: str = (
+        '/Users/schoi/Workspace/PED/PCDC/Projects/c3dc_etl/documents/source/20240815/Staging/MCI/phs002790/' +
+        'MCI_COG_clinical_JSON_v3/PBBUDW.json'
+    )
+    fp: TextIO
+    with open(source_file_path, encoding='utf-8') as fp:
+        obj: any = json.load(fp, object_pairs_hook=C3dcEtl.collate_form_data)
+        follow_up_forms: list[dict[str, any]] = [f for f in obj.get('forms', []) if f.get('form_id') == 'FOLLOW_UP']
+        assert follow_up_forms and len(follow_up_forms) == 1
+        follow_up_form: dict[str, any] = follow_up_forms[0]
+        assert follow_up_form and len(follow_up_form.get('data', [])) == 2
+        _logger.info('%d "FOLLOW_UP.data" elements found', len(follow_up_form.get('data', [])))
 
 
 @pytest.mark.skip('test_load_transformations')
 def test_load_transformations() -> None:
-    """ test load_transformations """
+    """ test_load_transformations """
     _logger.info(test_load_transformations.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
 
@@ -176,7 +195,7 @@ def test_load_transformations() -> None:
 
 @pytest.mark.skip('test_load_json_schema')
 def test_load_json_schema() -> None:
-    """ test load_json_schema """
+    """ test_load_json_schema """
     _logger.info(test_load_json_schema.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
 
@@ -188,7 +207,7 @@ def test_load_json_schema() -> None:
 
 @pytest.mark.skip('test_validate_json_etl_data')
 def test_validate_json_etl_data() -> None:
-    """ test validate_json_etl_data """
+    """ test_validate_json_etl_data """
     _logger.info(test_validate_json_etl_data.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
 
@@ -201,7 +220,7 @@ def test_validate_json_etl_data() -> None:
 
 @pytest.mark.skip('test_test_create_json_etl_files')
 def test_create_json_etl_files() -> None:
-    """ test create_json_etl_files """
+    """ test_create_json_etl_files """
     _logger.info(test_create_json_etl_files.__name__)
     c3dc_etl: C3dcEtl = C3dcEtl(_config)
     c3dc_file_manager: C3dcFileManager = C3dcFileManager()

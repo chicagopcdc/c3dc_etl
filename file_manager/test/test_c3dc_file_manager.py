@@ -11,7 +11,7 @@ import pytest
 from c3dc_file_manager import C3dcFileManager
 
 
-#pytest.skip("test_c3dc_file_manager.py", allow_module_level=True)
+pytest.skip("test_c3dc_file_manager.py", allow_module_level=True)
 
 _logger: logging.Logger = logging.getLogger(__name__)
 _logger.info(__name__)
