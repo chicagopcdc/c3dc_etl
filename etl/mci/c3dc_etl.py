@@ -244,6 +244,24 @@ class C3dcEtl:
         # participant => participants, etc
         return f'{node}s'
 
+    @staticmethod
+    def collate_form_data(ordered_pairs: list[tuple[any, any]]) -> any:
+        """
+        Callback for object_pairs_hook arg of json.load and json.loads. Collate form 'data' elements into
+        lists to avoid default behavior that only retains last element value when duplicates present
+        """
+        obj: dict[str, any] = {}
+        key: str
+        val: any
+        for key, val in ordered_pairs:
+            if key == 'data' and isinstance(val, list) and any(k == 'form_id' for k, _ in ordered_pairs):
+                # store 'data' element as list of lists, usually single-element except when dupes present
+                obj[key] = obj.get(key, [])
+                obj[key].append(val)
+            else:
+                obj[key] = val
+        return obj
+
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
         # enumerate each per-study transformation config object in local config
@@ -654,6 +672,87 @@ class C3dcEtl:
             raise RuntimeError(f'No "{node}" mapping records loaded')
         return mappings
 
+    def _get_primary_follow_up(self, upi: str, follow_ups: list[list[dict[str, any]]]) -> list[dict[str, any]]:
+        """ Return first/earliest 'Dead' or last/latest 'Alive' follow-up in list of data lists """
+        if not follow_ups:
+            raise RuntimeError(f'Unable to determine primary follow-up for subject "{upi}", no follow-ups provided')
+
+        # return first/earliest 'Dead' follow up if any
+        dead_follow_ups: list[list[dict[str, any]]] = [
+            dl for dl in follow_ups if any(
+                (d.get('form_field_id') or '').upper().strip() == 'PT_VST'
+                and
+                (d.get('value') or '').upper().strip() == 'DEAD'
+                for d in dl
+            )
+        ]
+        sorted_dead_follow_ups: list[list[dict[str, any]]] = sorted(
+            dead_follow_ups,
+            key=lambda dl: max(
+                (int(d.get('value', 0)) for d in dl if (d.get('form_field_id') or '').upper().strip() == 'PT_FU_BEGDT'),
+                default=0
+            ),
+            reverse=False
+        )
+        if sorted_dead_follow_ups:
+            return sorted_dead_follow_ups[0]
+
+        # return last/latest 'Alive' follow up if any
+        alive_follow_ups: list[list[dict[str, any]]] = [
+            dl for dl in follow_ups if any(
+                (d.get('form_field_id') or '').upper().strip() == 'PT_VST'
+                and
+                (d.get('value') or '').upper().strip() == 'ALIVE'
+                for d in dl
+            )
+        ]
+        sorted_alive_follow_ups: list[list[dict[str, any]]] = sorted(
+            alive_follow_ups,
+            key=lambda dl: max(
+                (int(d.get('value', 0)) for d in dl if (d.get('form_field_id') or '').upper().strip() == 'PT_FU_BEGDT'),
+                default=0
+            ),
+            reverse=True
+        )
+        if sorted_alive_follow_ups:
+            return sorted_alive_follow_ups[0]
+
+        # no follow ups with vital status 'Dead' or 'Alive', source data inspection and/or code adjustment is needed
+        raise RuntimeError(
+            f'Unable to determine primary follow-up for subject "{upi}", no follow-ups ' +
+            'provided having vital status ("PT_VST") "Alive" or "Dead"')
+
+    def _get_primary_source_form_data_list(self, upi: str, form: dict[str, any]) -> list[dict[str, any]]:
+        """ Find and return highest priority 'data' element of specified source record form object """
+        data_lists: list[list[dict[str, any]]] = form.get('data', [])
+        if not data_lists:
+            raise RuntimeError(f'Form "data" element for subject "{upi}" is missing or empty: {form}')
+        if len(data_lists) == 1:
+            return data_lists[0]
+
+        match form.get('form_id'):
+            case 'FOLLOW_UP':
+                return self._get_primary_follow_up(upi, data_lists)
+            case _:
+                # form has multiple (duplicate in original source JSON) 'data' elements and determination of primary
+                # element hasn't been implemented (only 'FOLLOW_UP' handled for now), but don't abort processing unless
+                # form has one or more field(s) that need to be retrieved and therefore are mapped
+                form_field_ids: set[str] = {d.get('form_field_id') for dl in data_lists for d in dl}
+                if form_field_ids.intersection(self._source_field_output_types.keys()):
+                    raise RuntimeError(
+                        f'Unable to determine primary data list for form "{form.get("form_id")}" containing multiple ' +
+                        f'"data" elements for subject "{upi}"'
+                    )
+                _logger.warning(
+                    (
+                        'Unable to determine primary data list for form "%s" containing multiple "data" elements ' +
+                        'for subject "%s", returning first data list in source file'
+                    ),
+                    form.get('form_id'),
+                    upi
+                )
+                return data_lists[0]
+
     def _load_source_data(
         self,
         study_id: str,
@@ -686,8 +785,11 @@ class C3dcEtl:
             processed += 1
             if processed % 100 == 0:
                 _logger.info('%d of %d source file(s) processed', processed, len(source_file_locations))
-            # construct skinny object from raw source data limited to source fields specified in mappings
-            obj: any = json.loads(self._c3dc_file_manager.read_file(source_file_location).decode('utf-8'))
+            # construct minimal object from raw source data limited to source fields specified in mappings
+            obj: any = json.loads(
+                self._c3dc_file_manager.read_file(source_file_location).decode('utf-8'),
+                object_pairs_hook=C3dcEtl.collate_form_data
+            )
             rec = {'source_file_name': source_file_name, 'manifest': manifests.get(source_file_name, {})}
 
             source_field_name: str
@@ -702,10 +804,15 @@ class C3dcEtl:
                     raise RuntimeError(msg)
                 rec[source_field_name] = obj.get(source_field_name)
 
+            if 'upi' not in rec:
+                raise RuntimeError(f'Subject identifier ("upi") not specified for source file "{source_file_location}"')
+
             # get properties such as DEMOGRAPHY=>DM_BRTHDAT that are defined within forms
             form_id: str
             data_fields: list[dict[str, any]]
-            for form_id, data_fields in {f.get('form_id'):f.get('data', {}) for f in obj.get('forms', [])}.items():
+            for form_id, data_fields in {
+                f.get('form_id'):self._get_primary_source_form_data_list(rec['upi'], f) for f in obj.get('forms', [])
+            }.items():
                 data_field: dict[str, any]
                 for data_field in [
                     d for d in data_fields
