@@ -516,7 +516,10 @@ class C3dcEtl:
 
     def _load_source_data(self, study_id: str, transformation: dict[str, any]) -> any:
         """ Load raw ETL data from source file specified in config """
-        raw_etl_data_tbl: any = self._get_petl_table_from_source_file(transformation.get('source_file_path'))
+        raw_etl_data_tbl: any = self._get_petl_table_from_source_file(
+            transformation.get('source_file_path'),
+            transformation.get('source_file_sheet')
+        )
 
         # add row numbers for logging/auditing
         raw_etl_data_tbl = petl.addrownumbers(raw_etl_data_tbl, start=2, field='source_file_row_num')

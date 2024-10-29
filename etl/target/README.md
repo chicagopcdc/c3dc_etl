@@ -95,6 +95,8 @@ as a starting point and customized as needed.
       For example `phs000467`.
     * `source_file_path`: Required. String specifying the location of the file containing the source data. Can be a
       local path or AWS S3 URL. For example `/path/to/source/file` or `s3://bucket/path/to/source/file`.
+    * `source_file_sheet`: Optional. String specifying the name of the sheet containing the source data if the source
+      file is an Excel (XLSX) workbook. The first sheet in the workbook will be used By default if not provided.
     * `output_file_path`: Required. String specifying the location of the file where the harmonized data will be
       saved. Can be a local path or AWS S3 URL. For example `/path/to/harmonized/data/file` or
       `s3://bucket/path/to/harmonized/data/file`.
