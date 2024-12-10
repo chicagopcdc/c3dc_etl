@@ -156,7 +156,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 75957
+                            "new_value": 77932
                         }
                     ]
                 },
@@ -168,7 +168,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "b2872e00d5c07bd80e56e7e6c015d7e2"
+                            "new_value": "573882a10c5fe3ce47fe4aba2fff48c6"
                         }
                     ]
                 },
@@ -240,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 161683
+                            "new_value": 379848
                         }
                     ]
                 },
@@ -252,7 +252,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "02b9c0979f87de1212fbe544d0ab1952"
+                            "new_value": "486a9c810e794a0bb41ced79f581a791"
                         }
                     ]
                 },
@@ -324,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 210058
+                            "new_value": 352581
                         }
                     ]
                 },
@@ -336,7 +336,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "9d1f2ac589ae3f820f7b6b93289aeac6"
+                            "new_value": "82ea073ba0bee27fd81daebfd6f81c9f"
                         }
                     ]
                 },
@@ -408,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 102091
+                            "new_value": 104361
                         }
                     ]
                 },
@@ -420,7 +420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "ac5f94ebc0ddcee666359522cba995a3"
+                            "new_value": "bcf9b6f4171251bce122cc0ad4f8e87b"
                         }
                     ]
                 },
@@ -761,6 +761,18 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.year_of_diagnosis",
+                    "source_field": "Year of Diagnosis",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.tumor_stage_clinical_t",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -824,7 +836,7 @@
                     "output_field": "diagnosis.toronto_childhood_cancer_staging",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -836,11 +848,31 @@
                     "output_field": "diagnosis.tumor_grade",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
                             "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.laterality",
+                    "source_field": "Specific tumor side",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "Left",
+                            "new_value": "Left"
+                        },
+                        {
+                            "old_value": "Right",
+                            "new_value": "Right"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Unknown"
                         }
                     ]
                 },
@@ -940,7 +972,7 @@
                     "output_field": "diagnosis.tumor_classification",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1152,7 +1184,7 @@
                     "output_field": "survival.cause_of_death",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1176,7 +1208,7 @@
                     "output_field": "treatment.age_at_treatment_start",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": -999,
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1188,7 +1220,7 @@
                     "output_field": "treatment.age_at_treatment_end",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": -999,
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1228,9 +1260,7 @@
                     "output_field": "treatment.treatment_agent",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -1397,7 +1427,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 75957
+                            "new_value": 77932
                         }
                     ]
                 },
@@ -1409,7 +1439,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "b2872e00d5c07bd80e56e7e6c015d7e2"
+                            "new_value": "573882a10c5fe3ce47fe4aba2fff48c6"
                         }
                     ]
                 },
@@ -1481,7 +1511,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 161683
+                            "new_value": 379848
                         }
                     ]
                 },
@@ -1493,7 +1523,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "02b9c0979f87de1212fbe544d0ab1952"
+                            "new_value": "486a9c810e794a0bb41ced79f581a791"
                         }
                     ]
                 },
@@ -1565,7 +1595,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 210058
+                            "new_value": 352581
                         }
                     ]
                 },
@@ -1577,7 +1607,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "9d1f2ac589ae3f820f7b6b93289aeac6"
+                            "new_value": "82ea073ba0bee27fd81daebfd6f81c9f"
                         }
                     ]
                 },
@@ -1649,7 +1679,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 102091
+                            "new_value": 104361
                         }
                     ]
                 },
@@ -1661,7 +1691,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "ac5f94ebc0ddcee666359522cba995a3"
+                            "new_value": "bcf9b6f4171251bce122cc0ad4f8e87b"
                         }
                     ]
                 },
@@ -2002,6 +2032,18 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.year_of_diagnosis",
+                    "source_field": "Year of Diagnosis",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.tumor_stage_clinical_t",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -2065,7 +2107,7 @@
                     "output_field": "diagnosis.toronto_childhood_cancer_staging",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2077,11 +2119,31 @@
                     "output_field": "diagnosis.tumor_grade",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
                             "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.laterality",
+                    "source_field": "Specific tumor side",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "Left",
+                            "new_value": "Left"
+                        },
+                        {
+                            "old_value": "Right",
+                            "new_value": "Right"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Unknown"
                         }
                     ]
                 },
@@ -2181,7 +2243,7 @@
                     "output_field": "diagnosis.tumor_classification",
                     "source_field": "[string_literal]",
                     "type_group_index": "1",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2393,7 +2455,7 @@
                     "output_field": "survival.cause_of_death",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2417,7 +2479,7 @@
                     "output_field": "treatment.age_at_treatment_start",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": -999,
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2429,7 +2491,7 @@
                     "output_field": "treatment.age_at_treatment_end",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": -999,
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
@@ -2469,9 +2531,7 @@
                     "output_field": "treatment.treatment_agent",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": [
-                        "Not Reported"
-                    ],
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",

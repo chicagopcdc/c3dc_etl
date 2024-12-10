@@ -214,20 +214,6 @@ class C3dcEtl:
                 return False
         return True
 
-    @staticmethod
-    def get_pluralized_node_name(node: str) -> str:
-        """ Get pluralized form of node name e.g. for output record set name """
-        if node in ['diagnosis']:
-            # pluralized subject collection property name is same as singular form
-            return 'diagnoses'
-
-        if node[-1] == 'y':
-            # study => studies
-            return node[:-1] + 'ies'
-
-        # participant => participants, etc
-        return f'{node}s'
-
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
         # enumerate each per-study transformation config object in local config
@@ -451,16 +437,17 @@ class C3dcEtl:
                 study_id
             )
             return True
-        except ValidationError:
-            _logger.warning(
+        except jsonschema.exceptions.ValidationError as verr:
+            _logger.error(
                 'ETL data for transformation %s (study %s) failed schema validation:',
                 transformation_name,
                 study_id
             )
-            validator: jsonschema.Validator = jsonschema.Draft7Validator(self._json_schema)
+            _logger.error(verr)
+            validator: jsonschema.Validator = jsonschema.Draft202012Validator(self._json_schema)
             validation_error: ValidationError
             for validation_error in validator.iter_errors(self._json_etl_data_sets[study_id][transformation_name]):
-                _logger.warning('%s: %s', validation_error.json_path, validation_error.message)
+                _logger.error('%s: %s', validation_error.json_path, validation_error.message)
         return False
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
@@ -907,7 +894,7 @@ class C3dcEtl:
                     # source field should contain list of source fields to be added together
                     if not (source_field.startswith('[') and source_field.endswith(']')):
                         msg = (
-                            f'Invalid source field "{source_field}" for "sum" macro in row ' +
+                            f'Invalid source field "{source_field}" for "{macro_text.lower()}" macro in row ' +
                             f'{source_record["source_file_row_num"]}, must be comma-delimited ' +
                             '(csv) string within square brackets, e.g. "[field1, field2]"'
                         )
@@ -1121,7 +1108,7 @@ class C3dcEtl:
                         if allowed_values and not C3dcEtl.is_allowed_value(converted_source_value, allowed_values):
                             _logger.warning(
                                 'Passthrough source value "%s" not allowed for output field "%s" (source field "%s")',
-                                converted_source_value,
+                                converted_source_value if converted_source_value is not None else '',
                                 output_field,
                                 source_field
                             )
@@ -1298,6 +1285,8 @@ class C3dcEtl:
 
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
             C3dcEtlModelNode.DIAGNOSIS: {},
+            C3dcEtlModelNode.GENETIC_ANALYSIS: {},
+            C3dcEtlModelNode.LABORATORY_TEST: {},
             C3dcEtlModelNode.PARTICIPANT: {},
             C3dcEtlModelNode.REFERENCE_FILE: {},
             C3dcEtlModelNode.STUDY: {},
@@ -1388,6 +1377,8 @@ class C3dcEtl:
 
             node_observations: dict[str, list[dict[str, any]]] = {
                 C3dcEtlModelNode.DIAGNOSIS: [],
+                C3dcEtlModelNode.GENETIC_ANALYSIS: [],
+                C3dcEtlModelNode.LABORATORY_TEST: [],
                 C3dcEtlModelNode.SURVIVAL: [],
                 C3dcEtlModelNode.TREATMENT: [],
                 C3dcEtlModelNode.TREATMENT_RESPONSE: []
@@ -1399,7 +1390,7 @@ class C3dcEtl:
 
                 src_recs: list[dict[str, any]] = [
                     r for r in nodes[node]['source_records']
-                        if r.get(nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']) == participant_id
+                        if str(r.get(nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full'])).strip() == participant_id
                 ]
                 if not src_recs:
                     continue
@@ -1459,7 +1450,7 @@ class C3dcEtl:
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
         self._json_etl_data_sets[study_id][transformation.get('name')] = {
-            C3dcEtl.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
+            C3dcEtlModelNode.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
         }
 
         _logger.info(

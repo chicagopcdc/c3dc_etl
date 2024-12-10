@@ -231,20 +231,6 @@ class C3dcEtl:
         return True
 
     @staticmethod
-    def get_pluralized_node_name(node: str) -> str:
-        """ Get pluralized form of node name e.g. for output record set name """
-        if node in ['diagnosis']:
-            # pluralized subject collection property name is same as singular form
-            return 'diagnoses'
-
-        if node[-1] == 'y':
-            # study => studies
-            return node[:-1] + 'ies'
-
-        # participant => participants, etc
-        return f'{node}s'
-
-    @staticmethod
     def collate_form_data(ordered_pairs: list[tuple[any, any]]) -> any:
         """
         Callback for object_pairs_hook arg of json.load and json.loads. Collate form 'data' elements into
@@ -541,16 +527,17 @@ class C3dcEtl:
                 study_id
             )
             return True
-        except ValidationError:
-            _logger.warning(
+        except jsonschema.exceptions.ValidationError as verr:
+            _logger.error(
                 'ETL data for transformation %s (study %s) failed schema validation:',
                 transformation_name,
                 study_id
             )
-            validator: jsonschema.Validator = jsonschema.Draft7Validator(self._json_schema)
+            _logger.error(verr)
+            validator: jsonschema.Validator = jsonschema.Draft202012Validator(self._json_schema)
             validation_error: ValidationError
             for validation_error in validator.iter_errors(self._json_etl_data_sets[study_id][transformation_name]):
-                _logger.warning('%s: %s', validation_error.json_path, validation_error.message)
+                _logger.error('%s: %s', validation_error.json_path, validation_error.message)
         return False
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
@@ -1355,6 +1342,7 @@ class C3dcEtl:
         {field:source_field_name} => substitute with specified record's source field value, e.g. {field:TARGET USI}
         """
         msg: str
+        output_field: str = mapping.get('output_field')
         output_value: any = None
 
         source_field: str = mapping.get('source_field').strip(' \'"')
@@ -1390,7 +1378,6 @@ class C3dcEtl:
                     new_val = new_val.replace(macro, source_record[macro_field])
                 elif macro_text.lower() == 'find_enum_value':
                     # source field will be code such as '8000/0' or 'C71.9' that can be found in output value enum
-                    output_field: str = mapping.get('output_field')
                     enum_value: any = self._get_json_schema_node_property_converted_value(
                         output_field,
                         self._json_schema_property_enum_code_values.get(output_field, {}).get(source_value)
@@ -1398,11 +1385,41 @@ class C3dcEtl:
                     if source_value and not enum_value:
                         _logger.warning('No enum value found for "%s" value code "%s"', source_field, source_value)
                     new_val = enum_value
+                elif macro_text.lower() == 'laterality':
+                    # source field should contain list of source fields to be added together
+                    if not (source_field.startswith('[') and source_field.endswith(']')):
+                        msg = (
+                            f'Invalid source field "{source_field}" for "{macro_text.lower()}" macro in source file ' +
+                            f'{source_record["source_file_name"]}, must be comma-delimited ' +
+                            '(csv) string within square brackets, e.g. "[field1, field2]"'
+                        )
+                        _logger.critical(msg)
+                        raise RuntimeError(msg)
+                    # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
+                    source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+                    laterality: str = default_value
+                    source_field_name: str
+                    for source_field_name in source_field_names:
+                        src_val: str = source_record.get(source_field_name)
+                        enum_value: any = self._get_json_schema_node_property_converted_value(
+                            output_field,
+                            src_val
+                        )
+                        if source_value and not enum_value:
+                            _logger.warning(
+                                'No enum value found for laterality source value "%s" (source field "%s")',
+                                src_val,
+                                source_field_name
+                            )
+                        if enum_value:
+                            laterality = enum_value
+                            break
+                    new_val = laterality
                 elif macro_text.lower() in ('sum', 'sum_abs_first'):
                     # source field should contain list of source fields to be added together
                     if not (source_field.startswith('[') and source_field.endswith(']')):
                         msg = (
-                            f'Invalid source field "{source_field}" for "sum" macro in source file ' +
+                            f'Invalid source field "{source_field}" for "{macro_text.lower()}" macro in source file ' +
                             f'{source_record["source_file_name"]}, must be comma-delimited ' +
                             '(csv) string within square brackets, e.g. "[field1, field2]"'
                         )
@@ -1670,7 +1687,7 @@ class C3dcEtl:
                             '"%s" not specified as allowed value (old_value) in transformation(s) for source field ' +
                             '"%s", source record "%s"'
                         ),
-                        source_value,
+                        source_value if source_value is not None else '',
                         source_field,
                         source_record.get('source_file_name')
                     )
@@ -1680,7 +1697,11 @@ class C3dcEtl:
                 allowed_values = self._get_allowed_values(mapping)
                 source_value_allowed = C3dcEtl.is_allowed_value(source_value, allowed_values)
                 if allowed_values and not source_value_allowed:
-                    _logger.info('value "%s" not allowed for source field "%s"', source_value, source_field)
+                    _logger.info(
+                        'value "%s" not allowed for source field "%s"',
+                        source_value if source_value is not None else '',
+                        source_field
+                    )
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
@@ -1920,7 +1941,11 @@ class C3dcEtl:
                 sub_src_rec: dict[str, any]
                 for sub_src_rec in self._build_sub_source_records(rec, nodes[node]) or [rec]:
                     harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
-                    if not harmonized_recs:
+                    if (
+                        not harmonized_recs
+                        and
+                        node not in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)
+                    ):
                         _logger.warning(
                             '%s (%s): Unable to build "%s" node for source record "%s"',
                             transformation.get('name'),
@@ -2034,7 +2059,7 @@ class C3dcEtl:
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
         self._json_etl_data_sets[study_id][transformation.get('name')] = {
-            C3dcEtl.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
+            C3dcEtlModelNode.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
         }
 
         _logger.info(

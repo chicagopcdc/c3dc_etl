@@ -98,7 +98,7 @@ class YamlJsonConverter:
     def save_json(input_data: any, output_file_path: str, output_encoding: str='utf-8') -> None:
         """ Save json content to specified output path """
         with open(output_file_path, 'w', encoding=output_encoding) as output_file:
-            json.dump(input_data, output_file, indent=2)
+            json.dump(input_data, output_file, indent=2, ensure_ascii=False)
 
     @staticmethod
     def convert(

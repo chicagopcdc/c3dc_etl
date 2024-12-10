@@ -16,6 +16,7 @@ import warnings
 import dotenv
 import jsonschema
 from jsonschema import ValidationError
+import jsonschema.exceptions
 import petl
 
 from c3dc_etl_model_node import C3dcEtlModelNode
@@ -87,6 +88,7 @@ class C3dcEtl:
     TYPE_NAME_CLASS_MAP: dict[str, type | list[type]] = {
         'array': list,
         'integer': int,
+        'number': float,
         'string': str
     }
     MULTIPLE_VALUE_DELIMITER: str = ';'
@@ -211,18 +213,18 @@ class C3dcEtl:
         return True
 
     @staticmethod
-    def get_pluralized_node_name(node: str) -> str:
-        """ Get pluralized form of node name e.g. for output record set name """
-        if node in ['diagnosis']:
-            # pluralized subject collection property name is same as singular form
-            return 'diagnoses'
-
-        if node[-1] == 'y':
-            # study => studies
-            return node[:-1] + 'ies'
-
-        # participant => participants, etc
-        return f'{node}s'
+    def is_macro_mapping(mapping: dict[str, any]) -> bool:
+        """ Determnine whether specified mapping uses macro replacement function """
+        return any(
+            r
+            and
+            isinstance(r.get('new_value'), str)
+            and
+            r.get('new_value').strip().startswith('{')
+            and
+            r.get('new_value').strip().endswith('}')
+            for r in mapping.get('replacement_values', [])
+        )
 
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
@@ -410,7 +412,7 @@ class C3dcEtl:
                     tmp_file.write(self._c3dc_file_manager.read_file(source_file_path))
                     tmp_file.flush()
                     tmp_file.close()
-                    tbl = petl.fromxlsx(tmp_file.name, sheet=xl_sheet_name)
+                    tbl = petl.fromxlsx(tmp_file.name, sheet=xl_sheet_name, data_only = True)
 
                     # reload from in-memory data because petl maintains association with table source file
                     # after delete, even if eager access methods (lookall, convertall, etc) are called
@@ -422,6 +424,9 @@ class C3dcEtl:
             raise RuntimeError(f'Unsupported source file type/extension: {source_file_path}')
         # remove columns without headers
         tbl = petl.cut(tbl, [h for h in petl.header(tbl) if (h or '').strip()])
+
+        # strip whitespace from header fields
+        tbl = petl.rename(tbl, dict((h, h.strip()) for h in petl.header(tbl)))
         return tbl
 
     def _generate_uuid(self) -> uuid.UUID:
@@ -494,16 +499,17 @@ class C3dcEtl:
                 study_id
             )
             return True
-        except ValidationError:
-            _logger.warning(
+        except jsonschema.exceptions.ValidationError as verr:
+            _logger.error(
                 'ETL data for transformation %s (study %s) failed schema validation:',
                 transformation_name,
                 study_id
             )
-            validator: jsonschema.Validator = jsonschema.Draft7Validator(self._json_schema)
+            _logger.error(verr)
+            validator: jsonschema.Validator = jsonschema.Draft202012Validator(self._json_schema)
             validation_error: ValidationError
             for validation_error in validator.iter_errors(self._json_etl_data_sets[study_id][transformation_name]):
-                _logger.warning('%s: %s', validation_error.json_path, validation_error.message)
+                _logger.error('%s: %s', validation_error.json_path, validation_error.message)
         return False
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
@@ -559,12 +565,13 @@ class C3dcEtl:
             k:v for k,v in node_properties.items() if self._is_json_schema_node_property_required(f'{node_type}.{k}')
         }
 
+    # pylint: disable-next=too-many-return-statements
     def _get_json_schema_node_property_converted_value(
         self,
         node_type_dot_property_name: str,
         value: any
-    ) -> list | int | str:
-        """ Get output value converted to JSON schema type for specified property array, integer, string """
+    ) -> float | int | list | str:
+        """ Get output value converted to JSON schema type for specified property array, float, integer, string """
         if value is None:
             return None
 
@@ -579,6 +586,14 @@ class C3dcEtl:
             raise RuntimeError(f'Schema type "{json_type}" not in type name class map')
 
         python_type = C3dcEtl.TYPE_NAME_CLASS_MAP.get(json_type)
+        if python_type in (float, int) and not C3dcEtl.is_number(value):
+            _logger.warning(
+                'Unable to convert source value "%s" to type "%s" for property "%s"',
+                value,
+                json_type,
+                node_type_dot_property_name
+            )
+            return None
         if python_type == list:
             if node_type_dot_property_name not in self._json_schema_property_enum_values:
                 # values not constrained, split on delimiter
@@ -598,6 +613,9 @@ class C3dcEtl:
                         node_type_dot_property_name
                     )
             return [v for v in vals.values() if v is not None]
+
+        if python_type == float:
+            return float(value)
         if python_type == int:
             return int(float(value))
         if python_type == str:
@@ -856,7 +874,7 @@ class C3dcEtl:
         msg: str
         output_value: any = None
 
-        source_field: str = mapping.get('source_field').strip(' \'"')
+        source_field: str = mapping.get('source_field').strip(' \t\r\n\'"')
         source_value: str = source_record.get(source_field, None)
 
         default_value: any = mapping.get('default_value', None)
@@ -902,7 +920,7 @@ class C3dcEtl:
                     # source field should contain list of source fields to be added together
                     if not (source_field.startswith('[') and source_field.endswith(']')):
                         msg = (
-                            f'Invalid source field "{source_field}" for "sum" macro in row ' +
+                            f'Invalid source field "{source_field}" for "{macro_text.lower()}" macro in row ' +
                             f'{source_record["source_file_row_num"]}, must be comma-delimited ' +
                             '(csv) string within square brackets, e.g. "[field1, field2]"'
                         )
@@ -1085,13 +1103,23 @@ class C3dcEtl:
 
         return allowed_values
 
-    def _find_source_field(self, transformation: dict[str, any], output_field: str) -> str:
+    def _find_source_field(
+        self,
+        transformation: dict[str, any],
+        output_field: str,
+        type_group_index: str = None
+    ) -> str:
         """
         Find source field for specified output field in transformation mappings. If the number of matches found
         is not equal to 1 then None will be returned.
         """
         matched_mappings: list[dict[str, any]] = [
-            m for m in transformation.get('mappings', []) if m.get('output_field', '').strip() == output_field
+            m for m in transformation.get('mappings', [])
+                if (
+                    m.get('output_field', '').strip() == output_field
+                    and
+                    (type_group_index is None or m.get('type_group_index', '*').strip() == type_group_index)
+                )
         ]
         return matched_mappings[0].get('source_field', '').strip() if len(matched_mappings) == 1 else None
 
@@ -1110,9 +1138,6 @@ class C3dcEtl:
             node_type
         )
         if not type_group_index_mappings:
-            if node_type not in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE):
-                # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
-                _logger.warning('No mappings found for type %s, unable to transform record', node_type)
             return []
 
         # a single source field can be mapped to multiple target fields, for example
@@ -1133,8 +1158,6 @@ class C3dcEtl:
                 source_field_allowed_values[source_field] = source_field_allowed_values.get(source_field, [])
                 source_field_allowed_values[source_field].extend(self._get_allowed_values(mapping))
 
-        output_source_field_map: dict[str, str] = {}
-
         # if there are multiple type group indexes (multiple records are mapped) then default
         # values to base ("*") values first and then overwrite individual mapped fields for
         # each mapping sub-group specified for that type group index
@@ -1154,9 +1177,6 @@ class C3dcEtl:
                 if source_value in ('', None) and default_value is not None:
                     source_value = default_value
 
-                if output_field not in output_source_field_map:
-                    output_source_field_map[output_field] = source_field
-
                 # check source value against all of this source field's mapped replacement values
                 # in case there are multiple output field mappings for this source field
                 allowed_values = source_field_allowed_values.get(source_field, set())
@@ -1167,7 +1187,7 @@ class C3dcEtl:
                             '"%s" not specified as allowed value (old_value) in transformation(s) for source field ' +
                             '"%s" (output field "%s"), source record "%s": %s'
                         ),
-                        source_value,
+                        source_value if source_value is not None else '',
                         source_field,
                         output_field,
                         source_record.get('source_file_row_num'),
@@ -1177,19 +1197,37 @@ class C3dcEtl:
                 # check source value against mapped replacement values for this particular output field mapping
                 allowed_values = self._get_allowed_values(mapping)
                 source_value_allowed = C3dcEtl.is_allowed_value(source_value, allowed_values)
-                if allowed_values and not source_value_allowed:
-                    _logger.info(
+                if allowed_values and not source_value_allowed and not C3dcEtl.is_macro_mapping(mapping):
+                    _logger.warning(
                         'value "%s" not allowed for source field "%s" (type group "%s")',
-                        source_value,
+                        source_value if source_value is not None else '',
                         source_field,
                         type_group_index
                     )
                     continue
 
                 output_value: any = self._get_mapped_output_value(mapping, source_record)
-
-                output_record[output_field_property] = output_value if output_value is not None else source_value
-                if output_field_type == 'integer':
+                output_record[output_field_property] = (
+                    output_value
+                        if output_value is not None
+                        else self._get_json_schema_node_property_converted_value(output_field, source_value)
+                )
+                if (
+                    output_field_type in ('integer', 'number')
+                    and
+                    output_record[output_field_property]
+                    and
+                    not C3dcEtl.is_number(output_record[output_field_property])
+                ):
+                    _logger.warning(
+                        'Unable to set output property "%s" (source field "%s") having type "%s" to value "%s"',
+                        output_field,
+                        source_field,
+                        output_field_type,
+                        output_record[output_field_property]
+                    )
+                    output_record[output_field_property] = None
+                if output_field_type == 'integer' and C3dcEtl.is_number(output_record[output_field_property]):
                     # some source values are read from Excel as floats instead of ints, e.g. age at diagnosis
                     # 3660.9999999999995 instead of 3661 for some TARGET OS records, so round (not int() which
                     # will truncate) harmonized values for integer output fields
@@ -1209,9 +1247,9 @@ class C3dcEtl:
                 ):
                     record_valid = False
                     _logger.warning(
-                        'Required output field "%s" (source field "%s") is null/empty for source record file "%s"',
+                        'Required output field "%s" (source field "%s") is null/empty for source record "%s"',
                         schema_field,
-                        output_source_field_map.get(schema_field, '*not mapped*'),
+                        self._find_source_field(transformation, schema_field, type_group_index) or '*not mapped*',
                         source_record.get("source_file_row_num")
                     )
 
@@ -1317,8 +1355,11 @@ class C3dcEtl:
                 f'Unable to find single source mapping for "{participant_id_field}" in transformation mappings; ' +
                 f'"{participant_id_field}" is either not mapped or is mapped multple times'
             )
+        unmapped_nodes: set[C3dcEtlModelNode] = set()
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
             C3dcEtlModelNode.DIAGNOSIS: {},
+            C3dcEtlModelNode.GENETIC_ANALYSIS: {},
+            C3dcEtlModelNode.LABORATORY_TEST: {},
             C3dcEtlModelNode.PARTICIPANT: {},
             C3dcEtlModelNode.REFERENCE_FILE: {},
             C3dcEtlModelNode.STUDY: {},
@@ -1334,6 +1375,14 @@ class C3dcEtl:
             node_props['id_field'] = f'{node}_id'
             node_props['id_field_full'] = f'{node}.{node_props["id_field"]}'
             node_props['source_id_field'] = subject_id_field
+
+            type_group_index_mappings: dict[str, list[dict[str, any]]] = self._get_type_group_index_mappings(
+                transformation,
+                node
+            )
+            if not type_group_index_mappings:
+                _logger.warning('No mappings found for type "%s", will be omitted from output', node)
+                unmapped_nodes.add(node)
 
         # build study node and add to node collection
         study: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.STUDY)
@@ -1367,7 +1416,7 @@ class C3dcEtl:
             participants: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.PARTICIPANT, rec)
             if len(participants) != 1:
                 _logger.warning(
-                    '%s (%s): Unexpected number of participant nodes (%d) built for sourced record %d, excluding',
+                    '%s (%s): Unexpected number of participant nodes (%d) built for source record %d, excluding',
                     transformation.get('name'),
                     study_id,
                     len(participants),
@@ -1379,6 +1428,8 @@ class C3dcEtl:
 
             node_observations: list[C3dcEtlModelNode] = [
                 C3dcEtlModelNode.DIAGNOSIS,
+                C3dcEtlModelNode.GENETIC_ANALYSIS,
+                C3dcEtlModelNode.LABORATORY_TEST,
                 C3dcEtlModelNode.SURVIVAL,
                 C3dcEtlModelNode.TREATMENT,
                 C3dcEtlModelNode.TREATMENT_RESPONSE
@@ -1390,10 +1441,7 @@ class C3dcEtl:
                 sub_src_rec: dict[str, any]
                 for sub_src_rec in self._build_sub_source_records(rec, nodes[node]) or [rec]:
                     harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
-                    # TODO: restore warning when unable to harmonize treatment/treatment response once fully mapped
-                    if not (
-                        harmonized_recs or node in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)
-                    ):
+                    if not harmonized_recs and node not in unmapped_nodes:
                         _logger.warning(
                             '%s (%s): Unable to build "%s" node for source record "%s"',
                             transformation.get('name'),
@@ -1438,7 +1486,7 @@ class C3dcEtl:
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
         self._json_etl_data_sets[study_id][transformation.get('name')] = {
-            C3dcEtl.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
+            C3dcEtlModelNode.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
         }
 
         _logger.info(
