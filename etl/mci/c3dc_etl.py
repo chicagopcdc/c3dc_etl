@@ -1399,6 +1399,16 @@ class C3dcEtl:
                     source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
                     laterality: str = default_value
                     source_field_name: str
+                    if sum(1 for s in source_field_names if source_record.get(s) not in ('', None)) > 1:
+                        # our expectation is that only 1 of the laterality source fields will be populated for any
+                        # given subject so if both are populated then need to check source data and/or revise logic
+                        msg = (
+                            f'Source record found having more than 1 "{macro_text.lower()}" source field ' +
+                            f'({source_field_names}) populated'
+                        )
+                        _logger.critical(msg)
+                        raise RuntimeError(msg)
+
                     for source_field_name in source_field_names:
                         src_val: str = source_record.get(source_field_name)
                         enum_value: any = self._get_json_schema_node_property_converted_value(
