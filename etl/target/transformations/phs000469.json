@@ -156,7 +156,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 75957
+                            "new_value": 77932
                         }
                     ]
                 },
@@ -168,7 +168,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "b2872e00d5c07bd80e56e7e6c015d7e2"
+                            "new_value": "573882a10c5fe3ce47fe4aba2fff48c6"
                         }
                     ]
                 },
@@ -240,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 161683
+                            "new_value": 379848
                         }
                     ]
                 },
@@ -252,7 +252,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "02b9c0979f87de1212fbe544d0ab1952"
+                            "new_value": "486a9c810e794a0bb41ced79f581a791"
                         }
                     ]
                 },
@@ -324,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 210058
+                            "new_value": 352581
                         }
                     ]
                 },
@@ -336,7 +336,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "9d1f2ac589ae3f820f7b6b93289aeac6"
+                            "new_value": "82ea073ba0bee27fd81daebfd6f81c9f"
                         }
                     ]
                 },
@@ -408,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 40469
+                            "new_value": 46351
                         }
                     ]
                 },
@@ -420,7 +420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "c4198e82584a73613e7632117626dc9b"
+                            "new_value": "952c3ac94ca47cb8a30135c4e6e6e9b3"
                         }
                     ]
                 },
@@ -665,6 +665,18 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.year_of_diagnosis",
+                    "source_field": "Year of Diagnosis",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.tumor_stage_clinical_t",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -702,7 +714,7 @@
                 },
                 {
                     "output_field": "diagnosis.diagnosis_comment",
-                    "source_field": "Diagnostic Category ",
+                    "source_field": "Diagnostic Category",
                     "type_group_index": "*",
                     "default_value": "Not Reported",
                     "replacement_values": [
@@ -734,7 +746,7 @@
                 },
                 {
                     "output_field": "diagnosis.diagnosis",
-                    "source_field": "Diagnostic Category ",
+                    "source_field": "Diagnostic Category",
                     "type_group_index": "*",
                     "default_value": "999 : Unknown, to be completed later",
                     "replacement_values": [
@@ -773,6 +785,18 @@
                         {
                             "old_value": "*",
                             "new_value": "{find_enum_value}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.laterality",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
@@ -972,7 +996,135 @@
                     "output_field": "survival.cause_of_death",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.genetic_analysis_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.age_at_genetic_analysis",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.allelic_ratio",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.vaf_numeric",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.dna_index_numeric",
+                    "source_field": "Ploidy Value",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.hgvs_coding",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.hgvs_protein",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.alteration",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "MYCN Amplification"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.status",
+                    "source_field": "MYCN Status",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "Amplified",
+                            "new_value": "Present"
+                        },
+                        {
+                            "old_value": "Not Amplified",
+                            "new_value": "Absent"
+                        },
+                        {
+                            "old_value": "Unknown",
+                            "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.iscn",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",

@@ -156,7 +156,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 76515
+                            "new_value": 76406
                         }
                     ]
                 },
@@ -168,7 +168,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "eefd55d8bb1af5d1e43913987d14079e"
+                            "new_value": "f1c76b393f9a86e7f5033eca0a224eee"
                         }
                     ]
                 },
@@ -240,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 161683
+                            "new_value": 379848
                         }
                     ]
                 },
@@ -252,7 +252,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "02b9c0979f87de1212fbe544d0ab1952"
+                            "new_value": "486a9c810e794a0bb41ced79f581a791"
                         }
                     ]
                 },
@@ -324,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 210058
+                            "new_value": 352581
                         }
                     ]
                 },
@@ -336,7 +336,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "9d1f2ac589ae3f820f7b6b93289aeac6"
+                            "new_value": "82ea073ba0bee27fd81daebfd6f81c9f"
                         }
                     ]
                 },
@@ -408,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 38107
+                            "new_value": 39036
                         }
                     ]
                 },
@@ -420,7 +420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3f86120341e6183d632c0a71a7f42950"
+                            "new_value": "909b8d9e9092574f50a285527a36cbf5"
                         }
                     ]
                 },
@@ -456,7 +456,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "CCDI_Submission_Template_v1.9.1_phs003519_JoinRy_2024-08-14.xlsx"
+                            "new_value": "CCDI_Submission_Template_v2.0.0_phs003519_JoinRy_2024-11-14.xlsx"
                         }
                     ]
                 },
@@ -492,7 +492,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 872756
+                            "new_value": 1348464
                         }
                     ]
                 },
@@ -504,7 +504,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "8ae98f554177dd90de556cfebea0f54b"
+                            "new_value": "81d27ecb08dcf636d0c5c5cb070fd973"
                         }
                     ]
                 },
@@ -631,6 +631,18 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.year_of_diagnosis",
+                    "source_field": "diagnosis.year_of_diagnosis",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_comment",
                     "source_field": "diagnosis.diagnosis_comment",
                     "type_group_index": "*",
@@ -733,6 +745,18 @@
                 {
                     "output_field": "diagnosis.tumor_classification",
                     "source_field": "diagnosis.tumor_classification",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.laterality",
+                    "source_field": "diagnosis.laterality",
                     "type_group_index": "*",
                     "default_value": "Not Reported",
                     "replacement_values": [

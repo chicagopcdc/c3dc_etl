@@ -190,7 +190,7 @@ class SchemaCreator:
             raise RuntimeError('Schema file path not specified')
         _logger.info('Saving schema to "%s"', self._schema_file_path)
         if self._schema_file_path.lower().startswith('s3://'):
-            buffer: bytes = json.dumps(self._schema, indent=2).encode('utf-8')
+            buffer: bytes = json.dumps(self._schema, indent=2, ensure_ascii=False).encode('utf-8')
             c3dc_file_manager: C3dcFileManager = C3dcFileManager()
             c3dc_file_manager.write_file(buffer, self._schema_file_path)
             local_file_path: str = f'./{os.path.basename(c3dc_file_manager.url_to_path(self._schema_file_path))}'
