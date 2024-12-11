@@ -1643,7 +1643,6 @@ class C3dcEtl:
             node_type
         )
         if not type_group_index_mappings:
-            _logger.warning('No mappings found for type %s, unable to transform record', node_type)
             return []
 
         # a single source field can be mapped to multiple target fields, for example
@@ -1877,8 +1876,11 @@ class C3dcEtl:
         )
         row_mapped_node: C3dcEtlModelNode
 
+        unmapped_nodes: set[C3dcEtlModelNode] = set()
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
             C3dcEtlModelNode.DIAGNOSIS: {},
+            C3dcEtlModelNode.GENETIC_ANALYSIS: {},
+            C3dcEtlModelNode.LABORATORY_TEST: {},
             C3dcEtlModelNode.PARTICIPANT: {},
             C3dcEtlModelNode.REFERENCE_FILE: {},
             C3dcEtlModelNode.STUDY: {},
@@ -1896,6 +1898,14 @@ class C3dcEtl:
             node_props['id_field'] = f'{node}_id'
             node_props['id_field_full'] = f'{node}.{node_props["id_field"]}'
             node_props['source_id_field'] = subject_id_field
+
+            type_group_index_mappings: dict[str, list[dict[str, any]]] = self._get_type_group_index_mappings(
+                transformation,
+                node
+            )
+            if not type_group_index_mappings:
+                _logger.warning('No mappings found for type "%s", will be omitted from output', node)
+                unmapped_nodes.add(node)
 
         # build study node and add to node collection
         study: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.STUDY)
@@ -1940,6 +1950,8 @@ class C3dcEtl:
 
             node_observations: list[C3dcEtlModelNode] = [
                 C3dcEtlModelNode.DIAGNOSIS,
+                C3dcEtlModelNode.GENETIC_ANALYSIS,
+                C3dcEtlModelNode.LABORATORY_TEST,
                 C3dcEtlModelNode.SURVIVAL,
                 C3dcEtlModelNode.TREATMENT,
                 C3dcEtlModelNode.TREATMENT_RESPONSE
@@ -1951,11 +1963,7 @@ class C3dcEtl:
                 sub_src_rec: dict[str, any]
                 for sub_src_rec in self._build_sub_source_records(rec, nodes[node]) or [rec]:
                     harmonized_recs: list[dict[str, any]] = self._build_node(transformation, node, sub_src_rec)
-                    if (
-                        not harmonized_recs
-                        and
-                        node not in (C3dcEtlModelNode.TREATMENT, C3dcEtlModelNode.TREATMENT_RESPONSE)
-                    ):
+                    if not harmonized_recs and node not in unmapped_nodes:
                         _logger.warning(
                             '%s (%s): Unable to build "%s" node for source record "%s"',
                             transformation.get('name'),
