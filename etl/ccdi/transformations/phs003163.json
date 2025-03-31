@@ -1,5 +1,5 @@
 {
-    "version": "20241028.1",
+    "version": "20250416.1",
     "transformations": [
         {
             "name": "phs003163",
@@ -73,6 +73,18 @@
                         {
                             "old_value": "*",
                             "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs003163"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_status",
+                    "source_field": "study.study_status",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
                         }
                     ]
                 },
@@ -156,7 +168,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 76406
+                            "new_value": 76623
                         }
                     ]
                 },
@@ -168,7 +180,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "f1c76b393f9a86e7f5033eca0a224eee"
+                            "new_value": "11b78a4fe25876598ca594907d4b70db"
                         }
                     ]
                 },
@@ -192,7 +204,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241211.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250416.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -240,7 +252,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 379848
+                            "new_value": 383901
                         }
                     ]
                 },
@@ -252,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "486a9c810e794a0bb41ced79f581a791"
+                            "new_value": "6dff168cc4776622ba879e449079716f"
                         }
                     ]
                 },
@@ -276,7 +288,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241211.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250416.1/schema/schema.json"
                         }
                     ]
                 },
@@ -324,7 +336,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 352003
+                            "new_value": 365492
                         }
                     ]
                 },
@@ -336,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "821003d70297a350aff31df7055863fe"
+                            "new_value": "83a74f183875b1fc151c9f5f25dc3bbc"
                         }
                     ]
                 },
@@ -360,7 +372,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241211.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250416.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -408,7 +420,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 38805
+                            "new_value": 43874
                         }
                     ]
                 },
@@ -420,7 +432,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "af9be123eb630d8164e30c057c58511e"
+                            "new_value": "be66debc4c414a7e9d3a682c7edc52d7"
                         }
                     ]
                 },
@@ -444,7 +456,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20241211.1/etl/ccdi/transformations/phs003163.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250416.1/etl/ccdi/transformations/phs003163.json"
                         }
                     ]
                 },
@@ -456,7 +468,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "CCDI_Submission_Template_v2.0.0_phs003163_JoinRy_2024-11-14.xlsx"
+                            "new_value": "phs003163_CCDI_Study_Manifest_v2.1.0.xlsx"
                         }
                     ]
                 },
@@ -492,7 +504,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 1669622
+                            "new_value": 1916831
                         }
                     ]
                 },
@@ -504,7 +516,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "ab75c0e7d05452d7af8b11e5c396dffc"
+                            "new_value": "2e6648d811b4576f98ad43c331987645"
                         }
                     ]
                 },
@@ -909,6 +921,54 @@
                     ]
                 },
                 {
+                    "output_field": "treatment.dose",
+                    "source_field": "treatment.dose",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose_unit",
+                    "source_field": "treatment.dose_unit",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose_route",
+                    "source_field": "treatment.dose_route",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose_frequency",
+                    "source_field": "treatment.dose_frequency",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
                     "output_field": "treatment_response.treatment_response_id",
                     "source_field": "treatment_response.treatment_response_id",
                     "type_group_index": "*",
@@ -958,7 +1018,79 @@
                 },
                 {
                     "output_field": "treatment_response.response_system",
-                    "source_field": "treatment_response.response_category",
+                    "source_field": "treatment_response.response_system",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.synonym_id",
+                    "source_field": "synonym.synonym_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.repository_of_synonym_id",
+                    "source_field": "synonym.repository_of_synonym_id",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.associated_id",
+                    "source_field": "synonym.associated_id",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.domain_description",
+                    "source_field": "synonym.domain_description",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.domain_category",
+                    "source_field": "synonym.domain_category",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.data_location",
+                    "source_field": "synonym.data_location",
                     "type_group_index": "*",
                     "default_value": "Not Reported",
                     "replacement_values": [

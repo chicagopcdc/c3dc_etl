@@ -1,5 +1,5 @@
 {
-  "$id": "https://datascience.cancer.gov/schemas/c3dc/2024-12-11",
+  "$id": "https://datascience.cancer.gov/schemas/c3dc/2025-04-16",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "description": "C3DC schema bundle",
   "$comment": "Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc",
@@ -3165,6 +3165,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "synonym.synonym_id": {
+          "type": "array",
+          "description": "of_synonym: many_to_one, [src] synonym => [dst] participant",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -3309,6 +3316,13 @@
             "caDSR:6584918"
           ]
         },
+        "id": {
+          "type": "string",
+          "description": "A unique sequence of characters used to identify, name, or characterize an attribute shared by all members of a class.",
+          "cde": [
+            "caDSR:14534325"
+          ]
+        },
         "study.study_id": {
           "type": "string",
           "description": "of_reference_file: many_to_one, [src] reference_file => [dst] study"
@@ -3335,7 +3349,7 @@
           "type": "string",
           "description": "A unique sequence of alphanumeric characters used to identify the sample in the investigation or study.",
           "cde": [
-            "caDSR:2003904"
+            "caDSR:15100774"
           ]
         },
         "anatomic_site": {
@@ -3745,8 +3759,7 @@
           "type": "string",
           "description": "Text description of a sample or specimen.",
           "cde": [
-            "caDSR:2003907",
-            "caDSR:5432687"
+            "caDSR:14688604"
           ]
         },
         "id": {
@@ -3766,10 +3779,6 @@
         "participant.participant_id": {
           "type": "string",
           "description": "of_sample: many_to_one, [src] sample => [dst] participant"
-        },
-        "study.study_id": {
-          "type": "string",
-          "description": "of_sample: many_to_one, [src] sample => [dst] study"
         }
       }
     },
@@ -3787,7 +3796,8 @@
         "study_description",
         "consent",
         "consent_number",
-        "external_url"
+        "external_url",
+        "study_status"
       ],
       "properties": {
         "study_id": {
@@ -3837,6 +3847,18 @@
           "description": "The url of the study (often a dbGaP study page).",
           "cde": []
         },
+        "study_status": {
+          "type": "string",
+          "description": "The status of the study.",
+          "cde": [
+            "caDSR:15607838"
+          ],
+          "enum": [
+            "Active",
+            "Completed",
+            "Provisional"
+          ]
+        },
         "id": {
           "type": "string",
           "description": "A unique sequence of characters used to identify, name, or characterize an attribute shared by all members of a class.",
@@ -3858,9 +3880,9 @@
             "type": "string"
           }
         },
-        "sample.sample_id": {
+        "synonym.synonym_id": {
           "type": "array",
-          "description": "of_sample: many_to_one, [src] sample => [dst] study",
+          "description": "of_synonym: many_to_one, [src] synonym => [dst] study",
           "items": {
             "type": "string"
           }
@@ -3980,6 +4002,78 @@
         }
       }
     },
+    "synonym": {
+      "$id": "https://datascience.cancer.gov/schemas/c3dc/synonym",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "Synonym",
+      "description": "Not specified in source yaml",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "synonym_id",
+        "repository_of_synonym_id",
+        "associated_id"
+      ],
+      "properties": {
+        "synonym_id": {
+          "type": "string",
+          "description": "A sequence of characters used to identify, name, or characterize a backup sequence of characters used to identify an entity.",
+          "cde": [
+            "caDSR:14612666"
+          ]
+        },
+        "repository_of_synonym_id": {
+          "type": "string",
+          "description": "A textual description of a storage location for digital data.",
+          "cde": [
+            "caDSR:14612686"
+          ]
+        },
+        "associated_id": {
+          "type": "string",
+          "description": "Text to identify the other name or alias of a person.",
+          "cde": [
+            "caDSR:3773730"
+          ]
+        },
+        "domain_description": {
+          "type": "string",
+          "description": "A textual description of a storage location for digital data.",
+          "cde": [
+            "caDSR:14612686"
+          ]
+        },
+        "domain_category": {
+          "type": "string",
+          "description": "A textual description of a storage location for digital data.",
+          "cde": [
+            "caDSR:14612686"
+          ]
+        },
+        "data_location": {
+          "type": "string",
+          "description": "Data location.",
+          "cde": [
+            "caDSR:11556141"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "description": "A unique sequence of characters used to identify, name, or characterize an attribute shared by all members of a class.",
+          "cde": [
+            "caDSR:14534325"
+          ]
+        },
+        "study.study_id": {
+          "type": "string",
+          "description": "of_synonym: many_to_one, [src] synonym => [dst] study"
+        },
+        "participant.participant_id": {
+          "type": "string",
+          "description": "of_synonym: many_to_one, [src] synonym => [dst] participant"
+        }
+      }
+    },
     "treatment": {
       "$id": "https://datascience.cancer.gov/schemas/c3dc/treatment",
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3991,7 +4085,11 @@
         "treatment_id",
         "age_at_treatment_start",
         "age_at_treatment_end",
-        "treatment_type"
+        "treatment_type",
+        "dose",
+        "dose_unit",
+        "dose_route",
+        "dose_frequency"
       ],
       "properties": {
         "treatment_id": {
@@ -8545,6 +8643,34 @@
             ]
           }
         },
+        "dose": {
+          "type": "string",
+          "description": "The amount of exposure that a subject actually receives.",
+          "cde": [
+            "caDSR:6642895"
+          ]
+        },
+        "dose_unit": {
+          "type": "string",
+          "description": "The unit of measure for the dosage form related to agents used as part of a procedure.",
+          "cde": [
+            "caDSR:6824805"
+          ]
+        },
+        "dose_route": {
+          "type": "string",
+          "description": "The text that describe the dosage route.",
+          "cde": [
+            "caDSR:2179582"
+          ]
+        },
+        "dose_frequency": {
+          "type": "string",
+          "description": "The text that represents the planned dosage frequency for a agent.",
+          "cde": [
+            "caDSR:2179580"
+          ]
+        },
         "id": {
           "type": "string",
           "description": "A unique sequence of characters used to identify, name, or characterize an attribute shared by all members of a class.",
@@ -8718,6 +8844,12 @@
           "type": "array",
           "items": {
             "$ref": "https://datascience.cancer.gov/schemas/c3dc/survival"
+          }
+        },
+        "synonyms": {
+          "type": "array",
+          "items": {
+            "$ref": "https://datascience.cancer.gov/schemas/c3dc/synonym"
           }
         },
         "treatments": {

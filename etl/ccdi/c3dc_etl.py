@@ -10,6 +10,7 @@ import random
 import re
 import sys
 import tempfile
+from typing import Callable
 import uuid
 import warnings
 
@@ -1205,7 +1206,11 @@ class C3dcEtl:
         is found then that will be called, otherwise the default base method will be called for all node types
         """
         transform_method_name: str = f'_transform_record_{node_type}'
-        transform_method: any = getattr(self, transform_method_name, lambda: None)
+        transform_method: Callable[[dict[str, any], dict[str, any]], list[dict[str, any]]] = getattr(
+            self,
+            transform_method_name,
+            lambda t, s: None
+        )
         if (
             transform_method is None
             or
@@ -1215,7 +1220,7 @@ class C3dcEtl:
         ):
             return self._transform_record_default(transformation, node_type, source_record)
 
-        return transform_method(transformation, node_type, source_record)
+        return transform_method(transformation, source_record)
 
     def _build_sub_source_records(
         self,
@@ -1291,6 +1296,7 @@ class C3dcEtl:
             C3dcEtlModelNode.REFERENCE_FILE: {},
             C3dcEtlModelNode.STUDY: {},
             C3dcEtlModelNode.SURVIVAL: {},
+            C3dcEtlModelNode.SYNONYM: {},
             C3dcEtlModelNode.TREATMENT: {},
             C3dcEtlModelNode.TREATMENT_RESPONSE: {}
         }
@@ -1380,6 +1386,7 @@ class C3dcEtl:
                 C3dcEtlModelNode.GENETIC_ANALYSIS: [],
                 C3dcEtlModelNode.LABORATORY_TEST: [],
                 C3dcEtlModelNode.SURVIVAL: [],
+                C3dcEtlModelNode.SYNONYM: [],
                 C3dcEtlModelNode.TREATMENT: [],
                 C3dcEtlModelNode.TREATMENT_RESPONSE: []
             }
