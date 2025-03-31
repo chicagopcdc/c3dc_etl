@@ -15,6 +15,7 @@ class C3dcEtlModelNode(str, Enum):
     SAMPLE = 'sample'
     STUDY = 'study'
     SURVIVAL = 'survival'
+    SYNONYM = 'synonym'
     TREATMENT = 'treatment'
     TREATMENT_RESPONSE = 'treatment_response'
 
