@@ -84,6 +84,20 @@ as a starting point and customized as needed.
     Can also be a local file path. For example
     `https://raw.githubusercontent.com/chicagopcdc/c3dc_etl/main/etl/target/transformations/phs000467.json` or
     `/path/to/phs000467.json`.
+  * `merged_output_file_path`: Optional. String specifying the location of the file where the harmonized data will be
+    saved after merging for studies having multiple source input and output files. For example for study `phs000467`
+    which has 'discovery' and 'validation' input source files, the output files might be specified as
+    `phs000467_discovery.harmonized.json` and `phs000467_validation.harmonized.json` respectively. If config variable
+    `merged_output_file_path` were to be specified as `phs000467.harmonized.json` then the records in the two output
+    files would be combined into that single output file. The merging operation will detect and eliminate duplicate
+    records, for example identical `diagnosis` records for patients that exist in both files with the same diagnosis
+    field values. The `merged_output_file_path` config variable must be specified for the duplicate record
+    report (see `duplicate_record_report_path`) to be created.
+  * `duplicate_record_report_path`: Optional. String specifying the location of the file containing details of any
+    duplicate records detected during creation of the merged output file. The merged output file path config variable
+    (see `merged_output_file_path`) must be specified in order for the duplicate record report to be created. The
+    report generated will contain a CSV record for each subject for which duplicate records were found, the
+    duplicate harmonized output records detected for each node type, and the associated transformations/source files.
   * `transformations`: Required. A string-ified list of objects, one per source data file, containing configuration
     details needed to harmonize each source data file. Each transformation will be matched and merged with an object
     in the remote config by `name`.
