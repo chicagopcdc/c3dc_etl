@@ -137,27 +137,6 @@ def test_is_replacement_match() -> None:
         )
 
 
-@pytest.mark.skip('test_get_pluralized_node_name')
-def test_get_pluralized_node_name() -> None:
-    """ test get_pluralized_node_name """
-    _logger.info(test_get_pluralized_node_name.__name__)
-    singular_plural_names: dict[str, str] = {
-        'diagnosis': 'diagnoses',
-        'participant': 'participants',
-        'reference_file': 'reference_files',
-        'study': 'studies',
-        'survival': 'survivals',
-        'treatment': 'treatments',
-        'treatment_response': 'treatment_responses',
-    }
-    singular_name: str
-    expected_plural_name: str
-    for singular_name, expected_plural_name in singular_plural_names.items():
-        plural_name:str = C3dcEtl.get_pluralized_node_name(singular_name)
-        logging.info('get_pluralized_node_name: %s => %s', singular_name, plural_name)
-        assert plural_name == expected_plural_name
-
-
 @pytest.mark.skip('test_load_transformations')
 def test_load_transformations() -> None:
     """ test load_transformations """

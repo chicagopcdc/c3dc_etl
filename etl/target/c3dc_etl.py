@@ -1,5 +1,7 @@
 """ C3DC ETL File Creator """
+import copy
 import csv
+import hashlib
 import io
 import json
 import logging
@@ -95,6 +97,15 @@ class C3dcEtl:
     MULTIPLE_VALUE_DELIMITER: str = ';'
     ETHNICITY_ALLOWED_VALUES: set[str] = {'Hispanic or Latino'}
     RACE_UNDETERMINED_VALUES: set[str] = {'Not Allowed to Collect', 'Not Reported', 'Unknown'}
+    OBSERVATION_NODES: tuple[C3dcEtlModelNode, ...] = (
+        C3dcEtlModelNode.DIAGNOSIS,
+        C3dcEtlModelNode.GENETIC_ANALYSIS,
+        C3dcEtlModelNode.LABORATORY_TEST,
+        C3dcEtlModelNode.SURVIVAL,
+        C3dcEtlModelNode.SYNONYM,
+        C3dcEtlModelNode.TREATMENT,
+        C3dcEtlModelNode.TREATMENT_RESPONSE
+    )
 
     def __init__(self, config: dict[str, str]) -> None:
         self._config: dict[str, str] = config
@@ -120,6 +131,27 @@ class C3dcEtl:
         # merged together to form the final study configuration object
         self._study_configurations: list[dict[str, any]] = json.loads(config.get('STUDY_CONFIGURATIONS', '[]'))
         self._study_configurations = [sc for sc in self._study_configurations if sc.get('active', True)]
+
+        # find and suppress duplicate harmonized records using cache; key will be
+        # hash of record normalized by serializing to JSON with blank/null assigned to id
+        # { study id =>
+        #   { (record hash, participant id, node) => [ transformation names (incl dupes) where source record found ] }
+        # }
+        self._harmonized_record_cache: dict[str, dict[tuple[str, str, str], list[str]]] = {}
+
+        # { study id => { (participant id, node) => { set of duplicate records } } }
+        self._duplicate_harmonized_records: dict[str, dict[tuple[str, str], set[str]]] = {}
+
+        # node => [node records]
+        self._merged_harmonized_records: dict[str, list[dict[str, any]]] = {}
+
+        # to translate node names from singular to plural and back, e.g. study => studies, diagnoses- => diagnosis
+        self._node_names_singular_to_plural: dict[str, str] = {
+            n.value:C3dcEtlModelNode.get_pluralized_node_name(n.value) for n in C3dcEtlModelNode
+        }
+        self._node_names_plural_to_singular: dict[str, str] = {
+            C3dcEtlModelNode.get_pluralized_node_name(n.value):n.value for n in C3dcEtlModelNode
+        }
 
         self.load_json_schema()
         self.load_transformations()
@@ -226,6 +258,62 @@ class C3dcEtl:
             r.get('new_value').strip().endswith('}')
             for r in mapping.get('replacement_values', [])
         )
+
+    @staticmethod
+    def sort_data(data: any) -> any:
+        """ Sort specified input data, including nested elements """
+        if isinstance(data, dict):
+            return {k:C3dcEtl.sort_data(v) for k,v in sorted(data.items())}
+        if isinstance(data, list):
+            return sorted(data)
+        if isinstance(data, tuple):
+            return tuple(sorted(data))
+        return data
+
+    @staticmethod
+    def get_node_id_field_name(node: C3dcEtlModelNode | str, fully_qualified: bool = False) -> str:
+        """ Get name of id field for specified node """
+        return f'{node}.{node}_id' if fully_qualified else f'{node}_id'
+
+    @staticmethod
+    def get_cache_key(record: dict[str, any], participant_id: str, node: str) -> tuple[str, str, str]:
+        """ Get cache key for specified record, participant id and node as tuple[str, str, str] """
+        # records to be hashed should have id fields blanked for dupe differentiation
+        cache_key: tuple[str, str, str] = (
+            hashlib.sha1(
+                json.dumps(
+                    C3dcEtl.sort_data(C3dcEtl.get_cacheable_record(record, node)),
+                    sort_keys=True
+                ).encode('utf-8')
+            ).hexdigest(),
+            participant_id,
+            node
+        )
+        return cache_key
+
+    @staticmethod
+    def get_cacheable_record(record: dict[str, any], node: C3dcEtlModelNode | str) -> dict[str, any]:
+        """ Get cacheable version of specified record (will not modify original) """
+        cacheable_record: dict[str, any] = copy.deepcopy(record)
+        match node:
+            case C3dcEtlModelNode.PARTICIPANT:
+                # identical participant records can have different signatures due to same observations having
+                # different ids across source files so validate with stripped down record containing id only
+                obs_node: C3dcEtlModelNode
+                for obs_node in C3dcEtl.OBSERVATION_NODES:
+                    obs_node_id_field_qualified: str = C3dcEtl.get_node_id_field_name(obs_node, True)
+                    if isinstance(cacheable_record.get(obs_node_id_field_qualified), list):
+                        cacheable_record[obs_node_id_field_qualified] = []
+            case C3dcEtlModelNode.STUDY:
+                # as with participants, identical study records can have different signatures due to different
+                # participants and same reference files having different ids across source files
+                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)] = []
+                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.REFERENCE_FILE, True)] = []
+            case C3dcEtlModelNode.REFERENCE_FILE:
+                if 'dcf_indexd_guid' in cacheable_record:
+                    cacheable_record['dcf_indexd_guid'] = ''     
+        cacheable_record[C3dcEtl.get_node_id_field_name(node)] = ''
+        return cacheable_record
 
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
@@ -355,9 +443,22 @@ class C3dcEtl:
         """ Create ETL files and save to output paths for study configurations specified in conf """
         study_configuration: dict[str, any]
         for study_configuration in self._study_configurations:
+            study_id: str = study_configuration.get('study')
+            # clear caches for duplicate record tracking
+            self._harmonized_record_cache[study_id] = {}
+            self._duplicate_harmonized_records[study_id] = {}
+
             transformation: dict[str, any]
             for transformation in study_configuration.get('transformations', []):
-                self._create_json_etl_file(study_configuration.get('study'), transformation)
+                self._create_json_etl_file(study_id, transformation)
+            if study_configuration.get('merged_output_file_path'):
+                self._create_merged_json_etl_file(study_id, study_configuration.get('merged_output_file_path'))
+                if study_configuration.get('duplicate_record_report_path'):
+                    self._create_harmonized_duplicate_record_report_file(
+                        study_id,
+                        study_configuration.get('duplicate_record_report_path')
+                    )
+                self._validate_merged_harmonized_data(study_id)
 
     def _verify_config(self) -> None:
         required_config_var: str
@@ -515,7 +616,7 @@ class C3dcEtl:
 
     def _save_json_etl_data(self, study_id: str, transformation: dict[str, any]) -> None:
         """ Save JSON ETL data for specified transformation to designated output file """
-        _logger.info('Saving JSON ETL data to %s', transformation.get('output_file_path'))
+        _logger.info('Saving JSON ETL data to "%s"', transformation.get('output_file_path'))
         self._c3dc_file_manager.write_file(
             json.dumps(self._json_etl_data_sets[study_id][transformation.get('name')], indent=2).encode('utf-8'),
             transformation.get('output_file_path')
@@ -1353,7 +1454,7 @@ class C3dcEtl:
             if not petl.nrows(self._raw_etl_data_tables[study_id][transformation.get('name')]):
                 raise RuntimeError(f'No data loaded to transform for study {study_id}')
 
-        participant_id_field: str = f'{C3dcEtlModelNode.PARTICIPANT}.{C3dcEtlModelNode.PARTICIPANT}_id'
+        participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
         subject_id_field: str = self._find_source_field(transformation, participant_id_field)
         if not subject_id_field:
             raise RuntimeError(
@@ -1378,8 +1479,8 @@ class C3dcEtl:
         for node, node_props in nodes.items():
             node_props['harmonized_records'] = []
             node_props['type'] = node
-            node_props['id_field'] = f'{node}_id'
-            node_props['id_field_full'] = f'{node}.{node_props["id_field"]}'
+            node_props['id_field'] = C3dcEtl.get_node_id_field_name(node)
+            node_props['id_field_full'] = C3dcEtl.get_node_id_field_name(node, True)
             node_props['source_id_field'] = subject_id_field
 
             type_group_index_mappings: dict[str, list[dict[str, any]]] = self._get_type_group_index_mappings(
@@ -1432,16 +1533,7 @@ class C3dcEtl:
                 continue
             participant = participants[0]
 
-            node_observations: list[C3dcEtlModelNode] = [
-                C3dcEtlModelNode.DIAGNOSIS,
-                C3dcEtlModelNode.GENETIC_ANALYSIS,
-                C3dcEtlModelNode.LABORATORY_TEST,
-                C3dcEtlModelNode.SURVIVAL,
-                C3dcEtlModelNode.SYNONYM,
-                C3dcEtlModelNode.TREATMENT,
-                C3dcEtlModelNode.TREATMENT_RESPONSE
-            ]
-            for node in node_observations:
+            for node in C3dcEtl.OBSERVATION_NODES:
                 # make sure relationship collection is defined, even if no records are added
                 participant[nodes[node]['id_field_full']] = []
 
@@ -1493,7 +1585,7 @@ class C3dcEtl:
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
         self._json_etl_data_sets[study_id][transformation.get('name')] = {
-            C3dcEtlModelNode.get_pluralized_node_name(k):v['harmonized_records'] for k,v in nodes.items()
+            self._node_names_singular_to_plural[k]:v['harmonized_records'] for k,v in nodes.items()
         }
 
         _logger.info(
@@ -1512,6 +1604,615 @@ class C3dcEtl:
         self._load_source_data(study_id, transformation)
         self._transform_source_data(study_id, transformation)
         self._save_json_etl_data(study_id, transformation)
+
+    def _get_merged_harmonized_node_ids(self, node: C3dcEtlModelNode) -> list[str]:
+        """ Get collection of ids from merged harmonized data set for specified node type """
+        return [
+            r[C3dcEtl.get_node_id_field_name(node)] for r in
+                self._merged_harmonized_records[self._node_names_singular_to_plural[node]]
+        ]
+
+    def _get_merged_harmonized_record(self, node: C3dcEtlModelNode, node_id: str) -> dict[str, any]:
+        """ Get merged harmonized record for specified node type and id """
+        return next(
+            (
+                r for r in self._merged_harmonized_records[self._node_names_singular_to_plural[node]]
+                    if r[C3dcEtl.get_node_id_field_name(node)] == node_id
+            ),
+            None
+        )
+
+    def _validate_merged_harmonized_node_data(self, node: C3dcEtlModelNode) -> None:
+        """ Validate merged harmonized data for specified node """
+        _logger.info('Validating merged harmonized node data: "%s"', node)
+
+        node_for_id_field: C3dcEtlModelNode
+        node_id_fields: dict[str, str] = {}
+        node_id_fields_qualified: dict[str, str] = {}
+        for node_for_id_field in C3dcEtlModelNode:
+            node_id_fields[node_for_id_field] = C3dcEtl.get_node_id_field_name(node_for_id_field)
+            node_id_fields_qualified[node_for_id_field] = C3dcEtl.get_node_id_field_name(node_for_id_field, True)
+
+        node_id_field: str = node_id_fields[node]
+        study_id_field: str = node_id_fields[C3dcEtlModelNode.STUDY]
+        study_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.STUDY]
+
+        participant_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.PARTICIPANT]
+        reference_file_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.REFERENCE_FILE]
+
+        if len(self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]) != 1:
+            raise RuntimeError('Error validating merged harmonized data, number of study records in data set != 1')
+        merged_study: dict[str, any] = next(
+            s for s in self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
+        )
+
+        merged_participant_ids: list[str] = self._get_merged_harmonized_node_ids(C3dcEtlModelNode.PARTICIPANT)
+        merged_reference_file_ids: list[str] = self._get_merged_harmonized_node_ids(C3dcEtlModelNode.REFERENCE_FILE)
+
+        # ensure consistency of records and record id lists for linked relationships between
+        # participants <=> observations, study <=> participants, and study <=> reference files
+        node_name_plural: str = self._node_names_singular_to_plural[node]
+        for record in self._merged_harmonized_records.get(node_name_plural, []):
+            record_id: str = record[node_id_field]
+            if node in (C3dcEtlModelNode.PARTICIPANT, C3dcEtlModelNode.REFERENCE_FILE):
+                # make sure study id matches existing study
+                if record[study_id_field_qualified] != merged_study[study_id_field]:
+                    raise RuntimeError(
+                        f'Participant study id "{record[study_id_field_qualified]}" != "{merged_study[study_id_field]}"'
+                    )
+
+                # make sure participant or reference file id in corresponding study id list
+                if record_id not in merged_study[node_id_fields_qualified[node]]:
+                    raise RuntimeError(
+                        f'"{node}" id "{record_id}" not in study "{node}" id list'
+                    )
+
+            if node == C3dcEtlModelNode.PARTICIPANT:
+                # make sure all observations exist
+                observation_node: C3dcEtlModelNode
+                for observation_node in C3dcEtlModelNode:
+                    if not isinstance(record.get(node_id_fields_qualified[observation_node]), list):
+                        continue
+                    observation_node_name_plural: str = self._node_names_singular_to_plural[observation_node]
+                    observation_id: str
+                    for observation_id in record[node_id_fields_qualified[observation_node]]:
+                        if not any(
+                            on for on in self._merged_harmonized_records[observation_node_name_plural]
+                                if on[node_id_fields[observation_node]] == observation_id
+                        ):
+                            raise RuntimeError(
+                                f'"{observation_node}" "{observation_id}" not found for participant "{record_id}"'
+                            )
+
+            if node == C3dcEtlModelNode.STUDY:
+                # make sure study participant ids match ids of actual participant records and are unique
+                if sorted(record[participant_id_field_qualified]) != sorted(merged_participant_ids):
+                    _logger.fatal('study participant ids:')
+                    _logger.fatal(sorted(record[participant_id_field_qualified]))
+                    _logger.fatal('merged participant ids:')
+                    _logger.fatal(sorted(merged_participant_ids))
+                    raise RuntimeError('Mismatch between study participant id list and participant ids')
+                participant_id_counts: dict[str, int] = {}
+                participant_id: str
+                for participant_id in record[participant_id_field_qualified]:
+                    participant_id_counts[participant_id] = participant_id_counts.get(participant_id, 0) + 1
+                dupe_participant_ids: set[str] = {pid for pid, cnt in participant_id_counts.items() if cnt > 1}
+                if dupe_participant_ids:
+                    raise RuntimeError(f'Duplicate entries in study participant id list: {dupe_participant_ids}')
+
+                # make sure study reference file ids match ids of actual reference file records and are unique
+                if sorted(record[reference_file_id_field_qualified]) != sorted(merged_reference_file_ids):
+                    _logger.fatal('study reference file ids:')
+                    _logger.fatal(sorted(record[reference_file_id_field_qualified]))
+                    _logger.fatal('merged reference file ids:')
+                    _logger.fatal(sorted(merged_reference_file_ids))
+                    raise RuntimeError('Mismatch between study reference file id list and reference file ids')
+                reference_file_id_counts: dict[str, int] = {}
+                reference_file_id: str
+                for reference_file_id in record[node_id_fields_qualified[C3dcEtlModelNode.REFERENCE_FILE]]:
+                    reference_file_id_counts[reference_file_id] = reference_file_id_counts.get(reference_file_id, 0) + 1
+                dupe_reference_file_ids: set[str] = {rfid for rfid, cnt in reference_file_id_counts.items() if cnt > 1}
+                if dupe_reference_file_ids:
+                    raise RuntimeError(f'Duplicate entries in study reference file id list: {dupe_reference_file_ids}')
+
+            # observations such as diagnosis, survival, etc
+            if isinstance(record.get(participant_id_field_qualified), str):
+                # observation associated with participant; make sure participant exists and
+                # observation id in participant's list of observations for node type
+                record_participant_id: str = record[participant_id_field_qualified]
+                if record_participant_id not in merged_participant_ids:
+                    raise RuntimeError(
+                        f'Participant "{record_participant_id}" not in merged participant list for record: {record}'
+                    )
+                record_participant: dict[str, any] = self._get_merged_harmonized_record(
+                    C3dcEtlModelNode.PARTICIPANT,
+                    record_participant_id
+                )
+                if not record_participant:
+                    raise RuntimeError(f'Participant "{record_participant_id}" not found for record: {record}')
+
+        _logger.info('Validation of merged harmonized node data for "%s" found no issues', node)
+
+    def _validate_merged_harmonized_data(self, study_id: str) -> None:
+        """
+        Validate merged harmonized data, checking for duplicates and matching counts against individual data sets
+        """
+        _logger.info('Validating merged harmonized data against unmerged JSON ETL data for study "%s"', study_id)
+
+        # verify study matches id
+        merged_study: dict[str, any] = next(
+            iter(self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]])
+        )
+        study_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)
+        if merged_study[study_id_field] != study_id:
+            raise RuntimeError(f'Merged study id "{merged_study[study_id_field]}" != "{study_id}"')
+
+        participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)
+        participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
+
+        # cache records for merged and distinct unmerged records for comparison
+        unmerged_node_cache_keys: dict[str, set[tuple[str, str, str]]] = {}
+        merged_node_cache_keys: dict[str, set[tuple[str, str, str]]] = {}
+        xform_data: dict[str, list[dict[str, any]]]
+        node_name_plural: str
+        for xform_data in self._json_etl_data_sets[study_id].values():
+            records: list[dict[str, any]]
+            for node_name_plural, records in xform_data.items():
+                node_name: str = self._node_names_plural_to_singular[node_name_plural]
+                unmerged_node_cache_keys[node_name_plural] = unmerged_node_cache_keys.get(node_name_plural, set())
+                record: dict[str, any]
+                for record in records:
+                    cacheable_record: dict[str, any] = C3dcEtl.get_cacheable_record(record, node_name)
+                    participant_id: str = record.get(
+                        participant_id_field,
+                        record.get(participant_id_field_qualified, '')
+                    )
+                    participant_id = participant_id if isinstance(participant_id, str) else ''
+                    cache_key: tuple[str, str, str] = C3dcEtl.get_cache_key(cacheable_record, participant_id, node_name)
+                    unmerged_node_cache_keys[node_name_plural].add(cache_key)
+        _logger.info(
+            '%s distinct unmerged records found for study "%s"',
+            ', '.join(f'{len(v)} {self._node_names_plural_to_singular[k]}' for k,v in unmerged_node_cache_keys.items()),
+            study_id
+        )
+
+        for node_name_plural, records in self._merged_harmonized_records.items():
+            node_name: str = self._node_names_plural_to_singular[node_name_plural]
+            merged_node_cache_keys[node_name_plural] = merged_node_cache_keys.get(node_name_plural, set())
+            record: dict[str, any]
+            for record in records:
+                participant_id: str = record.get(participant_id_field, record.get(participant_id_field_qualified, ''))
+                participant_id = participant_id if isinstance(participant_id, str) else ''
+                # identical participant records can have different signatures due to same observations having
+                # different ids for different source files so use proxy record only containing participant id
+                cacheable_record: dict[str, any] = C3dcEtl.get_cacheable_record(record, node_name)
+                cache_key: tuple[str, str, str] = C3dcEtl.get_cache_key(cacheable_record, participant_id, node_name)
+                merged_node_cache_keys[node_name_plural].add(cache_key)
+        _logger.info(
+            '%s merged harmonized records found for study "%s"',
+            ', '.join(f'{len(v)} {self._node_names_plural_to_singular[k]}' for k,v in merged_node_cache_keys.items()),
+            study_id
+        )
+
+        # compare merged and unmerged participant ids
+        unmerged_participant_ids: set[str] = set()
+        for xform_data in self._json_etl_data_sets[study_id].values():
+            record: dict[str, any]
+            for record in xform_data[self._node_names_singular_to_plural[C3dcEtlModelNode.PARTICIPANT]]:
+                unmerged_participant_ids.add(record[participant_id_field])
+
+        merged_participants: list[dict[str, any]] = self._merged_harmonized_records[
+            self._node_names_singular_to_plural[C3dcEtlModelNode.PARTICIPANT]
+        ]
+        merged_participant_ids: dict[str, int] = {}
+        record: dict[str, any]
+        for record in merged_participants:
+            merged_participant_ids[record[participant_id_field]] = \
+                merged_participant_ids.get(record[participant_id_field], 0) + 1
+        dupe_merged_participant_ids: set[str] = {pid for pid, cnt in merged_participant_ids.items() if cnt > 1}
+        if dupe_merged_participant_ids:
+            raise RuntimeError(f'Duplicate merged participant records found: {dupe_merged_participant_ids}')
+        if unmerged_participant_ids != merged_participant_ids.keys():
+            _logger.error('Mismatch between participant ids in unmerged and merged data sets')
+            _logger.error('Unmerged participant ids:')
+            _logger.error(unmerged_participant_ids)
+            _logger.error('Merged participant ids:')
+            _logger.error(merged_participant_ids)
+            raise RuntimeError('Mismatch between participant ids in unmerged and merged data sets')
+
+        # compare merged and unmerged node names and counts
+        unmerged_merged_key_diff: set[str] = set(unmerged_node_cache_keys.keys()).difference(merged_node_cache_keys)
+        if unmerged_merged_key_diff:
+            raise RuntimeError(
+                'Mismatch in node names between merged and unmerged distinct records: ' +
+                    '"{unmerged_merged_key_diff}"'
+            )
+        node_count: int
+        for node_name_plural, node_count in {k:len(v) for k,v in unmerged_node_cache_keys.items()}.items():
+            if len(merged_node_cache_keys[node_name_plural]) != node_count:
+                raise RuntimeError(
+                    'Mismatch in node record counts between merged and unmerged distinct records: ' +
+                        f'"{node_name_plural}", {len(merged_node_cache_keys[node_name_plural])} != {node_count}'
+                )
+
+        # validate each node type in the merged harmonized data set
+        node: C3dcEtlModelNode
+        for node in C3dcEtlModelNode:
+            self._validate_merged_harmonized_node_data(node)
+
+        _logger.info('Validation of marged harmonized data for study "%s" found no errors', study_id)
+
+    def _cache_harmonized_record(
+        self,
+        study_id: str,
+        transformation_name: str,
+        record_participant_id_node: tuple[dict[str, any], str, str] = None,
+        cache_key: tuple[str, str, str] = None
+    ) -> dict[str, ]:
+        """
+        Cache harmonized record for speciifed study, transformation, participant and node. Note that if cache key
+        is specified, record/participant/node tuple is optional and will be ignored. If cache key not provided then
+        record/participant/node tuple must be specified in order to generate cache key.
+        """
+        if cache_key is None and record_participant_id_node is None:
+            raise RuntimeError('Cache key or record/participant/node tuple must be specified')
+        cache_key = cache_key or C3dcEtl.get_cache_key(*record_participant_id_node)
+        # add to cache; { study => { (record hash, participant id, node) => [transformation names] } }
+        self._harmonized_record_cache[study_id][cache_key] = self._harmonized_record_cache[study_id].get(cache_key, [])
+        self._harmonized_record_cache[study_id][cache_key].append(transformation_name)
+
+    def _cache_harmonized_data_set(self, transformation_name: str, data: dict[str, list[dict[str, any]]]) -> None:
+        """ Cache records in specified harmonized data set """
+        # harmonized data set must be dict of pluralized node names => node records
+        participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
+
+        study: dict[str, any] = next(s for s in data[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]])
+        study_id: str = study[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)]
+
+        node_name_pluralized: str
+        node_records: list[dict[str, any]]
+        for node_name_pluralized, node_records in data.items():
+            node_name: str = self._node_names_plural_to_singular[node_name_pluralized]
+            if node_name not in (*C3dcEtl.OBSERVATION_NODES, C3dcEtlModelNode.REFERENCE_FILE):
+                # only cache participant observations and reference files
+                continue
+
+            record: dict[str, any]
+            for record in node_records:
+                cacheable_record: dict[str, any] = C3dcEtl.get_cacheable_record(record, node_name)
+                participant_id: str = record.get(participant_id_field_qualified, '')
+                self._cache_harmonized_record(
+                    study_id,
+                    transformation_name,
+                    (cacheable_record, participant_id, node_name)
+                )
+
+    def _add_participant_to_merged_data_set(
+        self,
+        participant: dict[str, any],
+        participant_data_set: dict[str, list[dict[str, any]]],
+        transformation_name: str
+    ) -> None:
+        """ Add records for specified participant from source transformation data to merged data set """
+        participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)
+        participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
+        study_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)
+        study_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY, True)
+        participant_id: str = participant[participant_id_field]
+        study_id: str = participant[study_id_field_qualified]
+        if any(
+            p[participant_id_field] == participant_id
+                for p in
+                    self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.PARTICIPANT]]
+        ):
+            raise RuntimeError(f'Error adding participant "{participant_id}" to merged data, record already exists')
+
+        merged_study: dict[str, any] = next(
+            s for s in self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
+                if s[study_id_field] == study_id
+        )
+
+        # add participant's observations to matching observation collections in merged data set
+        node: C3dcEtlModelNode
+        for node in C3dcEtl.OBSERVATION_NODES:
+            observation_id_field: str = C3dcEtl.get_node_id_field_name(node)
+            observation_id_field_qualified: str = C3dcEtl.get_node_id_field_name(node, True)
+            observation_id_collection: list[str] = participant.get(observation_id_field_qualified, [])
+            observation_id: str
+            node_name_plural: str = self._node_names_singular_to_plural[node]
+            for observation_id in list(observation_id_collection):
+                # add collection for this observation node if not already present in merged data set
+                self._merged_harmonized_records[node_name_plural] = self._merged_harmonized_records.get(
+                    node_name_plural,
+                    []
+                )
+
+                # find the observation object matching this id
+                observation: dict[str, any] = next(
+                    o for o in participant_data_set[node_name_plural] if o[observation_id_field] == observation_id
+                )
+                cacheable_observation: dict[str, any] = C3dcEtl.get_cacheable_record(observation, node)
+                cache_key: tuple[str, str, str] = C3dcEtl.get_cache_key(cacheable_observation, participant_id, node)
+                if cache_key in self._harmonized_record_cache[study_id]:
+                    #  same-file duplicate record (e.g. lab test), log and withhold from output
+                    _logger.warning(
+                        'Duplicate "%s" harmonized record found and suppressed for "%s":',
+                        node,
+                        participant_id
+                    )
+                    _logger.warning(observation)
+                    dupe_key: tuple[str, str] = (participant_id, node)
+                    self._duplicate_harmonized_records[study_id][dupe_key] = self._duplicate_harmonized_records.get(
+                        dupe_key,
+                        set()
+                    )
+                    self._duplicate_harmonized_records[study_id][dupe_key].add(json.dumps(cacheable_observation))
+                    observation_id_collection.remove(observation_id)
+                else:
+                    self._merged_harmonized_records[node_name_plural].append(observation)
+
+                # add to cache; (record hash, participant id) => { node => [transformation names] }
+                self._cache_harmonized_record(study_id, transformation_name, cache_key=cache_key)
+
+        # add participant to merged data set's list of participants
+        self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.PARTICIPANT]].append(
+            participant
+        )
+
+        # add participant id to merged study's list of participant ids
+        merged_study[participant_id_field_qualified].append(participant_id)
+
+    def _update_participant_in_merged_data_set(
+        self,
+        participant: dict[str, any],
+        participant_data_set: dict[str, list[dict[str, any]]],
+        transformation_name: str
+    ) -> None:
+        """ Update records for specified participant from source transformation data into merged data set """
+        participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)
+        participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
+        study_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)
+        study_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY, True)
+        participant_id: str = participant[participant_id_field]
+        study_id: str = participant[study_id_field_qualified]
+
+        # verify participant present in merged data set's participant and study participant id collections
+        merged_participant: dict[str, any] = next(
+            (
+                p for p in
+                    self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.PARTICIPANT]]
+                        if p[participant_id_field] == participant_id
+            ),
+            None
+        )
+        if not merged_participant:
+            raise RuntimeError(f'Unable to update participant "{participant_id}" in merged data, participant not found')
+
+        merged_study: dict[str, any] = next(
+            (
+                s for s in self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
+                    if s[study_id_field] == study_id
+            ),
+            None
+        )
+        if not merged_study:
+            raise RuntimeError(f'Unable to update participant "{participant_id}" in merged data, study not found')
+
+        if participant_id not in merged_study[participant_id_field_qualified]:
+            raise RuntimeError(
+                f'Unable to update participant "{participant_id}" in merged data, id not in study participant id list'
+            )
+
+        # add participant's non-duplicate observations to matching observation collections in merged data set
+        node: C3dcEtlModelNode
+        for node in C3dcEtl.OBSERVATION_NODES:
+            observation_id_field: str = C3dcEtl.get_node_id_field_name(node)
+            observation_id_field_qualified: str = C3dcEtl.get_node_id_field_name(node, True)
+            observation_id_collection: list[str] = participant.get(observation_id_field_qualified, [])
+            observation_id: str
+            node_name_plural: str = self._node_names_singular_to_plural[node]
+            for observation_id in observation_id_collection:
+                # add collection for this observation node if not already present in merged data set
+                self._merged_harmonized_records[node_name_plural] = self._merged_harmonized_records.get(
+                    node_name_plural,
+                    []
+                )
+
+                # find the observation object matching this id
+                observation: dict[str, any] = next(
+                    o for o in participant_data_set[node_name_plural] if o[observation_id_field] == observation_id
+                )
+                cacheable_observation: dict[str, any] = C3dcEtl.get_cacheable_record(observation, node)
+                cache_key: tuple[str, str, str] = C3dcEtl.get_cache_key(cacheable_observation, participant_id, node)
+                if cache_key in self._harmonized_record_cache[study_id]:
+                    #  cross-file duplicate record, log and withhold from output
+                    _logger.warning(
+                        'Duplicate "%s" harmonized record found and suppressed for "%s":',
+                        node,
+                        participant_id
+                    )
+                    _logger.warning(cacheable_observation)
+                    dupe_key: tuple[str, str] = (participant_id, node)
+                    self._duplicate_harmonized_records[study_id][dupe_key] = self._duplicate_harmonized_records.get(
+                        dupe_key,
+                        set()
+                    )
+                    self._duplicate_harmonized_records[study_id][dupe_key].add(json.dumps(cacheable_observation))
+                else:
+                    self._merged_harmonized_records[node_name_plural].append(observation)
+
+                # add to cache; (record hash, participant id) => { node => [transformation names] }
+                self._cache_harmonized_record(study_id, transformation_name, cache_key=cache_key)
+
+    def _create_merged_json_etl_file(self, study_id: str, merged_output_file_path: str) -> None:
+        """ Create merged harmonized output file for specified study with duplicate records removed """
+        _logger.info(
+            'Creating merged JSON ETL data file for study "%s" and saving to "%s"',
+            study_id,
+            merged_output_file_path
+        )
+        self._merged_harmonized_records = {}
+
+        participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)
+        participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
+        reference_file_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.REFERENCE_FILE)
+        reference_file_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.REFERENCE_FILE, True)
+
+        merged_participant_ids: set[str] = set()
+        merged_study: dict[str, any]
+        xform_name: str
+        xform_data: dict[str, list[dict[str, any]]]
+        # use copy to preserve transformation-specific data while de-duplicating records to create merged data set
+        json_etl_data: dict[str, any] = copy.deepcopy(self._json_etl_data_sets[study_id])
+        for xform_name, xform_data in json_etl_data.items():
+            _logger.info('Merging data set for transformation "%s"', xform_name)
+
+            # make sure merged output data set has containers for all node types found in transformation's data set
+            node_name_plural: str
+            for node_name_plural in xform_data:
+                self._merged_harmonized_records[node_name_plural] = self._merged_harmonized_records.get(
+                    node_name_plural,
+                    []
+                )
+
+            if not self._merged_harmonized_records.get(self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]):
+                # no data merged yet, add study to merged data set
+                self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]] = \
+                    xform_data[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
+                merged_study = next(
+                    s for s in
+                        self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
+                            if s[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)] == study_id
+                )
+                merged_study[reference_file_id_field_qualified] = []
+                merged_study[participant_id_field_qualified] = []
+
+            # enumerate and add/update participants in this data set while checking for and logging duplicates
+            participant: dict[str, any]
+            for participant in xform_data[self._node_names_singular_to_plural[C3dcEtlModelNode.PARTICIPANT]]:
+                participant_id: str = participant[participant_id_field]
+                if participant_id not in merged_participant_ids:
+                    self._add_participant_to_merged_data_set(participant, xform_data, xform_name)
+                    merged_participant_ids.add(participant_id)
+                else:
+                    self._update_participant_in_merged_data_set(participant, xform_data, xform_name)
+
+            # enumerate and add reference file entries as/if needed
+            reference_file: dict[str, any]
+            for reference_file in xform_data[self._node_names_singular_to_plural[C3dcEtlModelNode.REFERENCE_FILE]]:
+                reference_file_id: str = reference_file[reference_file_id_field]
+                cacheable_reference_file: dict[str, any] = C3dcEtl.get_cacheable_record(
+                    reference_file,
+                    C3dcEtlModelNode.REFERENCE_FILE
+                )
+                cache_key: tuple[str, str, str] = C3dcEtl.get_cache_key(
+                    cacheable_reference_file,
+                    '',
+                    C3dcEtlModelNode.REFERENCE_FILE
+                )
+                if cache_key in self._harmonized_record_cache[study_id]:
+                    continue
+                # add reference file to merged data set's list of reference files
+                self._merged_harmonized_records[
+                    self._node_names_singular_to_plural[C3dcEtlModelNode.REFERENCE_FILE]
+                ].append(reference_file)
+
+                # add reference file id to merged study's list of reference file ids
+                merged_study[reference_file_id_field_qualified].append(reference_file_id)
+
+                # cache reference file record
+                self._cache_harmonized_record(study_id, xform_name, cache_key=cache_key)
+
+        # save merged data to specified output file
+        self._c3dc_file_manager.write_file(
+            json.dumps(self._merged_harmonized_records, indent=2).encode('utf-8'),
+            merged_output_file_path
+        )
+
+        _logger.info(
+            '%s merged harmonized records for study "%s"',
+            ', '.join(
+                f'{len(v)} {self._node_names_plural_to_singular[k]}' for k,v in self._merged_harmonized_records.items()
+            ),
+            study_id
+        )
+
+    def _create_harmonized_duplicate_record_report_file(self, study_id: str, duplicate_record_report_path: str) -> None:
+        """ Save duplicate harmonized record details to file specified in config """
+        dupe_recs: dict[tuple[str, str, str], list[str]] = {
+            k:v for k,v in self._harmonized_record_cache.get(study_id, {}).items() if len(v) > 1
+        }
+        if not dupe_recs:
+            _logger.info('No duplicate harmonized records found/suppressed for study "%s"', study_id)
+            return
+
+        _logger.warning(
+            'Saving harmonized duplicate record report for study "%s" to "%s"',
+            study_id,
+            duplicate_record_report_path
+        )
+        _logger.warning(
+            '%d total duplicate harmonized records found and suppressed for %d distinct participants',
+            len(dupe_recs),
+            len(set(p for (_, p, _) in dupe_recs.keys()))
+        )
+
+        if not self._duplicate_harmonized_records.get(study_id):
+            raise RuntimeError(f'Duplicate harmonized record report cache is empty for study "{study_id}"')
+
+        node: C3dcEtlModelNode | str
+        node_counts: dict[C3dcEtlModelNode, int] = {}
+        for node in C3dcEtlModelNode:
+            node_counts[node] = sum(1 for (h, p, n) in dupe_recs if n == node)
+        _logger.warning(
+            '%s duplicate records found/suppressed for study "%s"',
+            ', '.join(f'{v} {k}' for k,v in node_counts.items()),
+            study_id
+        )
+
+        if not duplicate_record_report_path:
+            _logger.warning(
+                'Duplicate report output path "duplicate_report_path" not specified in study config, ' +
+                    'duplicate report CSV file not written'
+            )
+            return
+
+        # aggregate dupes by participant => node => [xforms]
+        parts_nodes_xforms: dict[str, dict[str, set[str]]] = {}
+        participant_id: str
+        xforms: list[str] | set[str]
+        for (_, participant_id, node), xforms in dupe_recs.items():
+            parts_nodes_xforms[participant_id] = parts_nodes_xforms.get(participant_id, {})
+            parts_nodes_xforms[participant_id][node] = parts_nodes_xforms[participant_id].get(node, set())
+            parts_nodes_xforms[participant_id][node].update(xforms)
+
+        # create tabular reports for participant => dupe node/transform names
+        # participant id | diagnosis      | diagnosis_dupe_rec | ... | survival        | survival_dupe_rec
+        # participant 1  | xform1, xform2 | <dupe rec(s)>      | ... | xform1, xform 3 | <dupe rec(s)>
+        # participant 2  | xform2, xform3 | <dupe rec(s)>      | ... | xform2, xform 4 | <dupe rec(s)>
+        # ...
+        dupe_report_records: list[dict[str, str]] = []
+        nodes_xforms: dict[str, set[str]]
+        for participant_id, nodes_xforms in dict(sorted(parts_nodes_xforms.items())).items():
+            dupe_report_record: dict[str, str] = {}
+            dupe_report_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)] = participant_id
+            for node in C3dcEtlModelNode:
+                xforms: list[str] = sorted(set(nodes_xforms.get(node, set())))
+                dupe_report_record[str(node)] = ', '.join(xforms)
+                dupe_report_record[f'{str(node)}_dupe_recs'] = '\n'.join(
+                    self._duplicate_harmonized_records[study_id].get((participant_id, node), set())
+                )
+            dupe_report_records.append(dupe_report_record)
+
+        fieldnames: list[str] = (
+            [C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)] +
+                sorted(k for k in dupe_report_records[0] if k != 'participant_id')
+        )
+        output_io: io.StringIO = io.StringIO()
+        writer: csv.DictWriter = csv.DictWriter(output_io, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(dupe_report_records)
+        self._c3dc_file_manager.write_file(output_io.getvalue().encode('utf-8'), duplicate_record_report_path)
 
 
 def print_usage() -> None:
