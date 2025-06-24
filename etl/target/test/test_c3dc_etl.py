@@ -1,7 +1,7 @@
 """ Test C3dcEtl """
+import hashlib
 import json
 import logging
-import logging.config
 import os
 import pathlib
 import sys
@@ -10,6 +10,7 @@ import dotenv
 import pytest
 
 from c3dc_etl import C3dcEtl
+from c3dc_etl_model_node import C3dcEtlModelNode
 
 def look_up_and_append_sys_path(*args: tuple[str, ...]) -> None:
     """ Append specified dir_name to sys path for import """
@@ -136,26 +137,275 @@ def test_is_replacement_match() -> None:
         )
 
 
-@pytest.mark.skip('test_get_pluralized_node_name')
-def test_get_pluralized_node_name() -> None:
-    """ test_get_pluralized_node_name """
-    _logger.info(test_get_pluralized_node_name.__name__)
-    singular_plural_names: dict[str, str] = {
-        'diagnosis': 'diagnoses',
-        'participant': 'participants',
-        'reference_file': 'reference_files',
-        'study': 'studies',
-        'survival': 'survivals',
-        'treatment': 'treatments',
-        'treatment_response': 'treatment_responses',
-    }
-    singular_name: str
-    expected_plural_name: str
-    for singular_name, expected_plural_name in singular_plural_names.items():
-        plural_name:str = C3dcEtl.get_pluralized_node_name(singular_name)
-        logging.info('get_pluralized_node_name: %s => %s', singular_name, plural_name)
-        assert plural_name == expected_plural_name
+@pytest.mark.skip('test_is_macro_mapping')
+def test_is_macro_mapping() -> None:
+    """ test_is_macro_mapping """
+    _logger.info(test_is_macro_mapping.__name__)
+    mappings_expected_results: list[tuple[dict[str, any], bool]] = [
+        (
+            {
+                "output_field": "study.study_id",
+                "source_field": "[string_literal]",
+                "type_group_index": "*",
+                "default_value": None,
+                "replacement_values": [
+                    {
+                        "old_value": "*",
+                        "new_value": "phs000463"
+                    }
+                ]
+            }, False
+        ),
+        (
+            {
+                "output_field": "survival.age_at_last_known_survival_status",
+                "source_field": "[Age at Diagnosis in Days, Overall Survival Time in Days]",
+                "type_group_index": "*",
+                "default_value": -999,
+                "replacement_values": [
+                    {
+                        "old_value": "*",
+                        "new_value": "{sum}"
+                    }
+                ]
+            }, True
+        ),
+        (
+            {
+                "output_field": "diagnosis.diagnosis_id",
+                "source_field": "[string_literal]",
+                "type_group_index": "*",
+                "default_value": None,
+                "replacement_values": [
+                    {
+                        "old_value": "*",
+                        "new_value": "{uuid}"
+                    }
+                ]
+            }, True
+        )
+    ]
+    mapping: dict[str, any]
+    expected_result: bool
+    for (mapping, expected_result) in mappings_expected_results:
+        assert C3dcEtl.is_macro_mapping(mapping) == expected_result
 
+
+@pytest.mark.skip('test_sort_data')
+def test_sort_data() -> None:
+    """ test_sort_data """
+    _logger.info(test_sort_data.__name__)
+    data_expected_results: list[tuple[any, any]] = [
+        (0, 0),
+        ((0, 1), (0, 1)),
+        ((1, 0), (0, 1)),
+        ('1', '1'),
+        (('0', '1'), ('0', '1')),
+        (('1', '0'), ('0', '1')),
+        (('a', 'b', 'c'), ('a', 'b', 'c')),
+        (('a', 'c', 'b'), ('a', 'b', 'c')),
+        ([0, 1], [0, 1]),
+        ([1, 0], [0, 1]),
+        (['0', '1'], ['0', '1']),
+        (['1', '0'], ['0', '1']),
+        (['a', 'b', 'c'], ['a', 'b', 'c']),
+        ({'a': 1, 'b': 2}, {'a': 1, 'b': 2}),
+        ({'b': 2, 'a': 1}, {'a': 1, 'b': 2}),
+        ({1: 'a', 2: 'b'}, {1: 'a', 2: 'b'}),
+        ({2: 'b', 1: 'a'}, {1: 'a', 2: 'b'}),
+        (
+            {
+                'a': 1,
+                'b': [0, 1],
+                'c': (20, 30, 40),
+                'd': {'x': 'x', 'y': 'y', 'z': 'z'},
+            },
+            {
+                'a': 1,
+                'b': [0, 1],
+                'c': (20, 30, 40),
+                'd': {'x': 'x', 'y': 'y', 'z': 'z'}
+            }
+        ),
+        (
+            {
+                'd': {'z': 'z', 'y': 'y', 'x': 'x'},
+                'c': (20, 30, 40),
+                'a': 1,
+                'b': [1, 0]
+            },
+            {
+                'a': 1,
+                'b': [0, 1],
+                'c': (20, 30, 40),
+                'd': {'x': 'x', 'y': 'y', 'z': 'z'}
+            }
+        )
+    ]
+    data: any
+    expected_result: any
+    for (data, expected_result) in data_expected_results:
+        _logger.info('%s => %s', data, expected_result)
+        assert C3dcEtl.sort_data(data) == expected_result
+        assert json.dumps(C3dcEtl.sort_data(data), sort_keys=True) == json.dumps(expected_result, sort_keys=True)
+
+
+@pytest.mark.skip('test_get_node_id_field_name')
+def test_get_node_id_field_name() -> None:
+    """ test_get_node_id_field_name """
+    node: C3dcEtlModelNode
+    for node in C3dcEtlModelNode:
+        assert C3dcEtl.get_node_id_field_name(node) == f'{node}_id'
+        assert C3dcEtl.get_node_id_field_name(node, True) == f'{node}.{node}_id'
+
+
+@pytest.mark.skip('test_get_cache_key')
+def test_get_cache_key() -> None:
+    """ test_get_cache_key """
+    node: C3dcEtlModelNode
+    for node in C3dcEtlModelNode:
+        _logger.info('testing "%s"', node)
+        participant_id: str = 'participant id'
+        record: dict[str, any] = { C3dcEtl.get_node_id_field_name(node): f'{node} id' }
+        cacheable_record: dict[str, any] = C3dcEtl.get_cacheable_record(record, node)
+        cache_key: tuple[str, str, str] = C3dcEtl.get_cache_key(record, participant_id, node)
+        _logger.info(cacheable_record)
+        assert cache_key[0] == hashlib.sha1(
+            json.dumps(C3dcEtl.sort_data(cacheable_record), sort_keys=True).encode('utf-8')
+        ).hexdigest()
+        assert cache_key[1] == participant_id
+        assert cache_key[2] == node
+        _logger.info('pass: "%s"', node)
+
+
+@pytest.mark.skip('test_get_cacheable_record')
+def test_get_cacheable_record() -> None:
+    """ test_get_cacheable_record """
+    test_participant_record: dict[str, any] = {
+        'participant_id': 'participant_id',
+        'ethnicity': 'ethnicity',
+        'race': 'race',
+        'sex_at_birth': 'sex_at_birth',
+        'study.study_id': 'study id'
+    }
+    expected_participant_record: dict[str, any] = {
+        'participant_id': '',
+        'ethnicity': 'ethnicity',
+        'race': 'race',
+        'sex_at_birth': 'sex_at_birth',
+        'study.study_id': 'study id'
+    }
+    node: C3dcEtlModelNode
+    for node in C3dcEtl.OBSERVATION_NODES:
+        test_participant_record[C3dcEtl.get_node_id_field_name(node, True)] = [
+            f'{node} id'
+        ]
+        expected_participant_record[C3dcEtl.get_node_id_field_name(node, True)] = []
+
+    test_study_record: dict[str, any] = {
+        'study_id': 'study id',
+        'dbgap_accession': 'dbgap accession',
+        'study_name': 'study name',
+        'consent': 'consent',
+        'consent_number': 1,
+        'external_url': 'external url',
+        'study_status': 'study status',
+        'study_description': 'study description',
+        'participant.participant_id': [ 'participant id' ],
+        'reference_file.reference_file_id': [ 'reference file id' ]
+    }
+    expected_study_record: dict[str, any] = {
+        'study_id': '',
+        'dbgap_accession': 'dbgap accession',
+        'study_name': 'study name',
+        'consent': 'consent',
+        'consent_number': 1,
+        'external_url': 'external url',
+        'study_status': 'study status',
+        'study_description': 'study description',
+        'participant.participant_id': [],
+        'reference_file.reference_file_id': []
+    }
+
+    test_reference_file_record: dict[str, any] = {
+        'reference_file_id': 'reference file id',
+        'dcf_indexd_guid': 'dcf indexd guid',
+        'file_name': 'file name',
+        'file_type': 'file type',
+        'file_category': "file category",
+        'file_size': 1,
+        'md5sum': 'md5 sum',
+        'file_description': 'file description',
+        'reference_file_url': 'reference file url',
+        'study.study_id': 'study id'
+    }
+    expected_reference_file_record: dict[str, any] = {
+        'reference_file_id': '',
+        'dcf_indexd_guid': '',
+        'file_name': 'file name',
+        'file_type': 'file type',
+        'file_category': "file category",
+        'file_size': 1,
+        'md5sum': 'md5 sum',
+        'file_description': 'file description',
+        'reference_file_url': 'reference file url',
+        'study.study_id': 'study id'
+    }
+
+    test_diagnosis_record: dict[str, any] = {
+        'diagnosis_id': 'diagnosis id',
+        'disease_phase': 'disease phase',
+        'diagnosis_classification_system': 'diagnosis classification system',
+        'diagnosis_basis': 'diagnosis basis',
+        'age_at_diagnosis': 1,
+        'tumor_stage_clinical_t': 'tumor stage clinical t',
+        'tumor_stage_clinical_n': 'tumor stage clinical n',
+        'tumor_stage_clinical_m': 'tumor stage clinical m',
+        'diagnosis_comment': 'diagnosis comment',
+        'diagnosis': 'diagnosis',
+        'year_of_diagnosis': 1,
+        'anatomic_site': 'anatomic site',
+        'laterality': 'laterality',
+        'toronto_childhood_cancer_staging': 'toronto childhood cancer staging',
+        'tumor_grade': 'tumor grade',
+        'tumor_classification': 'tumor classification',
+        'participant.participant_id': 'participant id'
+    }
+    expected_diagnosis_record: dict[str, any] = {
+        'diagnosis_id': '',
+        'disease_phase': 'disease phase',
+        'diagnosis_classification_system': 'diagnosis classification system',
+        'diagnosis_basis': 'diagnosis basis',
+        'age_at_diagnosis': 1,
+        'tumor_stage_clinical_t': 'tumor stage clinical t',
+        'tumor_stage_clinical_n': 'tumor stage clinical n',
+        'tumor_stage_clinical_m': 'tumor stage clinical m',
+        'diagnosis_comment': 'diagnosis comment',
+        'diagnosis': 'diagnosis',
+        'year_of_diagnosis': 1,
+        'anatomic_site': 'anatomic site',
+        'laterality': 'laterality',
+        'toronto_childhood_cancer_staging': 'toronto childhood cancer staging',
+        'tumor_grade': 'tumor grade',
+        'tumor_classification': 'tumor classification',
+        'participant.participant_id': 'participant id'
+    }
+
+    nodes_test_expected_records: list[tuple[C3dcEtlModelNode, dict[str, any], dict[str, any]]] = [
+        (C3dcEtlModelNode.PARTICIPANT, test_participant_record, expected_participant_record),
+        (C3dcEtlModelNode.STUDY, test_study_record, expected_study_record),
+        (C3dcEtlModelNode.REFERENCE_FILE, test_reference_file_record, expected_reference_file_record),
+        (C3dcEtlModelNode.DIAGNOSIS, test_diagnosis_record, expected_diagnosis_record)
+    ]
+    node_test_expected_record: tuple[C3dcEtlModelNode, dict[str, any], dict[str, any]]
+    for node_test_expected_record in nodes_test_expected_records:
+        _logger.info('testing "%s"', node_test_expected_record[0])
+        actual_cacheable_record: dict[str, any] = C3dcEtl.get_cacheable_record(
+            node_test_expected_record[1],
+            node_test_expected_record[0]
+        )
+        assert actual_cacheable_record == node_test_expected_record[2]
+        _logger.info('pass: "%s"', node_test_expected_record[0])
 
 @pytest.mark.skip('test_load_transformations')
 def test_load_transformations() -> None:
