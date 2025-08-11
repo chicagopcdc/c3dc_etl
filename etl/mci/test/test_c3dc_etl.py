@@ -68,6 +68,64 @@ def test_is_number() -> None:
         assert is_num == expected_status
 
 
+@pytest.mark.skip('test_to_float')
+def test_to_float() -> None:
+    """ test_to_float """
+    _logger.info(test_to_float.__name__)
+    values: dict[any, bool] = {
+        '123': 123.0,
+        3: 3.0,
+        -7: -7.0,
+        3.14: 3.14,
+        -5.2: -5.2
+    }
+    value: any
+    expected_result: float
+    for value, expected_result in values.items():
+        float_value: float = C3dcEtl.to_float(value)
+        _logger.info('to_float: "%s" => "%s"', value, float_value)
+        assert float_value == expected_result
+
+
+@pytest.mark.skip('test_is_integer')
+def test_is_integer() -> None:
+    """ test_is_integer """
+    _logger.info(test_is_integer.__name__)
+    values: dict[any, bool] = {
+        '123': True,
+        'x123': False,
+        3: True,
+        -7: True,
+        3.14: False,
+        -5.2: False
+    }
+    value: any
+    expected_status: bool
+    for value, expected_status in values.items():
+        is_int: bool = C3dcEtl.is_integer(value)
+        _logger.info('is_integer: %s => %s', value, test_is_integer)
+        assert is_int == expected_status
+
+
+@pytest.mark.skip('test_to_integer')
+def test_to_integer() -> None:
+    """ test_to_integer """
+    _logger.info(test_to_integer.__name__)
+    values: dict[any, bool] = {
+        '123': 123,
+        3: 3,
+        -7: -7,
+        3.14: 3,
+        -5.2: -5
+    }
+    value: any
+    expected_result: int
+    for value, expected_result in values.items():
+        integer_value: int = C3dcEtl.to_integer(value)
+        _logger.info('to_integer: %s => %s', value, integer_value)
+        assert integer_value == expected_result
+
+
 @pytest.mark.skip('test_is_allowed_value')
 def test_is_allowed_value() -> None:
     """ test_is_allowed_value """
@@ -153,6 +211,63 @@ def test_collate_form_data() -> None:
         follow_up_form: dict[str, any] = follow_up_forms[0]
         assert follow_up_form and len(follow_up_form.get('data', [])) == 2
         _logger.info('%d "FOLLOW_UP.data" elements found', len(follow_up_form.get('data', [])))
+
+
+@pytest.mark.skip('test_get_mapping_macros')
+def test_get_mapping_macros() -> None:
+    """ test_get_mapping_macros """
+    _logger.info(test_get_mapping_macros.__name__)
+    mapping_macro: dict[str, any] = {
+        'output_field': 'diagnosis.diagnosis',
+        'source_field': 'MORPHO_ICDO',
+        'type_group_index': '*',
+        'default_value': 'Unknown, to be completed later',
+        'replacement_values': [
+            {
+                'old_value': '0001/0',
+                'new_value': 'Neoplasm, benign'
+            },
+            {
+                'old_value': '8681/1',
+                'new_value': 'Sympathetic paraganglioma'
+            },
+            {
+                'old_value': '*',
+                'new_value': '{diagnosis}'
+            }
+        ]
+    }
+    mapping_nonmacro: dict[str, any] = {
+        'output_field': 'survival.last_known_survival_status',
+        'source_field': 'PT_VST',
+        'type_group_index': '*',
+        'default_value': 'Not reported',
+        'replacement_values': [
+            {
+                'old_value': 'Alive',
+                'new_value': 'Alive'
+            },
+            {
+                'old_value': 'Dead',
+                'new_value': 'Dead'
+            },
+            {
+                'old_value': 'Unknown',
+                'new_value': 'Unknown'
+            },
+            {
+                'old_value': 'Not reported',
+                'new_value': 'Not reported'
+            }
+        ]
+    }
+
+    macros: list[str] = C3dcEtl.get_mapping_macros(mapping_macro)
+    assert macros
+    _logger.info('Macros: "%s"', macros)
+
+    macros = C3dcEtl.get_mapping_macros(mapping_nonmacro)
+    assert not macros
 
 
 @pytest.mark.skip('test_load_transformations')

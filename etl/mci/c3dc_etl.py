@@ -122,6 +122,16 @@ class C3dcEtl:
         self._study_configurations: list[dict[str, any]] = json.loads(config.get('STUDY_CONFIGURATIONS', '[]'))
         self._study_configurations = [sc for sc in self._study_configurations if sc.get('active', True)]
 
+        # ICD-O code => term mappings for diagnosis determination:
+        # - find diagnosis.diagnosis entry matching ICD-O term for source record MORPHO_ICDO
+        # - set diagnosis to 'Unknown'
+        self._icdo_codes_terms: dict[str, dict[str, list[dict[str, str]]]] = {}
+
+        # diagnosis.diagnosis => diagnosis.diagnosis_category mappings for diagnosis_category determination:
+        # - find diagnosis.diagnosis using MORPHO_TEXT/MORPHO_ICDO
+        # - find diagnosis.diagnosis_category matching diagnosis.diagnosis
+        self._diagnosis_category_mappings: dict[str, dict[str, str]] = {}
+
         # track mappings for row-mapped nodes (ex: treatments and treatment responses) separately for each
         # transformation as nested dicts: {node type => {transformation name => list of mappings}}
         self._row_mapped_node_mappings: dict[str, dict[str, list[dict[str, any]]]] = {}
@@ -172,6 +182,25 @@ class C3dcEtl:
         except (TypeError, ValueError):
             return False
         return True
+
+    @staticmethod
+    def to_float(value: any) -> float:
+        """ Convert specified input value to float """
+        if not C3dcEtl.is_number(value):
+            raise ValueError(f'"{value}" is not a number')
+        return float(value)
+
+    @staticmethod
+    def is_integer(value: any) -> bool:
+        """ Determine whether specified input value is integer """
+        return C3dcEtl.is_number(value) and C3dcEtl.to_float(value).is_integer()
+
+    @staticmethod
+    def to_integer(value: any) -> int:
+        """ Convert specified input value to integer """
+        if not C3dcEtl.is_number(value):
+            raise ValueError(f'"{value}" is not an integer')
+        return int(C3dcEtl.to_float(value))
 
     @staticmethod
     def is_allowed_value(value: any, allowed_values: set[any]) -> bool:
@@ -249,6 +278,25 @@ class C3dcEtl:
                 obj[key] = val
         return obj
 
+    @staticmethod
+    def get_mapping_macros(mapping: dict[str, any]) -> list[str]:
+        """ Get new value replacement macros in specified mapping """
+        macros: list[str] = []
+        replacement_entry: dict[str, str]
+        for replacement_entry in mapping.get('replacement_values', []):
+            new_value: any = replacement_entry.get('new_value', None)
+
+            new_vals: list[any] = new_value if isinstance(new_value, (list, set, tuple)) else [new_value]
+            new_val: any
+            for i, new_val in enumerate(new_vals):
+                if not (str(new_val).startswith('{') and str(new_val).endswith('}')):
+                    continue
+                repl_macros: list[str] = re.findall(r'\{.*?\}', new_val)
+                if not repl_macros:
+                    continue
+                macros.append(repl_macros[0])
+        return macros
+
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
         # enumerate each per-study transformation config object in local config
@@ -305,6 +353,12 @@ class C3dcEtl:
                         self._source_field_output_types[source_field] = (
                             self._get_json_schema_node_property_type(mapping.get('output_field'))
                         )
+
+                # load ICD-O and diagnosis category mappings if specified in transform config
+                self._icdo_codes_terms[transform_config['name']] = self._get_icdo_codes_terms(transform_config)
+                self._diagnosis_category_mappings[transform_config['name']] = self._get_diagnosis_category_mappings(
+                    transform_config
+                )
 
                 # load row-mapped node mappings if specified in transform config
                 row_mapped_node: C3dcEtlModelNode
@@ -557,7 +611,7 @@ class C3dcEtl:
             and
             self._c3dc_file_manager.file_exists(transformation.get('source_file_manifest_path'))
         ):
-            _logger.info('Source file manifest data not available, skipping load')
+            _logger.warning('Source file manifest data not available, skipping load')
             return {}
 
         _logger.info('Loading source file manifest data from "%s"', transformation.get('source_file_manifest_path'))
@@ -606,6 +660,100 @@ class C3dcEtl:
             raise RuntimeError('No manifest records loaded')
         return manifests
 
+    def _get_icdo_codes_terms(self, transformation: dict[str, any]) -> dict[str, list[dict[str, str]]]:
+        """ Read and return ICD-O lookup data """
+        icdo_codes_terms: dict[str, list[dict[str, str]]] = {}
+        if not (
+            transformation.get('icdo_codes_terms_mappings_path')
+            and
+            self._c3dc_file_manager.file_exists(transformation.get('icdo_codes_terms_mappings_path'))
+        ):
+            _logger.warning('ICD-O lookup data not available, skipping load')
+            return icdo_codes_terms
+
+        _logger.info('Loading ICD-O lookup data from "%s"', transformation.get('icdo_codes_terms_mappings_path'))
+        icdo_lookup_file_path: str = transformation['icdo_codes_terms_mappings_path']
+        if pathlib.Path(icdo_lookup_file_path).suffix.lower() != '.xlsx':
+            raise RuntimeError(f'Unsupported ICD-O lookup data file type: "{icdo_lookup_file_path}"')
+
+        icdo_lookup_file_data: bytes = self._c3dc_file_manager.read_file(icdo_lookup_file_path)
+        sheet_name: str = transformation.get('icdo_codes_terms_mappings_sheet', 'icdo_codes_terms')[:31]
+        wb: Workbook = openpyxl.load_workbook(io.BytesIO(icdo_lookup_file_data), data_only=True)
+        if sheet_name not in wb.sheetnames:
+            raise RuntimeError(f'Worksheet "{sheet_name}" not found in workbook worksheet list: {wb.sheetnames}')
+        ws: Worksheet = wb[sheet_name] if sheet_name else wb.worksheets[0]
+        row: str
+        cols: list[str] = []
+        for row in ws.iter_rows():
+            if not cols:
+                # first row is header:
+                # Code|Level|Term|Code|reference|obs|See also|See note|Includes|Excludes|Other text
+                cols = [cell.value for cell in row]
+                continue
+            icdo_lookup_rec: dict[str, str] = {}
+            col_num: int
+            for col_num, cell in enumerate(row):
+                value: any = cell.value
+                icdo_lookup_rec[cols[col_num]] = str(value).strip() if value is not None else ''
+            if (icdo_lookup_rec['Code'] in ('', None) or icdo_lookup_rec['Term'] in ('', None)):
+                continue
+            icdo_codes_terms[icdo_lookup_rec['Code']] = icdo_codes_terms.get(icdo_lookup_rec['Code'], [])
+            icdo_codes_terms[icdo_lookup_rec['Code']].append(icdo_lookup_rec)
+        if not icdo_codes_terms:
+            raise RuntimeError('No ICD-O lookup records loaded')
+        return icdo_codes_terms
+
+    def _get_diagnosis_category_mappings(self, transformation: dict[str, any]) -> dict[str, str]:
+        """ Read and return diagnosis.diagnosis => diagnosis.diagnosis_category map """
+        diagnosis_category_mappings: dict[str, str] = {}
+        if not (
+            transformation.get('diagnosis_category_mappings_path')
+            and
+            self._c3dc_file_manager.file_exists(transformation.get('diagnosis_category_mappings_path'))
+        ):
+            _logger.warning('Diagnosis category mapping data not available, skipping load')
+            return diagnosis_category_mappings
+
+        _logger.info('Loading diagnosis category map from "%s"', transformation.get('diagnosis_category_mappings_path'))
+        diagnosis_category_map_file_path: str = transformation['diagnosis_category_mappings_path']
+        if pathlib.Path(diagnosis_category_map_file_path).suffix.lower() != '.xlsx':
+            raise RuntimeError(
+                f'Unsupported diagnosis category map data file type: "{diagnosis_category_map_file_path}"'
+            )
+
+        diagnosis_category_file_data: bytes = self._c3dc_file_manager.read_file(diagnosis_category_map_file_path)
+        sheet_name: str = transformation.get('diagnosis_category_mappings_sheet', 'diagnosis_category_map')[:31]
+        wb: Workbook = openpyxl.load_workbook(io.BytesIO(diagnosis_category_file_data), data_only=True)
+        if sheet_name not in wb.sheetnames:
+            raise RuntimeError(f'Worksheet "{sheet_name}" not found in workbook worksheet list: {wb.sheetnames}')
+        ws: Worksheet = wb[sheet_name] if sheet_name else wb.worksheets[0]
+        row: str
+        cols: list[str] = []
+        for row in ws.iter_rows():
+            if not cols:
+                # first row is header: diagnosis|diagnosis_category
+                cols = [cell.value for cell in row]
+                if 'diagnosis' not in cols or 'diagnosis_category' not in cols:
+                    raise RuntimeError(
+                        f'Diagnosis category mapping does not contain "diagnosis" or "diagnosis_category": "{cols}"'
+                    )
+                continue
+            dx_cat_rec: dict[str, str] = {}
+            col_num: int
+            for col_num, cell in enumerate(row):
+                value: any = cell.value
+                dx_cat_rec[cols[col_num]] = str(value).strip() if value is not None else ''
+            if (dx_cat_rec['diagnosis'] in ('', None) or dx_cat_rec['diagnosis_category'] in ('', None)):
+                continue
+            if dx_cat_rec['diagnosis'] in diagnosis_category_mappings:
+                raise RuntimeError(
+                    f'Duplicate diagnosis record found in diagnosis category map sheet: {dx_cat_rec["diagnosis"]}'
+                )
+            diagnosis_category_mappings[dx_cat_rec['diagnosis']] = dx_cat_rec['diagnosis_category']
+        if not diagnosis_category_mappings:
+            raise RuntimeError('No diagnosis category map records loaded')
+        return diagnosis_category_mappings
+
     def _get_row_mapped_node_mappings(
         self,
         transformation: dict[str, any],
@@ -620,7 +768,7 @@ class C3dcEtl:
             and
             self._c3dc_file_manager.file_exists(transformation.get(mappings_path_config_name))
         ):
-            _logger.info('Mappings file for "%s" not available, skipping load', node)
+            _logger.warning('Mappings file for "%s" not available, skipping load', node)
             return []
 
         _logger.info('Loading "%s" mappings from "%s"', node, transformation.get(mappings_path_config_name))
@@ -705,10 +853,21 @@ class C3dcEtl:
         if sorted_alive_follow_ups:
             return sorted_alive_follow_ups[0]
 
-        # no follow ups with vital status 'Dead' or 'Alive', source data inspection and/or code adjustment is needed
-        raise RuntimeError(
-            f'Unable to determine primary follow-up for subject "{upi}", no follow-ups ' +
-            'provided having vital status ("PT_VST") "Alive" or "Dead"')
+        # no follow ups with vital status 'Dead' or 'Alive', return follow up latest start date or last sequential
+        sorted_follow_ups: list[list[dict[str, any]]] = sorted(
+            follow_ups,
+            key=lambda dl: max(
+                (int(d.get('value', 0)) for d in dl if (d.get('form_field_id') or '').upper().strip() == 'PT_FU_BEGDT'),
+                default=0
+            ),
+            reverse=True
+        )
+        _logger.warning(
+            'Unable to determine primary follow-up for subject "%s", no follow-ups provided having vital status ' +
+                '("PT_VST") "Alive" or "Dead"',
+            upi
+        )
+        return sorted_follow_ups[0]
 
     def _get_primary_source_form_data_list(self, upi: str, form: dict[str, any]) -> list[dict[str, any]]:
         """ Find and return highest priority 'data' element of specified source record form object """
@@ -768,6 +927,7 @@ class C3dcEtl:
         )
         source_file_location: str
         processed: int = 0
+        dupe_source_field_recs: int = 0
         for source_file_location in source_file_locations:
             source_file_name: str = C3dcFileManager.get_basename(source_file_location)
             processed += 1
@@ -787,9 +947,12 @@ class C3dcEtl:
                 k:v for k,v in self._source_field_output_types.items() if k in obj
             }.items():
                 if source_field_name in rec and source_field_output_type != 'array':
-                    msg = f'Duplicate source field "{source_field_name}" found in file "{source_file_name}"'
-                    _logger.fatal(msg)
-                    raise RuntimeError(msg)
+                    msg = (
+                        f'Duplicate source field "{source_field_name}" found in file "{source_file_name}": ' +
+                            f'"{rec[source_field_name]}", "{obj.get(source_field_name)}"'
+                    )
+                    _logger.warning(msg)
+                    dupe_source_field_recs += 1
                 rec[source_field_name] = obj.get(source_field_name)
 
             if 'upi' not in rec:
@@ -807,6 +970,10 @@ class C3dcEtl:
                         if d.get('form_field_id') in self._source_field_output_types or
                             f'{form_id}.{d.get("form_field_id")}' in self._source_field_output_types
                 ]:
+                    data_value: any = (
+                        data_field.get('value').strip()
+                            if data_field.get('value') is not None else data_field.get('value')
+                    )
                     source_field_name = data_field.get('form_field_id')
                     form_id_field_id = f'{form_id}.{source_field_name}'
                     # use the full form-qualified name if specified in mapping (e.g. to avoid dupes)
@@ -816,17 +983,49 @@ class C3dcEtl:
 
                     if source_field_output_type == 'array':
                         rec[source_field_name] = rec.get(source_field_name, [])
-                        rec[source_field_name].append(data_field.get('value'))
+                        rec[source_field_name].append(data_value)
                     elif source_field_name in rec:
+                        dupe_source_field_recs += 1
+                        existing_value: any = rec[source_field_name]
                         msg = (
-                            f'Duplicate source field "{source_field_name}" ({form_id_field_id}) ' +
-                            f'found in file "{source_file_name}"'
+                            f'Duplicate source field "{form_id}.{source_field_name}" found in file ' +
+                                f'"{source_file_name}": "{existing_value}", "{data_field.get("value")}"'
                         )
-                        _logger.fatal(msg)
-                        raise RuntimeError(msg)
+                        _logger.warning(msg)
+
+                        # exception for MCI COG dupe dobs that began appearing in 2025-08-01 (C3DC release 7/1.7.0)
+                        # source data; allow duplicates, using the lowest/most negative value encountered
+                        if (
+                            # pylint: disable-next=too-many-boolean-expressions; # type: ignore
+                            form_id == 'DEMOGRAPHY'
+                            and
+                            source_field_name == 'DM_BRTHDAT'
+                            and
+                            C3dcEtl.is_integer(data_value)
+                            and
+                            C3dcEtl.to_integer(data_value) < 0
+                            and
+                                (
+                                    not C3dcEtl.is_integer(existing_value)
+                                    or
+                                    C3dcEtl.to_integer(existing_value) >= 0
+                                    or
+                                    C3dcEtl.to_integer(existing_value) > C3dcEtl.to_integer(data_value)
+                                )
+                        ):
+                            _logger.warning(
+                                'Existing value of "DEMOGRAPHY.DM_BRTHDAT" from file "%s" overwritten: "%s" => "%s"',
+                                source_file_name,
+                                existing_value,
+                                data_value
+                            )
+                            rec[source_field_name] = data_value
                     else:
-                        rec[source_field_name] = data_field.get('value')
+                        rec[source_field_name] = data_value
             recs.append(rec)
+
+        if dupe_source_field_recs:
+            _logger.warning('%d duplicate source field recs found', dupe_source_field_recs)
 
         self._raw_etl_data_objects[study_id] = self._raw_etl_data_objects.get(study_id, {})
         self._raw_etl_data_objects[study_id][transformation.get('name')] = recs
@@ -966,9 +1165,21 @@ class C3dcEtl:
             macro_text: str = macro.strip(' {}').strip()
             # source field to be replaced will be specified as '{field: FIELD_NAME}'
             if not (
-                (macro_text.startswith('"') and macro_text.endswith('"')) or
-                (macro_text.startswith("'") and macro_text.endswith("'")) or
-                macro_text.lower() in ('find_enum_value', 'race', 'sum', 'sum_abs_first', 'uuid') or
+                (macro_text.startswith('"') and macro_text.endswith('"'))
+                or
+                (macro_text.startswith("'") and macro_text.endswith("'"))
+                or
+                macro_text.lower() in (
+                    'diagnosis',
+                    'diagnosis_category',
+                    'find_enum_value',
+                    'laterality',
+                    'race',
+                    'sum',
+                    'sum_abs_first',
+                    'uuid'
+                )
+                or
                 (
                     macro_text.lower().startswith('field:')
                     and
@@ -1326,10 +1537,34 @@ class C3dcEtl:
         self._c3dc_file_manager.write_file(json.dumps(remote_config, indent=4).encode('utf-8'), save_path)
         _logger.info('Saved updated remote transformation mapping to %s', save_path)
 
+    def _get_diagnosis_for_icdo_code(self, icdo_code: str, icdo_codes_terms: dict[str, list[dict[str, str]]]) -> str:
+        """
+        Get diagnosis.diagnosis for specified ICD-O code. Use ICD-O code=>term mapping to find matching ICD-O
+        terms which in turn will be matched against diagnosis PVs
+        """
+        diagnosis_property_name: str = f'{C3dcEtlModelNode.DIAGNOSIS}.{C3dcEtlModelNode.DIAGNOSIS}'
+        diagnosis_pvs: dict[str, str] = self._json_schema_property_enum_code_values.get(diagnosis_property_name, {})
+        if not diagnosis_pvs:
+            raise RuntimeError(f'Invalid enum property: {diagnosis_property_name}')
+
+        terms_codes: list[dict[str, str]] = sorted(
+            [tc for tc in icdo_codes_terms.get(icdo_code, []) if tc['Level'] in ('Preferred', 'Synonym')],
+            key=lambda tc: tc['Level']
+        )
+
+        term_code: dict[str, str]
+        for term_code in terms_codes:
+            diagnosis_pv_match: str = diagnosis_pvs.get(term_code['Term'])
+            if diagnosis_pv_match is not None:
+                return diagnosis_pv_match
+
+        return None
+
     def _get_mapped_output_value(
         self,
         mapping: dict[str, any],
-        source_record: dict[str, any]
+        source_record: dict[str, any],
+        transformation: dict[str, any]
     ) -> any:
         """
         Get output value for specified mapping and source record.
@@ -1367,8 +1602,31 @@ class C3dcEtl:
                     continue
                 macro: str = macros[0]
                 macro_text: str = macro.strip(' {}').strip()
-                if macro_text.lower() == 'uuid':
-                    new_val = new_val.replace(macro, str(self._generate_uuid()))
+                if macro_text.lower() == 'diagnosis':
+                    # source field must contain ICD-O code (MORPHO_ICDO), which will be used to find matching
+                    # ICD-O terms which in turn will be used to find matching diagnosis.diagnosis PV
+                    icdo_codes_terms: dict[str, list[dict[str, str]]] = self._icdo_codes_terms[transformation['name']]
+                    diagnosis: str = self._get_diagnosis_for_icdo_code(source_value, icdo_codes_terms)
+                    # if source_value and not diagnosis:
+                    #     _logger.warning('No "diagnosis" found for "%s" value code "%s"', source_field, source_value)
+                    new_val = diagnosis if diagnosis is not None else default_value
+                elif macro_text.lower() == 'diagnosis_category':
+                    # find matching diagnosis.diagnosis PV as per 'diagnosis' macro, then find matching
+                    # diagnosis.diagnosis_category using diagnosis => diagnosis_category mapping table
+                    icdo_codes_terms: dict[str, list[dict[str, str]]] = self._icdo_codes_terms[transformation['name']]
+                    dx: str = self._get_diagnosis_for_icdo_code(source_value, icdo_codes_terms)
+                    # if source_value and not dx:
+                    #     _logger.warning('No "diagnosis" found for "%s" value code "%s"', source_field, source_value)
+                    dx_cat_map: dict[str, str] = self._diagnosis_category_mappings[transformation['name']]
+                    dx_cat_mapped: any = dx_cat_map.get(dx)
+                    # if source_value and dx and not dx_cat_mapped:
+                    #     _logger.warning('No "diagnosis_category" found for diagnosis "%s"', dx)
+
+                    dx_cat: any = self._get_json_schema_node_property_converted_value(
+                        output_field,
+                        dx_cat_mapped
+                    )
+                    new_val = dx_cat if dx_cat not in ('', None) else default_value
                 elif macro_text.lower().startswith('field:'):
                     # source field to be replaced will be specified as '[field: FIELD_NAME]
                     macro_field: str = macro_text[len('field:'):].strip()
@@ -1426,40 +1684,6 @@ class C3dcEtl:
                             laterality = enum_value
                             break
                     new_val = laterality
-                elif macro_text.lower() in ('sum', 'sum_abs_first'):
-                    # source field should contain list of source fields to be added together
-                    if not (source_field.startswith('[') and source_field.endswith(']')):
-                        msg = (
-                            f'Invalid source field "{source_field}" for "{macro_text.lower()}" macro in source file ' +
-                            f'{source_record["source_file_name"]}, must be comma-delimited ' +
-                            '(csv) string within square brackets, e.g. "[field1, field2]"'
-                        )
-                        _logger.critical(msg)
-                        raise RuntimeError(msg)
-                    # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
-                    source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
-                    addends: list[float | int] = []
-                    source_field_name: str
-                    for source_field_name in source_field_names:
-                        addend: str = source_record.get(source_field_name)
-                        addend = '' if addend is None else str(addend).strip()
-                        if addend in (None, ''):
-                            # set output sum to blank/null if any addend is invalid/blank/null
-                            return None
-
-                        if not C3dcEtl.is_number(addend):
-                            msg = (
-                                f'Invalid "{source_field_name}" value "{addend}" for "{macro_text}" macro in source ' +
-                                f'file {source_record["source_file_name"]}, must be a number'
-                            )
-                            _logger.warning(msg)
-                            addends.append(None)
-                        else:
-                            addend = float(addend)
-                            # use absolute value of first addend for 'sum_abs_first' macro
-                            addend = abs(addend) if macro_text.lower() == 'sum_abs_first' and not addends else addend
-                            addends.append(addend if not addend.is_integer() else int(addend))
-                    new_val = sum(addends) if all(a is not None for a in addends) else default_value
                 elif macro_text.lower() == 'race':
                     # source field may contain 'race' and 'ethnicity' source
                     # fields from which to derive final 'race' output value
@@ -1506,6 +1730,43 @@ class C3dcEtl:
                             if valid_races and all(r not in ('', None) for r in valid_races)
                             else default_value
                     )
+                elif macro_text.lower() in ('sum', 'sum_abs_first'):
+                    # source field should contain list of source fields to be added together
+                    if not (source_field.startswith('[') and source_field.endswith(']')):
+                        msg = (
+                            f'Invalid source field "{source_field}" for "{macro_text.lower()}" macro in source file ' +
+                            f'{source_record["source_file_name"]}, must be comma-delimited ' +
+                            '(csv) string within square brackets, e.g. "[field1, field2]"'
+                        )
+                        _logger.critical(msg)
+                        raise RuntimeError(msg)
+                    # strip extra spaces; csv module parses "field 1, field 2" into ["field 1", " field 2"]
+                    source_field_names: list[str] = [s.strip() for s in next(csv.reader([source_field.strip(' []')]))]
+                    addends: list[float | int] = []
+                    source_field_name: str
+                    for source_field_name in source_field_names:
+                        addend: str = source_record.get(source_field_name)
+                        addend = '' if addend is None else str(addend).strip()
+                        if addend in (None, ''):
+                            # set output sum to blank/null if any addend is invalid/blank/null
+                            return None
+
+                        if not C3dcEtl.is_number(addend):
+                            msg = (
+                                f'Invalid "{source_field_name}" value "{addend}" for "{macro_text}" macro in source ' +
+                                f'file {source_record["source_file_name"]}, must be a number'
+                            )
+                            _logger.warning(msg)
+                            addends.append(None)
+                        else:
+                            addend = float(addend)
+                            # use absolute value of first addend for 'sum_abs_first' macro
+                            addend = abs(addend) if macro_text.lower() == 'sum_abs_first' and not addends else addend
+                            addends.append(addend if not addend.is_integer() else int(addend))
+                    new_val = sum(addends) if all(a is not None for a in addends) else default_value
+                elif macro_text.lower() == 'uuid':
+                    new_val = new_val.replace(macro, str(self._generate_uuid()))
+
                 new_vals[i] = new_val
 
             if new_value == '{find_enum_value}' and new_val is None:
@@ -1687,34 +1948,40 @@ class C3dcEtl:
                 if output_field not in output_source_field_map:
                     output_source_field_map[output_field] = source_field
 
-                # check source value against all of this source field's mapped replacement values
-                # in case there are multiple output field mappings for this source field
-                allowed_values = source_field_allowed_values.get(source_field, set())
-                source_value_allowed: bool = C3dcEtl.is_allowed_value(source_value, allowed_values)
-                if allowed_values and not source_value_allowed:
-                    _logger.warning(
-                        (
-                            '"%s" not specified as allowed value (old_value) in transformation(s) for source field ' +
-                            '"%s", source record "%s"'
-                        ),
-                        source_value if source_value is not None else '',
-                        source_field,
-                        source_record.get('source_file_name')
-                    )
-                    continue
+                macros: list[str] = C3dcEtl.get_mapping_macros(mapping)
 
-                # check source value against mapped replacement values for this particular output field mapping
-                allowed_values = self._get_allowed_values(mapping)
-                source_value_allowed = C3dcEtl.is_allowed_value(source_value, allowed_values)
-                if allowed_values and not source_value_allowed:
-                    _logger.info(
-                        'value "%s" not allowed for source field "%s"',
-                        source_value if source_value is not None else '',
-                        source_field
-                    )
-                    continue
+                # don't validate source values for macros
+                if not macros:
+                    # check source value against all of this source field's mapped replacement values
+                    # in case there are multiple output field mappings for this source field
+                    allowed_values = source_field_allowed_values.get(source_field, set())
+                    source_value_allowed: bool = C3dcEtl.is_allowed_value(source_value, allowed_values)
+                    if allowed_values and not source_value_allowed:
+                        _logger.warning(
+                            (
+                                '"%s" not specified as allowed value (old_value) in transformation(s) for ' +
+                                'source field "%s", source record "%s"'
+                            ),
+                            source_value if source_value is not None else '',
+                            source_field,
+                            source_record.get('source_file_name')
+                        )
+                        _logger.warning(allowed_values)
+                        _logger.warning(source_field_allowed_values)
+                        continue
 
-                output_value: any = self._get_mapped_output_value(mapping, source_record)
+                    # check source value against mapped replacement values for this particular output field mapping
+                    allowed_values = self._get_allowed_values(mapping)
+                    source_value_allowed = C3dcEtl.is_allowed_value(source_value, allowed_values)
+                    if allowed_values and not source_value_allowed:
+                        _logger.info(
+                            'value "%s" not allowed for source field "%s"',
+                            source_value if source_value is not None else '',
+                            source_field
+                        )
+                        continue
+
+                output_value: any = self._get_mapped_output_value(mapping, source_record, transformation)
 
                 output_record[output_field_property] = output_value if output_value is not None else source_value
 
@@ -1883,6 +2150,7 @@ class C3dcEtl:
 
         unmapped_nodes: set[C3dcEtlModelNode] = set()
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
+            C3dcEtlModelNode.CONSENT_GROUP: {},
             C3dcEtlModelNode.DIAGNOSIS: {},
             C3dcEtlModelNode.GENETIC_ANALYSIS: {},
             C3dcEtlModelNode.LABORATORY_TEST: {},
@@ -1918,8 +2186,19 @@ class C3dcEtl:
         if len(study) != 1:
             raise RuntimeError(f'Unexpected number of study nodes built ({len(study)}), check mapping')
         study = study[0]
-        study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        study[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']] = []
         study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']] = []
+
+        # build consent group node and add to node collection
+        consent_group: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.CONSENT_GROUP)
+        if len(consent_group) != 1:
+            raise RuntimeError(f'Unexpected number of consent group nodes built ({len(consent_group)}), check mapping')
+        consent_group = consent_group[0]
+        consent_group[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        consent_group[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[nodes[C3dcEtlModelNode.STUDY]['id_field']]
+        study[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']].append(
+            consent_group[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field']]
+        )
 
         # verify mappings defined for row-mapped nodes
         for row_mapped_node in row_mapped_nodes:
@@ -1990,10 +2269,10 @@ class C3dcEtl:
                     # populate final transformed record collection for this observation node
                     nodes[node]['harmonized_records'].extend(harmonized_recs)
 
-            participant[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
-                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            participant[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']] = consent_group[
+                nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field']
             ]
-            study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
+            consent_group[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
                 participant[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']]
             )
             nodes[C3dcEtlModelNode.PARTICIPANT]['harmonized_records'].append(participant)
@@ -2079,7 +2358,10 @@ class C3dcEtl:
             if dupe_ids:
                 raise RuntimeError(f'Duplicate {node} id(s) found: {dupe_ids}')
 
-        # attach the main study object
+        # attach the consent group object
+        nodes[C3dcEtlModelNode.CONSENT_GROUP]['harmonized_records'].append(consent_group)
+
+        # attach the study object
         nodes[C3dcEtlModelNode.STUDY]['harmonized_records'].append(study)
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
@@ -2125,7 +2407,8 @@ def main() -> None:
     )
     etl: C3dcEtl = C3dcEtl(config)
     etl.create_json_etl_files()
-    etl.validate_json_etl_data()
+    if not etl.validate_json_etl_data():
+        raise RuntimeError('Harmonized output data failed JSON validation')
 
 
 if __name__ == '__main__':

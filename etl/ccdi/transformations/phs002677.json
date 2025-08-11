@@ -1,9 +1,21 @@
 {
-    "version": "20250623.1",
+    "version": "20250822.1",
     "transformations": [
         {
             "name": "phs002677",
             "mappings": [
+                {
+                    "output_field": "study.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
                 {
                     "output_field": "study.study_id",
                     "source_field": "study.study_id",
@@ -31,30 +43,6 @@
                 {
                     "output_field": "study.study_name",
                     "source_field": "study.study_name",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "",
-                            "new_value": ""
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.consent",
-                    "source_field": "study.consent",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "",
-                            "new_value": ""
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.consent_number",
-                    "source_field": "study.consent_number",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
@@ -97,6 +85,78 @@
                         {
                             "old_value": "",
                             "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_id",
+                    "source_field": "consent_group.consent_group_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_name",
+                    "source_field": "consent_group.consent_group_name",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_number",
+                    "source_field": "consent_group.consent_group_number",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_suffix",
+                    "source_field": "consent_group.consent_group_suffix",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
                         }
                     ]
                 },
@@ -168,7 +228,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 76623
+                            "new_value": 78570
                         }
                     ]
                 },
@@ -180,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "11b78a4fe25876598ca594907d4b70db"
+                            "new_value": "f91beb4cb0691363860d205deb142872"
                         }
                     ]
                 },
@@ -204,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/etl/ccdi/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/etl/ccdi/c3dc_etl.py"
                         }
                     ]
                 },
@@ -252,7 +312,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 383901
+                            "new_value": 386533
                         }
                     ]
                 },
@@ -264,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3f1c298f2d14539a1df3eb989428647d"
+                            "new_value": "de2768a4a26c8ffbd5b757b0e1e32002"
                         }
                     ]
                 },
@@ -288,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/schema/schema.json"
                         }
                     ]
                 },
@@ -336,7 +396,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 365853
+                            "new_value": 590162
                         }
                     ]
                 },
@@ -348,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "5949b4e3dea38e9aea631db6872802ae"
+                            "new_value": "958ae1f6330d742f99470308eaf02208"
                         }
                     ]
                 },
@@ -372,7 +432,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -420,7 +480,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 44265
+                            "new_value": 49893
                         }
                     ]
                 },
@@ -432,7 +492,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "56b90f2cbd6339569789d2cae6e8a3a3"
+                            "new_value": "e5effcb847b5794aebfdba1d195345f7"
                         }
                     ]
                 },
@@ -456,7 +516,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/etl/ccdi/transformations/phs002677.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/etl/ccdi/transformations/phs002677.json"
                         }
                     ]
                 },
@@ -468,7 +528,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "phs002677_CCDI_Study_Manifest_v2.1.0.xlsx"
+                            "new_value": "CCDI_Submission_Template_v3.1.0_phs002677_JoinRy_2025-08-04.xlsx"
                         }
                     ]
                 },
@@ -504,7 +564,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 640746
+                            "new_value": 642044
                         }
                     ]
                 },
@@ -516,7 +576,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "2e274d53f02b30bd202441a7641dd75c"
+                            "new_value": "c4a1e1a5a0150a67d0b9fc444b4b43b9"
                         }
                     ]
                 },
@@ -541,6 +601,18 @@
                         {
                             "old_value": "*",
                             "new_value": "See CCDI Hub at https://ccdi.cancer.gov/explore"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
                         }
                     ]
                 },
@@ -583,6 +655,18 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_id",
                     "source_field": "diagnosis.diagnosis_id",
                     "type_group_index": "*",
@@ -607,10 +691,30 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.diagnosis_category",
+                    "source_field": "diagnosis.diagnosis_category",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Other"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "Not Reported",
+                            "new_value": "Other"
+                        },
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_classification_system",
                     "source_field": "diagnosis.diagnosis_classification_system",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -622,7 +726,9 @@
                     "output_field": "diagnosis.diagnosis_basis",
                     "source_field": "diagnosis.diagnosis_basis",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": [
+                        "Not Reported"
+                    ],
                     "replacement_values": [
                         {
                             "old_value": "",
@@ -672,10 +778,6 @@
                     "type_group_index": "*",
                     "default_value": "Not Reported",
                     "replacement_values": [
-                        {
-                            "old_value": "8680/3 : Paraganglioma, NOS",
-                            "new_value": "8680/1 : Paraganglioma, NOS"
-                        },
                         {
                             "old_value": "",
                             "new_value": ""
@@ -783,6 +885,18 @@
                     ]
                 },
                 {
+                    "output_field": "survival.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "survival.survival_id",
                     "source_field": "survival.survival_id",
                     "type_group_index": "*",
@@ -863,6 +977,18 @@
                         {
                             "old_value": "",
                             "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
                         }
                     ]
                 },
@@ -977,6 +1103,18 @@
                     ]
                 },
                 {
+                    "output_field": "treatment_response.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "treatment_response.treatment_response_id",
                     "source_field": "treatment_response.treatment_response_id",
                     "type_group_index": "*",
@@ -1033,6 +1171,18 @@
                         {
                             "old_value": "",
                             "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
                         }
                     ]
                 },

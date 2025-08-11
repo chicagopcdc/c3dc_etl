@@ -312,7 +312,11 @@ class C3dcEtl:
                 self._json_schema_property_enum_values[f'{node_type}.{prop_name}'] = enum_values
                 # enum properties that contain ';' in any of the permissible values don't support
                 # multiple delimited values since ';' is the delimiting character
-                if not any(C3dcEtl.MULTIPLE_VALUE_DELIMITER in v for v in enum_values):
+                if (
+                    prop_props.get('type', '').lower() != 'array'
+                    and
+                    not any(C3dcEtl.MULTIPLE_VALUE_DELIMITER in v for v in enum_values)
+                ):
                     self._sub_source_record_enum_properties[f'{node_type}.{prop_name}'] = None
 
         return self._json_schema
@@ -587,7 +591,14 @@ class C3dcEtl:
                         val,
                         node_type_dot_property_name
                     )
-            return sorted([v for v in vals.values() if v is not None])
+            if len(vals.values()) != len(set(vals.values())):
+                _logger.warning(
+                    'Duplicate values in "%s" will be removed: "%s"',
+                    node_type_dot_property_name,
+                    list(vals.keys())
+                )
+
+            return sorted({v for v in vals.values() if v is not None})
         if python_type == int:
             return int(float(value))
         if python_type == str:
@@ -1095,7 +1106,11 @@ class C3dcEtl:
                             source_field
                         )
                         continue
-                    output_record[output_field_property] = output_value
+                    converted_output_value: any = self._get_json_schema_node_property_converted_value(
+                        output_field,
+                        output_value
+                    )
+                    output_record[output_field_property] = converted_output_value
                 else:
                     # passthrough (not explicitly mapped) values need to be converted to destination field schema type
                     converted_source_value: any = self._get_json_schema_node_property_converted_value(
@@ -1289,6 +1304,7 @@ class C3dcEtl:
             raise RuntimeError('No raw ETL data found')
 
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
+            C3dcEtlModelNode.CONSENT_GROUP: {},
             C3dcEtlModelNode.DIAGNOSIS: {},
             C3dcEtlModelNode.GENETIC_ANALYSIS: {},
             C3dcEtlModelNode.LABORATORY_TEST: {},
@@ -1313,7 +1329,7 @@ class C3dcEtl:
                 _logger.warning('No "%s" data available for harmonization', node)
 
         # build study node and add to node collection
-        src_recs: list[dict[str, any]] = list(petl.dicts(raw_etl_data_tbls.get(C3dcEtlModelNode.STUDY, petl.empty())))
+        src_recs: list[dict[str, any]] = nodes[C3dcEtlModelNode.STUDY]['source_records']
         if len(src_recs) != 1:
             raise RuntimeError(f'Unexpected number of study records ({len(src_recs)}) found in source data')
         src_rec: dict[str, any] = src_recs[0]
@@ -1321,8 +1337,23 @@ class C3dcEtl:
         if len(study) != 1:
             raise RuntimeError(f'Unexpected number of study nodes built ({len(study)}), check mapping')
         study = study[0]
-        study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        study[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']] = []
         study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']] = []
+
+        # build consent group node and add to node collection
+        src_recs: list[dict[str, any]] = nodes[C3dcEtlModelNode.CONSENT_GROUP]['source_records']
+        if len(src_recs) != 1:
+            raise RuntimeError(f'Unexpected number of consent group records ({len(src_recs)}) found in source data')
+        src_rec: dict[str, any] = src_recs[0]
+        consent_group: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.CONSENT_GROUP, src_rec)
+        if len(consent_group) != 1:
+            raise RuntimeError(f'Unexpected number of consent group nodes built ({len(consent_group)}), check mapping')
+        consent_group = consent_group[0]
+        consent_group[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        consent_group[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[nodes[C3dcEtlModelNode.STUDY]['id_field']]
+        study[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']].append(
+            consent_group[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field']]
+        )
 
         # build reference file nodes and add to node collection
         reference_files: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.REFERENCE_FILE)
@@ -1433,10 +1464,10 @@ class C3dcEtl:
                 # populate final transformed record collection for this observation node
                 nodes[node]['harmonized_records'].extend(node_recs)
 
-            participant[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
-                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            participant[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']] = consent_group[
+                nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field']
             ]
-            study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
+            consent_group[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
                 participant[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']]
             )
             nodes[C3dcEtlModelNode.PARTICIPANT]['harmonized_records'].append(participant)
@@ -1453,6 +1484,10 @@ class C3dcEtl:
             if dupe_ids:
                 raise RuntimeError(f'Duplicate {node} id(s) found: {dupe_ids}')
 
+        # attach the consent group object
+        nodes[C3dcEtlModelNode.CONSENT_GROUP]['harmonized_records'].append(consent_group)
+
+        # attach the study object
         nodes[C3dcEtlModelNode.STUDY]['harmonized_records'].append(study)
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
@@ -1498,7 +1533,9 @@ def main() -> None:
     )
     etl: C3dcEtl = C3dcEtl(config)
     etl.create_json_etl_files()
-    etl.validate_json_etl_data()
+
+    if not etl.validate_json_etl_data():
+        raise RuntimeError('Harmonized output data failed JSON validation')
 
 
 if __name__ == '__main__':
