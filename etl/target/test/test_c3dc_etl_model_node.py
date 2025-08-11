@@ -28,6 +28,7 @@ def test_get_pluralized_node_name() -> None:
     """ test_get_pluralized_node_name """
     _logger.info(test_get_pluralized_node_name.__name__)
     singular_plural_names: dict[str, str] = {
+        'consent_group': 'consent_groups',
         'diagnosis': 'diagnoses',
         'genetic_analysis': 'genetic_analyses',
         'laboratory_test': 'laboratory_tests',

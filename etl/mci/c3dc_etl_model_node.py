@@ -7,6 +7,7 @@ class C3dcEtlModelNode(str, Enum):
     """
     Enum class for ETL timing sub-types
     """
+    CONSENT_GROUP = 'consent_group'
     DIAGNOSIS = 'diagnosis'
     GENETIC_ANALYSIS = 'genetic_analysis'
     LABORATORY_TEST = 'laboratory_test'

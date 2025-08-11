@@ -276,6 +276,43 @@ class C3dcEtl:
         return f'{node}.{node}_id' if fully_qualified else f'{node}_id'
 
     @staticmethod
+    def get_cacheable_record(record: dict[str, any], node: C3dcEtlModelNode | str) -> dict[str, any]:
+        """ Get cacheable version of specified record (will not modify original) """
+        cacheable_record: dict[str, any] = copy.deepcopy(record)
+        match node:
+            case C3dcEtlModelNode.CONSENT_GROUP:
+                # identical consent group records can have different signatures due to
+                # different participants having different ids across source files
+                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)] = []
+            case C3dcEtlModelNode.PARTICIPANT:
+                # identical participant records can have different signatures due to same observations having
+                # different ids across source files so validate with stripped down record containing id only
+                obs_node: C3dcEtlModelNode
+                for obs_node in C3dcEtl.OBSERVATION_NODES:
+                    obs_node_id_field_qualified: str = C3dcEtl.get_node_id_field_name(obs_node, True)
+                    if isinstance(cacheable_record.get(obs_node_id_field_qualified), list):
+                        cacheable_record[obs_node_id_field_qualified] = []
+
+                # left for reference; consent group id is expected to be unique across harmonization cycles for
+                # studies having multiple source files so consent group id will not be normalized (blanked).
+                # otherwise identical participants can appear to be distinct if consent group id is set using
+                # e.g. random uuid generation instead of deterministically
+                # cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.CONSENT_GROUP, True)] = ''
+            case C3dcEtlModelNode.STUDY:
+                # identical study records can have different signatures due to different
+                # consent groups and same reference files having different ids across source files
+                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.CONSENT_GROUP, True)] = []
+                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.REFERENCE_FILE, True)] = []
+            case C3dcEtlModelNode.REFERENCE_FILE:
+                if 'dcf_indexd_guid' in cacheable_record:
+                    cacheable_record['dcf_indexd_guid'] = ''
+        # clear own id (<node>_id, not 'id' field used internally by NCI) since identical records generated during
+        # separate harmonization cycles for different source files (discovery/validation etc) can differ if <node>_id
+        # is set using random uuid generation
+        cacheable_record[C3dcEtl.get_node_id_field_name(node)] = ''
+        return cacheable_record
+
+    @staticmethod
     def get_cache_key(record: dict[str, any], participant_id: str, node: str) -> tuple[str, str, str]:
         """ Get cache key for specified record, participant id and node as tuple[str, str, str] """
         # records to be hashed should have id fields blanked for dupe differentiation
@@ -290,30 +327,6 @@ class C3dcEtl:
             node
         )
         return cache_key
-
-    @staticmethod
-    def get_cacheable_record(record: dict[str, any], node: C3dcEtlModelNode | str) -> dict[str, any]:
-        """ Get cacheable version of specified record (will not modify original) """
-        cacheable_record: dict[str, any] = copy.deepcopy(record)
-        match node:
-            case C3dcEtlModelNode.PARTICIPANT:
-                # identical participant records can have different signatures due to same observations having
-                # different ids across source files so validate with stripped down record containing id only
-                obs_node: C3dcEtlModelNode
-                for obs_node in C3dcEtl.OBSERVATION_NODES:
-                    obs_node_id_field_qualified: str = C3dcEtl.get_node_id_field_name(obs_node, True)
-                    if isinstance(cacheable_record.get(obs_node_id_field_qualified), list):
-                        cacheable_record[obs_node_id_field_qualified] = []
-            case C3dcEtlModelNode.STUDY:
-                # as with participants, identical study records can have different signatures due to different
-                # participants and same reference files having different ids across source files
-                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)] = []
-                cacheable_record[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.REFERENCE_FILE, True)] = []
-            case C3dcEtlModelNode.REFERENCE_FILE:
-                if 'dcf_indexd_guid' in cacheable_record:
-                    cacheable_record['dcf_indexd_guid'] = ''     
-        cacheable_record[C3dcEtl.get_node_id_field_name(node)] = ''
-        return cacheable_record
 
     def load_transformations(self, save_local_copy: bool = False) -> list[dict[str, any]]:
         """ Download JSON transformations from configured URLs and merge with local config """
@@ -1463,6 +1476,7 @@ class C3dcEtl:
             )
         unmapped_nodes: set[C3dcEtlModelNode] = set()
         nodes: dict[C3dcEtlModelNode, dict[str, any]] = {
+            C3dcEtlModelNode.CONSENT_GROUP: {},
             C3dcEtlModelNode.DIAGNOSIS: {},
             C3dcEtlModelNode.GENETIC_ANALYSIS: {},
             C3dcEtlModelNode.LABORATORY_TEST: {},
@@ -1496,8 +1510,19 @@ class C3dcEtl:
         if len(study) != 1:
             raise RuntimeError(f'Unexpected number of study nodes built ({len(study)}), check mapping')
         study = study[0]
-        study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        study[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']] = []
         study[nodes[C3dcEtlModelNode.REFERENCE_FILE]['id_field_full']] = []
+
+        # build consent group node and add to node collection
+        consent_group: dict[str, any] = self._build_node(transformation, C3dcEtlModelNode.CONSENT_GROUP)
+        if len(consent_group) != 1:
+            raise RuntimeError(f'Unexpected number of consent group nodes built ({len(consent_group)}), check mapping')
+        consent_group = consent_group[0]
+        consent_group[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']] = []
+        consent_group[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[nodes[C3dcEtlModelNode.STUDY]['id_field']]
+        study[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']].append(
+            consent_group[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field']]
+        )
 
         # build reference file nodes and add to node collection
         reference_files: list[dict[str, any]] = self._build_node(transformation, C3dcEtlModelNode.REFERENCE_FILE)
@@ -1560,10 +1585,10 @@ class C3dcEtl:
                     # populate final transformed record collection for this observation node
                     nodes[node]['harmonized_records'].extend(harmonized_recs)
 
-            participant[nodes[C3dcEtlModelNode.STUDY]['id_field_full']] = study[
-                nodes[C3dcEtlModelNode.STUDY]['id_field']
+            participant[nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field_full']] = consent_group[
+                nodes[C3dcEtlModelNode.CONSENT_GROUP]['id_field']
             ]
-            study[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
+            consent_group[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field_full']].append(
                 participant[nodes[C3dcEtlModelNode.PARTICIPANT]['id_field']]
             )
             nodes[C3dcEtlModelNode.PARTICIPANT]['harmonized_records'].append(participant)
@@ -1580,7 +1605,10 @@ class C3dcEtl:
             if dupe_ids:
                 raise RuntimeError(f'Duplicate {node} id(s) found: {dupe_ids}')
 
-        # attach the main study object
+        # attach the consent group object
+        nodes[C3dcEtlModelNode.CONSENT_GROUP]['harmonized_records'].append(consent_group)
+
+        # attach the study object
         nodes[C3dcEtlModelNode.STUDY]['harmonized_records'].append(study)
 
         self._json_etl_data_sets[study_id] = self._json_etl_data_sets.get(study_id) or {}
@@ -1612,15 +1640,25 @@ class C3dcEtl:
                 self._merged_harmonized_records[self._node_names_singular_to_plural[node]]
         ]
 
-    def _get_merged_harmonized_record(self, node: C3dcEtlModelNode, node_id: str) -> dict[str, any]:
+    def _get_merged_harmonized_record(
+        self,
+        node: C3dcEtlModelNode,
+        node_id: str,
+        raise_error_if_not_found: bool = False
+    ) -> dict[str, any]:
         """ Get merged harmonized record for specified node type and id """
-        return next(
+        record: dict[str, any] = next(
             (
                 r for r in self._merged_harmonized_records[self._node_names_singular_to_plural[node]]
                     if r[C3dcEtl.get_node_id_field_name(node)] == node_id
             ),
             None
         )
+        if record is None and raise_error_if_not_found:
+            raise RuntimeError(f'Merged harmonized record for "{node}" with id "{node_id}" not found')
+
+        return record
+
 
     def _validate_merged_harmonized_node_data(self, node: C3dcEtlModelNode) -> None:
         """ Validate merged harmonized data for specified node """
@@ -1637,6 +1675,9 @@ class C3dcEtl:
         study_id_field: str = node_id_fields[C3dcEtlModelNode.STUDY]
         study_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.STUDY]
 
+        consent_group_id_field: str = node_id_fields[C3dcEtlModelNode.CONSENT_GROUP]
+        consent_group_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.CONSENT_GROUP]
+
         participant_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.PARTICIPANT]
         reference_file_id_field_qualified: str = node_id_fields_qualified[C3dcEtlModelNode.REFERENCE_FILE]
 
@@ -1646,28 +1687,68 @@ class C3dcEtl:
             s for s in self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
         )
 
+        if len(
+            self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.CONSENT_GROUP]]
+        ) != 1:
+            raise RuntimeError(
+                'Error validating merged harmonized data, number of consent group records in data set != 1'
+            )
+        merged_consent_group: dict[str, any] = next(
+            c for c in self._merged_harmonized_records[
+                self._node_names_singular_to_plural[C3dcEtlModelNode.CONSENT_GROUP]
+            ]
+        )
+
+        merged_consent_group_ids: list[str] = self._get_merged_harmonized_node_ids(C3dcEtlModelNode.CONSENT_GROUP)
         merged_participant_ids: list[str] = self._get_merged_harmonized_node_ids(C3dcEtlModelNode.PARTICIPANT)
         merged_reference_file_ids: list[str] = self._get_merged_harmonized_node_ids(C3dcEtlModelNode.REFERENCE_FILE)
 
         # ensure consistency of records and record id lists for linked relationships between
-        # participants <=> observations, study <=> participants, and study <=> reference files
+        # participants <=> observations, consent group <=> participants, and study <=> reference files
         node_name_plural: str = self._node_names_singular_to_plural[node]
         for record in self._merged_harmonized_records.get(node_name_plural, []):
             record_id: str = record[node_id_field]
-            if node in (C3dcEtlModelNode.PARTICIPANT, C3dcEtlModelNode.REFERENCE_FILE):
+            if node == C3dcEtlModelNode.CONSENT_GROUP:
+                # make sure consent group participant ids match ids of actual participant records and are unique
+                if sorted(record[participant_id_field_qualified]) != sorted(merged_participant_ids):
+                    _logger.critical('consent group participant ids:')
+                    _logger.critical(sorted(record[participant_id_field_qualified]))
+                    _logger.critical('merged participant ids:')
+                    _logger.critical(sorted(merged_participant_ids))
+                    raise RuntimeError('Mismatch between consent group participant id list and participant ids')
+                participant_id_counts: dict[str, int] = {}
+                participant_id: str
+                for participant_id in record[participant_id_field_qualified]:
+                    participant_id_counts[participant_id] = participant_id_counts.get(participant_id, 0) + 1
+                dupe_participant_ids: set[str] = {pid for pid, cnt in participant_id_counts.items() if cnt > 1}
+                if dupe_participant_ids:
+                    raise RuntimeError(
+                        f'Duplicate entries in consent group participant id list: {dupe_participant_ids}'
+                    )
+
+            if node in (C3dcEtlModelNode.CONSENT_GROUP, C3dcEtlModelNode.REFERENCE_FILE):
                 # make sure study id matches existing study
                 if record[study_id_field_qualified] != merged_study[study_id_field]:
                     raise RuntimeError(
-                        f'Participant study id "{record[study_id_field_qualified]}" != "{merged_study[study_id_field]}"'
+                        f'{node} study id "{record[study_id_field_qualified]}" != "{merged_study[study_id_field]}"'
                     )
 
-                # make sure participant or reference file id in corresponding study id list
+                # make sure consent group or reference file id in merged study's id list
                 if record_id not in merged_study[node_id_fields_qualified[node]]:
-                    raise RuntimeError(
-                        f'"{node}" id "{record_id}" not in study "{node}" id list'
-                    )
+                    raise RuntimeError(f'"{node}" id "{record_id}" not in study "{node}" id list')
 
             if node == C3dcEtlModelNode.PARTICIPANT:
+                # make sure consent group id matches existing consent group
+                if record[consent_group_id_field_qualified] != merged_consent_group[consent_group_id_field]:
+                    raise RuntimeError(
+                        f'{node} consent group id "{record[consent_group_id_field_qualified]}" != ' +
+                            f'"{merged_consent_group[consent_group_id_field]}"'
+                    )
+
+                # make sure participant id in merged consent group's id list
+                if record_id not in merged_consent_group[node_id_fields_qualified[node]]:
+                    raise RuntimeError(f'"{node}" id "{record_id}" not in consent group "{node}" id list')
+
                 # make sure all observations exist
                 observation_node: C3dcEtlModelNode
                 for observation_node in C3dcEtlModelNode:
@@ -1685,27 +1766,27 @@ class C3dcEtl:
                             )
 
             if node == C3dcEtlModelNode.STUDY:
-                # make sure study participant ids match ids of actual participant records and are unique
-                if sorted(record[participant_id_field_qualified]) != sorted(merged_participant_ids):
-                    _logger.fatal('study participant ids:')
-                    _logger.fatal(sorted(record[participant_id_field_qualified]))
-                    _logger.fatal('merged participant ids:')
-                    _logger.fatal(sorted(merged_participant_ids))
-                    raise RuntimeError('Mismatch between study participant id list and participant ids')
-                participant_id_counts: dict[str, int] = {}
-                participant_id: str
-                for participant_id in record[participant_id_field_qualified]:
-                    participant_id_counts[participant_id] = participant_id_counts.get(participant_id, 0) + 1
-                dupe_participant_ids: set[str] = {pid for pid, cnt in participant_id_counts.items() if cnt > 1}
-                if dupe_participant_ids:
-                    raise RuntimeError(f'Duplicate entries in study participant id list: {dupe_participant_ids}')
+                # make sure study consent group ids match ids of actual consent group records and are unique
+                if sorted(record[consent_group_id_field_qualified]) != sorted(merged_consent_group_ids):
+                    _logger.critical('study consent group ids:')
+                    _logger.critical(sorted(record[participant_id_field_qualified]))
+                    _logger.critical('merged consent group ids:')
+                    _logger.critical(sorted(merged_consent_group_ids))
+                    raise RuntimeError('Mismatch between study consent group id list and consent group ids')
+                consent_group_id_counts: dict[str, int] = {}
+                consent_group_id: str
+                for consent_group_id in record[consent_group_id_field_qualified]:
+                    consent_group_id_counts[consent_group_id] = consent_group_id_counts.get(consent_group_id, 0) + 1
+                dupe_consent_group_ids: set[str] = {cgid for cgid, cnt in consent_group_id_counts.items() if cnt > 1}
+                if dupe_consent_group_ids:
+                    raise RuntimeError(f'Duplicate entries in study consent group id list: {dupe_consent_group_ids}')
 
                 # make sure study reference file ids match ids of actual reference file records and are unique
                 if sorted(record[reference_file_id_field_qualified]) != sorted(merged_reference_file_ids):
-                    _logger.fatal('study reference file ids:')
-                    _logger.fatal(sorted(record[reference_file_id_field_qualified]))
-                    _logger.fatal('merged reference file ids:')
-                    _logger.fatal(sorted(merged_reference_file_ids))
+                    _logger.critical('study reference file ids:')
+                    _logger.critical(sorted(record[reference_file_id_field_qualified]))
+                    _logger.critical('merged reference file ids:')
+                    _logger.critical(sorted(merged_reference_file_ids))
                     raise RuntimeError('Mismatch between study reference file id list and reference file ids')
                 reference_file_id_counts: dict[str, int] = {}
                 reference_file_id: str
@@ -1896,10 +1977,7 @@ class C3dcEtl:
         """ Add records for specified participant from source transformation data to merged data set """
         participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)
         participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
-        study_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)
-        study_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY, True)
         participant_id: str = participant[participant_id_field]
-        study_id: str = participant[study_id_field_qualified]
         if any(
             p[participant_id_field] == participant_id
                 for p in
@@ -1907,10 +1985,15 @@ class C3dcEtl:
         ):
             raise RuntimeError(f'Error adding participant "{participant_id}" to merged data, record already exists')
 
-        merged_study: dict[str, any] = next(
-            s for s in self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
-                if s[study_id_field] == study_id
+        consent_group_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.CONSENT_GROUP, True)
+        consent_group_id: str = participant[consent_group_id_field_qualified]
+        merged_consent_group: dict[str, any] = self._get_merged_harmonized_record(
+            C3dcEtlModelNode.CONSENT_GROUP,
+            consent_group_id,
+            True
         )
+
+        study_id: str = merged_consent_group[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY, True)]
 
         # add participant's observations to matching observation collections in merged data set
         node: C3dcEtlModelNode
@@ -1959,8 +2042,8 @@ class C3dcEtl:
             participant
         )
 
-        # add participant id to merged study's list of participant ids
-        merged_study[participant_id_field_qualified].append(participant_id)
+        # add participant id to merged consent group's list of participant ids
+        merged_consent_group[participant_id_field_qualified].append(participant_id)
 
     def _update_participant_in_merged_data_set(
         self,
@@ -1971,11 +2054,7 @@ class C3dcEtl:
         """ Update records for specified participant from source transformation data into merged data set """
         participant_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT)
         participant_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.PARTICIPANT, True)
-        study_id_field: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)
-        study_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY, True)
         participant_id: str = participant[participant_id_field]
-        study_id: str = participant[study_id_field_qualified]
-
         # verify participant present in merged data set's participant and study participant id collections
         merged_participant: dict[str, any] = next(
             (
@@ -1988,19 +2067,19 @@ class C3dcEtl:
         if not merged_participant:
             raise RuntimeError(f'Unable to update participant "{participant_id}" in merged data, participant not found')
 
-        merged_study: dict[str, any] = next(
-            (
-                s for s in self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
-                    if s[study_id_field] == study_id
-            ),
-            None
+        consent_group_id_field_qualified: str = C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.CONSENT_GROUP, True)
+        consent_group_id: str = participant[consent_group_id_field_qualified]
+        merged_consent_group: dict[str, any] = self._get_merged_harmonized_record(
+            C3dcEtlModelNode.CONSENT_GROUP,
+            consent_group_id,
+            True
         )
-        if not merged_study:
-            raise RuntimeError(f'Unable to update participant "{participant_id}" in merged data, study not found')
+        study_id: str = merged_consent_group[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY, True)]
 
-        if participant_id not in merged_study[participant_id_field_qualified]:
+        if participant_id not in merged_consent_group[participant_id_field_qualified]:
             raise RuntimeError(
-                f'Unable to update participant "{participant_id}" in merged data, id not in study participant id list'
+                f'Unable to update participant "{participant_id}" in merged data, ' +
+                    'id not in consent group participant id list'
             )
 
         # add participant's non-duplicate observations to matching observation collections in merged data set
@@ -2060,6 +2139,7 @@ class C3dcEtl:
 
         merged_participant_ids: set[str] = set()
         merged_study: dict[str, any]
+        merged_consent_group: dict[str, any]
         xform_name: str
         xform_data: dict[str, list[dict[str, any]]]
         # use copy to preserve transformation-specific data while de-duplicating records to create merged data set
@@ -2076,16 +2156,25 @@ class C3dcEtl:
                 )
 
             if not self._merged_harmonized_records.get(self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]):
-                # no data merged yet, add study to merged data set
+                # no data merged yet, add study and consent group to merged data set
                 self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]] = \
                     xform_data[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
-                merged_study = next(
-                    s for s in
-                        self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.STUDY]]
-                            if s[C3dcEtl.get_node_id_field_name(C3dcEtlModelNode.STUDY)] == study_id
-                )
+                merged_study = self._get_merged_harmonized_record(C3dcEtlModelNode.STUDY, study_id, True)
                 merged_study[reference_file_id_field_qualified] = []
-                merged_study[participant_id_field_qualified] = []
+
+                self._merged_harmonized_records[self._node_names_singular_to_plural[C3dcEtlModelNode.CONSENT_GROUP]] = \
+                    xform_data[self._node_names_singular_to_plural[C3dcEtlModelNode.CONSENT_GROUP]]
+                merged_consent_group_ids: list[str] = self._get_merged_harmonized_node_ids(
+                    C3dcEtlModelNode.CONSENT_GROUP
+                )
+                if len(merged_consent_group_ids) != 1:
+                    raise RuntimeError(f'No merged consent group ids found for study {study_id}')
+                merged_consent_group = self._get_merged_harmonized_record(
+                    C3dcEtlModelNode.CONSENT_GROUP,
+                    merged_consent_group_ids[0],
+                    True
+                )
+                merged_consent_group[participant_id_field_qualified] = []
 
             # enumerate and add/update participants in this data set while checking for and logging duplicates
             participant: dict[str, any]
@@ -2235,7 +2324,8 @@ def main() -> None:
     )
     etl: C3dcEtl = C3dcEtl(config)
     etl.create_json_etl_files()
-    etl.validate_json_etl_data()
+    if not etl.validate_json_etl_data():
+        raise RuntimeError('Harmonized output data failed JSON validation')
 
 
 if __name__ == '__main__':

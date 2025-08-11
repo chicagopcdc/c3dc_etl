@@ -388,7 +388,7 @@ class C3dcRowMappedBuilder:
 
 
 def main() -> None:
-    """ Standalong entry point not supported """
+    """ Standalone entry point not supported """
     raise RuntimeError('Standalone script execution not supported')
 
 

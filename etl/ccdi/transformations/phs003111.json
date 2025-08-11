@@ -1,0 +1,1256 @@
+{
+    "version": "20250822.1",
+    "transformations": [
+        {
+            "name": "phs003111",
+            "mappings": [
+                {
+                    "output_field": "study.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_id",
+                    "source_field": "study.study_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": "phs003111"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.dbgap_accession",
+                    "source_field": "study.dbgap_accession",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs003111"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_name",
+                    "source_field": "study.study_name",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.external_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://www.ncbi.nlm.nih.gov/projects/gap/cgi-bin/study.cgi?study_id=phs003111"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_status",
+                    "source_field": "study.study_status",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "study.study_description",
+                    "source_field": "study.study_description",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_id",
+                    "source_field": "consent_group.consent_group_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_name",
+                    "source_field": "consent_group.consent_group_name",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_number",
+                    "source_field": "consent_group.consent_group_number",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_suffix",
+                    "source_field": "consent_group.consent_group_suffix",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.dcf_indexd_guid",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "{uuid}"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "programmatic source code"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 78570
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "f91beb4cb0691363860d205deb142872"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Python script implementation of ETL process"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "1",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/etl/ccdi/c3dc_etl.py"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "output schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 386533
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "de2768a4a26c8ffbd5b757b0e1e32002"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON schema representation of YAML C3DC model schema"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "2",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/schema/schema.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "C3DC Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 590162
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "958ae1f6330d742f99470308eaf02208"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing tabular source-to-destination mappings and transformations. Transformed by mapping unpivoter script into JSON format for input into ETL script."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "3",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "phs003111.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "transformation/mapping"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 49538
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "cf782ce584293919224229975e804463"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "JSON file containing source-to-destination mappings and transformations. The self-referential properties 'file_size' and 'md5sum' are set to the values calculated when both fields are set to 0 and blank ('') respectively"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "4",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/etl/ccdi/transformations/phs003111.json"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "CCDI_Submission_Template_v3.1.0_phs003111_JoinRy_2025-08-04.xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "xlsx"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_size",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": 953265
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.md5sum",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "adf91dc839596baf0d30882de24e0c18"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.file_description",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Excel spreadsheet (XLSX) file containing input source data"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.reference_file_url",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "5",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "See CCDI Hub at https://ccdi.cancer.gov/explore"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.participant_id",
+                    "source_field": "participant.participant_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.sex_at_birth",
+                    "source_field": "participant.sex_at_birth",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "participant.race",
+                    "source_field": "participant.race",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_id",
+                    "source_field": "diagnosis.diagnosis_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.disease_phase",
+                    "source_field": "diagnosis.disease_phase",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_category",
+                    "source_field": "diagnosis.diagnosis_category",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Other"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_classification_system",
+                    "source_field": "diagnosis.diagnosis_classification_system",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_basis",
+                    "source_field": "diagnosis.diagnosis_basis",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.age_at_diagnosis",
+                    "source_field": "diagnosis.age_at_diagnosis",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.year_of_diagnosis",
+                    "source_field": "diagnosis.year_of_diagnosis",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis_comment",
+                    "source_field": "diagnosis.diagnosis_comment",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.diagnosis",
+                    "source_field": "diagnosis.diagnosis",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.anatomic_site",
+                    "source_field": "diagnosis.anatomic_site",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_grade",
+                    "source_field": "diagnosis.tumor_grade",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.toronto_childhood_cancer_staging",
+                    "source_field": "diagnosis.toronto_childhood_cancer_staging",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_t",
+                    "source_field": "diagnosis.tumor_stage_clinical_t",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_n",
+                    "source_field": "diagnosis.tumor_stage_clinical_n",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_stage_clinical_m",
+                    "source_field": "diagnosis.tumor_stage_clinical_m",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.tumor_classification",
+                    "source_field": "diagnosis.tumor_classification",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "diagnosis.laterality",
+                    "source_field": "diagnosis.laterality",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.survival_id",
+                    "source_field": "survival.survival_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.last_known_survival_status",
+                    "source_field": "survival.last_known_survival_status",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.age_at_last_known_survival_status",
+                    "source_field": "survival.age_at_last_known_survival_status",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.event_free_survival_status",
+                    "source_field": "survival.event_free_survival_status",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.age_at_event_free_survival_status",
+                    "source_field": "survival.age_at_event_free_survival_status",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.first_event",
+                    "source_field": "survival.first_event",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "survival.cause_of_death",
+                    "source_field": "survival.cause_of_death",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_id",
+                    "source_field": "treatment.treatment_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_start",
+                    "source_field": "treatment.age_at_treatment_start",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.age_at_treatment_end",
+                    "source_field": "treatment.age_at_treatment_end",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_type",
+                    "source_field": "treatment.treatment_type",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.treatment_agent",
+                    "source_field": "treatment.treatment_agent",
+                    "type_group_index": "*",
+                    "default_value": [
+                        "Not Reported"
+                    ],
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose",
+                    "source_field": "treatment.dose",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose_unit",
+                    "source_field": "treatment.dose_unit",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose_route",
+                    "source_field": "treatment.dose_route",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment.dose_frequency",
+                    "source_field": "treatment.dose_frequency",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.treatment_response_id",
+                    "source_field": "treatment_response.treatment_response_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.response",
+                    "source_field": "treatment_response.response",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.age_at_response",
+                    "source_field": "treatment_response.age_at_response",
+                    "type_group_index": "*",
+                    "default_value": -999,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.response_category",
+                    "source_field": "treatment_response.response_category",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "treatment_response.response_system",
+                    "source_field": "treatment_response.response_system",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.synonym_id",
+                    "source_field": "synonym.synonym_id",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.repository_of_synonym_id",
+                    "source_field": "synonym.repository_of_synonym_id",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.associated_id",
+                    "source_field": "synonym.associated_id",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.domain_description",
+                    "source_field": "synonym.domain_description",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.domain_category",
+                    "source_field": "synonym.domain_category",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "synonym.data_location",
+                    "source_field": "synonym.data_location",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

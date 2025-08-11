@@ -1,9 +1,21 @@
 {
-    "version": "20250623.1",
+    "version": "20250822.1",
     "transformations": [
         {
             "name": "phs000464_p3",
             "mappings": [
+                {
+                    "output_field": "study.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
                 {
                     "output_field": "study.study_id",
                     "source_field": "[string_literal]",
@@ -41,30 +53,6 @@
                     ]
                 },
                 {
-                    "output_field": "study.consent",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "DS-PEDCR"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "study.consent_number",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": 1
-                        }
-                    ]
-                },
-                {
                     "output_field": "study.external_url",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -97,6 +85,78 @@
                         {
                             "old_value": "*",
                             "new_value": "There are 175 fully characterized patient cases with relapsed precursor B-cell ALL (all tumor/normal pairs, 85 with relapse sample as well) that will make up Phase II of the TARGET ALL dataset, each with gene expression, tumor and paired normal copy number analyses, and comprehensive next-generation sequencing to include whole genome sequencing, mRNA-seq and miRNA-seq. Subsets of these cases will also have methylation and/or whole exome sequencing data available as well. There are additionally a large number of cases with partial molecular characterization making this a large and informative genomic dataset."
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "PHS000464_P3_DS-PEDCR_1"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_name",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "DS-PEDCR"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_number",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "1"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "consent_group.consent_group_suffix",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Applicable"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "reference_file.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
                         }
                     ]
                 },
@@ -168,7 +228,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 118544
+                            "new_value": 124298
                         }
                     ]
                 },
@@ -180,7 +240,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "f03fa51880166a26274b4c709227898e"
+                            "new_value": "88c74519a20f5f549317e76d64fc0080"
                         }
                     ]
                 },
@@ -204,7 +264,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/etl/target/c3dc_etl.py"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/etl/target/c3dc_etl.py"
                         }
                     ]
                 },
@@ -252,7 +312,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 383901
+                            "new_value": 386533
                         }
                     ]
                 },
@@ -264,7 +324,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "3f1c298f2d14539a1df3eb989428647d"
+                            "new_value": "de2768a4a26c8ffbd5b757b0e1e32002"
                         }
                     ]
                 },
@@ -288,7 +348,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/schema/schema.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/schema/schema.json"
                         }
                     ]
                 },
@@ -336,7 +396,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 365853
+                            "new_value": 590162
                         }
                     ]
                 },
@@ -348,7 +408,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "5949b4e3dea38e9aea631db6872802ae"
+                            "new_value": "958ae1f6330d742f99470308eaf02208"
                         }
                     ]
                 },
@@ -372,7 +432,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/mapping_unpivoter/C3DC%20Mappings.xlsx"
                         }
                     ]
                 },
@@ -420,7 +480,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 47085
+                            "new_value": 61350
                         }
                     ]
                 },
@@ -432,7 +492,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "8174d8f58a5db2ab470bfd853d39374c"
+                            "new_value": "d59d30060de3a17a372a44eb59f9c555"
                         }
                     ]
                 },
@@ -456,7 +516,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250623.1/etl/target/transformations/phs000464_p3.json"
+                            "new_value": "https://github.com/chicagopcdc/c3dc_etl/blob/20250822.1/etl/target/transformations/phs000464_p3.json"
                         }
                     ]
                 },
@@ -557,6 +617,18 @@
                     ]
                 },
                 {
+                    "output_field": "participant.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "participant.participant_id",
                     "source_field": "TARGET USI",
                     "type_group_index": "*",
@@ -599,6 +671,18 @@
                     ]
                 },
                 {
+                    "output_field": "survival.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "survival.survival_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -614,7 +698,7 @@
                     "output_field": "survival.last_known_survival_status",
                     "source_field": "Vital Status",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": "Not reported",
                     "replacement_values": [
                         {
                             "old_value": "Alive",
@@ -695,6 +779,18 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -719,6 +815,20 @@
                     ]
                 },
                 {
+                    "output_field": "diagnosis.diagnosis_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": [
+                                "Leukemias, NOS"
+                            ]
+                        }
+                    ]
+                },
+                {
                     "output_field": "diagnosis.diagnosis_classification_system",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -726,7 +836,9 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "ICD-O-3.2"
+                            "new_value": [
+                                "ICD-O-3.2"
+                            ]
                         }
                     ]
                 },
@@ -738,7 +850,9 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "Not Reported"
+                            "new_value": [
+                                "Not Reported"
+                            ]
                         }
                     ]
                 },
@@ -810,31 +924,31 @@
                     "replacement_values": [
                         {
                             "old_value": "AUL",
-                            "new_value": "9801/3 : Acute leukemia, NOS"
+                            "new_value": "Acute leukemia, NOS"
                         },
                         {
                             "old_value": "B/M",
-                            "new_value": "9808/3 : Mixed phenotype acute leukemia, B/myeloid, NOS"
+                            "new_value": "Mixed phenotype acute leukemia, B/myeloid, NOS"
                         },
                         {
                             "old_value": "MLL",
-                            "new_value": "9807/3 : Mixed phenotype acute leukemia with t(v;11q23); MLL rearranged"
+                            "new_value": "Mixed phenotype acute leukemia with t(v;11q23); MLL rearranged"
                         },
                         {
                             "old_value": "NOS (T/B)",
-                            "new_value": "9805/3 : Acute biphenotypic leukemia"
+                            "new_value": "Acute Leukemias of Ambiguous Lineage"
                         },
                         {
                             "old_value": "NOS (T/B/M)",
-                            "new_value": "9805/3 : Acute biphenotypic leukemia"
+                            "new_value": "Acute Leukemias of Ambiguous Lineage"
                         },
                         {
                             "old_value": "Ph+",
-                            "new_value": "9806/3 : Mixed phenotype acute leukemia with t(9;22)(q34;q11.2); BCR-ABL1"
+                            "new_value": "Acute Leukemias of Ambiguous Lineage"
                         },
                         {
                             "old_value": "T/M",
-                            "new_value": "Mixed Phenotype Acute Leukemia, T/Myeloid, NOS"
+                            "new_value": "Mixed phenotype acute leukemia, T/myeloid, NOS"
                         }
                     ]
                 },
@@ -911,6 +1025,18 @@
                     ]
                 },
                 {
+                    "output_field": "laboratory_test.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
+                        }
+                    ]
+                },
+                {
                     "output_field": "laboratory_test.laboratory_test_id",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -923,7 +1049,7 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.age_at_lab",
+                    "output_field": "laboratory_test.age_at_laboratory_test",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -935,7 +1061,7 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.method",
+                    "output_field": "laboratory_test.laboratory_test_method",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -947,7 +1073,7 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.result",
+                    "output_field": "laboratory_test.test_result_text",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -959,19 +1085,7 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.result_text",
-                    "source_field": "[string_literal]",
-                    "type_group_index": "*",
-                    "default_value": null,
-                    "replacement_values": [
-                        {
-                            "old_value": "*",
-                            "new_value": "Not Reported"
-                        }
-                    ]
-                },
-                {
-                    "output_field": "laboratory_test.result_modifier",
+                    "output_field": "laboratory_test.test_result_modifier",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -995,7 +1109,7 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.result_numeric",
+                    "output_field": "laboratory_test.test_result_numeric",
                     "source_field": "WBC at Diagnosis",
                     "type_group_index": "*",
                     "default_value": null,
@@ -1007,14 +1121,14 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.test",
+                    "output_field": "laboratory_test.laboratory_test_name",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "WBC"
+                            "new_value": "White Blood Cells (WBC), #, Blood"
                         }
                     ]
                 },
@@ -1031,7 +1145,7 @@
                     ]
                 },
                 {
-                    "output_field": "laboratory_test.result_unit",
+                    "output_field": "laboratory_test.test_result_unit",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -1039,6 +1153,18 @@
                         {
                             "old_value": "*",
                             "new_value": "1000/uL"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.id",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "n/a"
                         }
                     ]
                 },
@@ -1079,14 +1205,62 @@
                     ]
                 },
                 {
-                    "output_field": "genetic_analysis.vaf_numeric",
+                    "output_field": "genetic_analysis.alteration",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": -999
+                            "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.alteration_effect",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.alteration_type",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Unknown"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.chromosome",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.cytoband",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
@@ -1103,7 +1277,91 @@
                     ]
                 },
                 {
+                    "output_field": "genetic_analysis.exon",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.fusion_partner_exon",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.fusion_partner_gene",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.fusion_partner_transcript",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.gene_symbol",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.genomic_source_category",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
                     "output_field": "genetic_analysis.hgvs_coding",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.hgvs_genome",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
@@ -1127,6 +1385,78 @@
                     ]
                 },
                 {
+                    "output_field": "genetic_analysis.iscn",
+                    "source_field": "Karyotype",
+                    "type_group_index": "*",
+                    "default_value": "Not Reported",
+                    "replacement_values": [
+                        {
+                            "old_value": "",
+                            "new_value": ""
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.method",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.reference_genome",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.reported_significance",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.reported_significance_system",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.result",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
                     "output_field": "genetic_analysis.status",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
@@ -1139,26 +1469,62 @@
                     ]
                 },
                 {
-                    "output_field": "genetic_analysis.alteration",
+                    "output_field": "genetic_analysis.test",
                     "source_field": "[string_literal]",
                     "type_group_index": "*",
                     "default_value": null,
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "Unknown"
+                            "new_value": "Not Reported"
                         }
                     ]
                 },
                 {
-                    "output_field": "genetic_analysis.iscn",
-                    "source_field": "Karyotype",
+                    "output_field": "genetic_analysis.transcript",
+                    "source_field": "[string_literal]",
                     "type_group_index": "*",
-                    "default_value": "Not Reported",
+                    "default_value": null,
                     "replacement_values": [
                         {
-                            "old_value": "",
-                            "new_value": ""
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.translocation_partner_chromosome",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.translocation_partner_cytoband",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": "Not Reported"
+                        }
+                    ]
+                },
+                {
+                    "output_field": "genetic_analysis.vaf_numeric",
+                    "source_field": "[string_literal]",
+                    "type_group_index": "*",
+                    "default_value": null,
+                    "replacement_values": [
+                        {
+                            "old_value": "*",
+                            "new_value": -999
                         }
                     ]
                 }

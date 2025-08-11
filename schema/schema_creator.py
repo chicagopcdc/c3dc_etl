@@ -432,12 +432,18 @@ class SchemaCreator:
     def _build_and_populate_property_schemas(self) -> dict[str, any]:
         """ Build and return json schema for source properties """
         _logger.info('Building and populating property schemas')
+        errors: list[str] = []
         self._schema_props.clear()
         for prop_name, prop_obj in self._props_source_data['PropDefinitions'].items():
-            self._schema_props[prop_name] = self._build_property_schema(prop_name.lower(), prop_obj)
+            self._schema_props[prop_name] = self._build_property_schema(prop_name.lower(), prop_obj, errors)
+        error: str
+        for error in errors:
+            _logger.critical(error)
+        if errors:
+            raise RuntimeError("Errors found building/populating property schemas")
         return self._schema_props
 
-    def _build_property_schema(self, name: str, obj: dict[str, any]) -> dict[str, any]:
+    def _build_property_schema(self, name: str, obj: dict[str, any], errors: list[str] = None) -> dict[str, any]:
         """ Build and return json schema for specified source property """
         schema: dict[str, any] = {}
         schema['type'] = self._get_property_type(name, obj)
@@ -458,8 +464,30 @@ class SchemaCreator:
             if name.startswith('age_at') or '_age_at_' in name:
                 schema['maximum'] = 54750 # 365 * 150
 
+        invalid_permissible_values: list[str] = []
         permissible_values: list[str] = self._get_property_permissible_values(name, obj)
         if permissible_values:
+            permissible_value: str
+            for permissible_value in permissible_values:
+                if not permissible_value.isascii():
+                    permissible_value_coded: str = ''
+                    char: str
+                    for char in permissible_value:
+                        permissible_value_coded += char if char.isascii() else f'<{hex(ord(char))}>'
+                    invalid_permissible_values.append(
+                        'Non-ascii character(s) found in permissible value for property ' +
+                            f'"{name}": "{permissible_value_coded}"'
+                    )
+            if invalid_permissible_values:
+                invalid_permissible_value: str
+                for invalid_permissible_value in invalid_permissible_values:
+                    _logger.error(invalid_permissible_value)
+                error = f'{len(invalid_permissible_values)} invalid permissible value(s) found for "{name}"'
+                if errors is not None:
+                    errors.append(error)
+                else:
+                    _logger.critical(error)
+
             if schema['type'] == 'array':
                 schema['uniqueItems'] = True
                 schema['items'] = {'type': 'string', 'enum': permissible_values}

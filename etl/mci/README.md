@@ -254,15 +254,40 @@ as a starting point and customized as needed.
       `s3://bucket/path/to/source/file/manifest.xlsx`.
     * `source_file_manifest_sheet`: Optional. String specifying the name of the source data manifest file worksheet
       containing the metadata rows. Defaults to `clinical_measure_file` if not specified.
+    * `icdo_codes_terms_mappings_path`: Optional. String specifying the location of the Excel (XLSX) file containing
+      the table of ICD-O codes and terms. At a minimum, the table should contain `Code`, `Term`, and `Level` columns.
+      The most recent reference document,
+      [WHO IARC ICD-O-3.2 Excel Table](https://www.naaccr.org/wp-content/uploads/2020/10/Copy-of-ICD-O-3.2_MFin_17042019_web.xls),
+      was downloaded from https://www.naaccr.org/icdo. For example `/path/to/icdo_codes_terms_mappings.xlsx` or
+      `s3://bucket/path/to/icdo_codes_terms_mappings.xlsx`.
+      For the D4CG implementation, the contents of the reference Excel table were copied to a sheet in the
+      [C3DC Mappings.xlsx document used by the mapping unpivoter script](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md).
+    * `icdo_codes_terms_mappings_sheet`: Optional. String specifying the name of the worksheet containing the
+      ICD-O codes and terms table. Defaults to `icdo_codes_terms` if not specified.
+    * `diagnosis_category_mappings_path`: Optional. String specifying the location of the Excel (XLSX) file containing
+      a table mapping each `diagnosis.diagnosis` value in the C3DC model to the `diagnosis.diagnosis_category` that
+      best fits the diagnosis as determined by the D4CG team.
+      that file containing metadata about each source file such as globally unique identifier (guid), size, MD5 hash, and
+      URL. Can be a local path or AWS S3 URL. For example `/path/to/diagnosis_category_mappings.xlsx` or
+      `s3://bucket/path/to/diagnosis_category_mappings.xlsx`.
+      For the D4CG implementation, the mapping table has been defined on a sheet in the
+      [C3DC Mappings.xlsx document used by the mapping unpivoter script](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md)
+    * `diagnosis_category_mappings_sheet`: Optional. String specifying the name of the worksheet containing the
+      `diagnosis.diagnosis` => `diagnosis.diagnosis_category` mapping table. Defaults to `diagnosis_category_map`
+      if not specified.
     * `treatment_mappings_path`: Optional. String specifying the location of the Excel (XLSX) document containing
       the mapping rules that will be used to find and derive `treatment` records. Can be a local path or AWS S3 URL.
-      For example `/path/to/source/file/manifest.xlsx` or `s3://bucket/path/to/source/file/manifest.xlsx`.
+      For example `/path/to/treatment_mappings.xlsx` or `s3://bucket/path/to/treatment_mappings.xlsx`.
     * `treatment_mappings_sheet`: Optional. String specifying the name of the treatment mappings file worksheet
       containing the mapping rows. Defaults to `phs002790_treatment` if not specified.
+      For the D4CG implementation, the mapping table has been defined on a sheet in the
+      [C3DC Mappings.xlsx document used by the mapping unpivoter script](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md)
     * `treatment_response_mappings_path`: Optional. String specifying the location of the Excel (XLSX) document
       containing the mapping rules that will be used to find and derive `treatment_response` records. Can be a local
-      path or AWS S3 URL. For example `/path/to/source/file/manifest.xlsx` or
-      `s3://bucket/path/to/source/file/manifest.xlsx`.
+      path or AWS S3 URL. For example `/path/to/treatment_response_mappings.xlsx` or
+      `s3://bucket/path/to/treatment_response_mappings.xlsx`.
+      For the D4CG implementation, the mapping table has been defined on a sheet in the
+      [C3DC Mappings.xlsx document used by the mapping unpivoter script](https://github.com/chicagopcdc/c3dc_etl/blob/main/mapping_unpivoter/README.md)
     * `treatment_response_mappings_sheet`: Optional. String specifying the name of the treatment mappings file
       worksheet containing the mapping rows. Defaults to `phs002790_treatment_response` if not specified.
     * `output_file_path`: Required. String specifying the location of the file where the harmonized data will be
