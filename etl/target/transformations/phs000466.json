@@ -2,7 +2,7 @@
     "version": "20250822.1",
     "transformations": [
         {
-            "name": "phs000466_discovery",
+            "name": "phs000466",
             "mappings": [
                 {
                     "output_field": "study.id",
@@ -480,7 +480,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": 41081
+                            "new_value": 41071
                         }
                     ]
                 },
@@ -492,7 +492,7 @@
                     "replacement_values": [
                         {
                             "old_value": "*",
-                            "new_value": "0facc3b4397e8a98d816669fe06ca468"
+                            "new_value": "fbb6c95cc05e17574e0b0888723d6d29"
                         }
                     ]
                 },

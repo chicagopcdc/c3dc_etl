@@ -1,3 +1,4 @@
+# Obsolete, left for reference only. Use requirements.txt.
 name: c3dc_etl
 channels:
   - defaults
@@ -12,4 +13,4 @@ dependencies:
   - openpyxl
   - pytest
   - boto3
-prefix: /Users/schoi/opt/miniconda3/envs/c3dc_etl
+#prefix: /Users/schoi/opt/miniconda3/envs/c3dc_etl

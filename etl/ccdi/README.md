@@ -1,10 +1,10 @@
 # ETL and supporting scripts for C3DC Childhood Cancer Data Initiative (CCDI) study
 
 ## Pre-requisites
-Install Python (3.11 used at time of documentation) and add support for dependencies such as
+Install Python (3.12 used at time of documentation) and add support for dependencies such as
 [PETL](https://github.com/petl-developers/petl) by, for example,
-[creating and activating a Conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)
-based on the [Conda environment file](https://github.com/chicagopcdc/c3dc_etl/blob/main/conda_environment.yml)
+[creating and activating a virtual environment](https://docs.python.org/3/library/venv.html)
+based on the [requirements file](https://github.com/chicagopcdc/c3dc_etl/blob/main/requirements.txt)
 
 ## Data harmonization process and input dependencies
 The c3dc_etl.py script ingests the source data in tabular (XLSX) format, transforms it into a harmonized (JSON)
@@ -193,7 +193,8 @@ all of the data harmonization steps for all studies into a single executable scr
 # 3) Create transformation/mapping file using mapping unpivoter script
 # 4) Run ETL to create harmonized data file
 
-# activate conda env first with e.g. 'conda activate c3dc_etl'; check conda_environment.yml for package dependencies
+# activate venv first with e.g. 'source .venv/bin/activate'; check requirements.txt for package dependencies
+source .venv/bin/activate
 
 # exit on error
 set -e
