@@ -36,21 +36,31 @@ script to create the final harmonized data output file for a given source input 
 * [Create the harmonized data output file](#create-the-harmonized-data-output-file)
 
 ## Prepare harmonization environment
-The Python script interpreter and dependencies can be installed using the Miniconda aka conda package manager.
+The Python script dependencies can be installed in a [virtual environment](https://docs.python.org/3/library/venv.html) using the
+[requirements.txt](https://github.com/chicagopcdc/c3dc_etl/blob/main/requirements.txt) file.
 1. Download and install the [Git](https://git-scm.com/downloads) source code control system if not already installed.
 1. Download the C3DC data harmonization scripts and dependencies from the
    [GitHub repository](https://github.com/chicagopcdc/c3dc_etl). For example from a command prompt or git bash:
    `git clone https://github.com/chicagopcdc/c3dc_etl.git`.
    Note the local download location; this will be referred to throughout this guide as the "`c3dc_etl` root directory".
-1. Download and install the [Miniconda (aka conda)](https://docs.anaconda.com/miniconda/miniconda-install/)
-   Python package manager.
-1. Open a conda terminal or command prompt per the installation instructions. The command line prompt should
-   contain `(base)` for example `(base) user@machine` or `(base) C:\>`.
-1. Create the runtime environment needed for harmonization using the
-   [conda_enviroment.yml](https://github.com/chicagopcdc/c3dc_etl/blob/main/conda_environment.yml) file. Execute the
-   following command from the `c3dc_etl` root directory where the C3DC data harmonization scripts were downloaded
-   from GitHub: `conda env create -f conda_environment.yml`
-1. Activate the newly created conda environment: `conda activate c3dc_etl`
+1. Download and install [Python](https://www.python.org/downloads/) as needed. The specific installation and
+   configuration steps are device and operating system dependent and are beyond the scope of this document. A
+   [dedicated virtual environment](https://docs.python.org/3/library/venv.html) should be created for the data
+   harmonization process. The C3DC data harmonization scripts were developed and tested using
+   [Python 3.12.9](https://www.python.org/downloads/release/python-3129/).
+1. Create the runtime environment and install the requirements needed for harmonization using the
+   [requirements.txt](https://github.com/chicagopcdc/c3dc_etl/blob/main/requirements.txt) file. For example, open
+   a command prompt and navigate to the `c3dc_etl` root directory where the C3DC data harmonization scripts were
+   downloaded from GitHub and then execute the following:
+   ```
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+1. The harmonization environment should now be ready. Execute the command `deactivate` to deactivate the virtual
+   environment or close the command prompt window. In the future the steps to create the virtual environment and
+   install requirements can be skipped and the environment can be activated by executing the venv activation command,
+   `source .venv/bin/activate`, within a command prompt from the `c3dc_etl` root directory.
 
 ## Create JSON schema file
 The JSON schema file representation of the [C3DC data model](https://github.com/CBIIT/c3dc-model) is created by the
@@ -70,7 +80,7 @@ The JSON schema file representation of the [C3DC data model](https://github.com/
    SCHEMA_ROOT_COMMENT='Based on yaml schema files at https://github.com/CBIIT/c3dc-model/tree/main/model-desc'
    SCHEMA_ROOT_NODE='nodes'
    ```
-1. Open a conda terminal or command prompt with the `c3dc_etl` conda environment activated as described in the earlier
+1. Open a terminal or command prompt with the `c3dc_etl` virtual environment activated as described in the earlier
    environment preparation step.
 1. Change to the `schema` subdirectory of the `c3dc_etl` root directory.
 1. Create the JSON schema file by executing the following command: `python schema_creator.py .env` \
@@ -106,7 +116,7 @@ subdirectory of the `c3dc_etl` root directory.
        }
    ]'
    ```
-1. Open a conda terminal or command prompt with the `c3dc_etl` conda environment activated as described in the earlier
+1. Open a terminal or command prompt with the `c3dc_etl` virtual environment activated as described in the earlier
    environment preparation step.
 1. Change to the `mapping_unpivoter` subdirectory of the `c3dc_etl` root directory.
 1. Create the transformation/mapping file by executing the following command:
@@ -149,7 +159,7 @@ group must be executed in order to create a valid harmonized data output file.
        }
    ]'
    ```
-1. Open a conda terminal or command prompt with the `c3dc_etl` conda environment activated as described in the earlier
+1. Open a terminal or command prompt with the `c3dc_etl` virtual environment activated as described in the earlier
    environment preparation step.
 1. Change to the `etl/[study group]` subdirectory of the `c3dc_etl` root directory, for example `etl/ccdi`.
 1. Create the harmonized data output file by executing the following command: `python c3dc_etl.py .env` \

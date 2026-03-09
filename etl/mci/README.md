@@ -1,10 +1,10 @@
 # ETL and supporting scripts for Molecular Characterization Initiative (MCI) study
 
 ## Pre-requisites
-Install Python (3.11 used at time of documentation) and add support for dependencies such as
+Install Python (3.12 used at time of documentation) and add support for dependencies such as
 [PETL](https://github.com/petl-developers/petl) by, for example,
-[creating and activating a Conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file)
-based on the [Conda environment file](https://github.com/chicagopcdc/c3dc_etl/blob/main/conda_environment.yml)
+[creating and activating a virtual environment](https://docs.python.org/3/library/venv.html)
+based on the [venv requirements file](https://github.com/chicagopcdc/c3dc_etl/blob/main/requirements.txt)
 
 ## Script to collate and pivot study data in JSON files
 The MCI source data is provided as individual JSON files per subject. To make it easier to browse and inspect the
@@ -401,7 +401,8 @@ all of the data harmonization steps for all studies into a single executable scr
 #    from 0 and '' initial values respectively)
 # 6) Run ETL again to create final harmonized data file with updated reference file entries 
 
-# activate conda env first with e.g. 'conda activate c3dc_etl'; check conda_environment.yml for package dependencies
+# activate venv first with e.g. 'source .venv/bin/activate'; check requirements.txt for package dependencies
+source .venv/bin/activate
 
 # exit on error
 set -e
